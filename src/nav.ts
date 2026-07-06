@@ -95,6 +95,119 @@ export const kNavGroups: NavGroup[] = [
     ],
   },
   {
+    id: 'industrial-foundations',
+    heading: 'H · 第零部：先修與心智模型',
+    items: [
+      { slug: 'ind01-why-parallel-roofline', chapterLabel: '第 1 章', title: '為何平行、效能的上限在哪', href: '/ind01-why-parallel-roofline' },
+      { slug: 'ind02-hardware-reality', chapterLabel: '第 2 章', title: '硬體現實：NUMA、快取一致性與弱記憶體', href: '/ind02-hardware-reality' },
+      { slug: 'ind03-concurrency-vs-parallelism', chapterLabel: '第 3 章', title: '並行 vs 平行、任務 vs 資料平行', href: '/ind03-concurrency-vs-parallelism' },
+    ],
+  },
+  {
+    id: 'industrial-memory-model',
+    heading: 'I · 第一部：C++ 記憶體模型與原子操作',
+    items: [
+      { slug: 'ind04-data-races-memory-model', chapterLabel: '第 4 章', title: '資料競爭與 C++ 記憶體模型', href: '/ind04-data-races-memory-model' },
+      { slug: 'ind05-atomics-memory-order', chapterLabel: '第 5 章', title: 'std::atomic 與記憶體序', href: '/ind05-atomics-memory-order' },
+      { slug: 'ind06-weak-memory-fences', chapterLabel: '第 6 章', title: '進階記憶體序與弱記憶體', href: '/ind06-weak-memory-fences' },
+    ],
+  },
+  {
+    id: 'industrial-threads-sync',
+    heading: 'J · 第二部：執行緒與同步',
+    items: [
+      { slug: 'ind07-thread-lifecycle', chapterLabel: '第 7 章', title: '執行緒生命週期', href: '/ind07-thread-lifecycle' },
+      { slug: 'ind08-mutex-locks', chapterLabel: '第 8 章', title: '互斥與鎖', href: '/ind08-mutex-locks' },
+      { slug: 'ind09-condvar-cpp20-sync', chapterLabel: '第 9 章', title: '條件變數與 C++20 新同步原語', href: '/ind09-condvar-cpp20-sync' },
+    ],
+  },
+  {
+    id: 'industrial-lock-free',
+    heading: 'K · 第三部：無鎖與並行資料結構',
+    items: [
+      { slug: 'ind10-lock-free-basics', chapterLabel: '第 10 章', title: '無鎖程式設計基礎', href: '/ind10-lock-free-basics' },
+      { slug: 'ind11-safe-memory-reclamation', chapterLabel: '第 11 章', title: '安全記憶體回收', href: '/ind11-safe-memory-reclamation' },
+      { slug: 'ind12-concurrent-containers', chapterLabel: '第 12 章', title: '並行容器實作', href: '/ind12-concurrent-containers' },
+    ],
+  },
+  {
+    id: 'industrial-high-level',
+    heading: 'L · 第四部：高階平行抽象',
+    items: [
+      { slug: 'ind13-async-future-promise', chapterLabel: '第 13 章', title: 'std::async／future／promise 與其侷限', href: '/ind13-async-future-promise' },
+      { slug: 'ind14-parallel-stl', chapterLabel: '第 14 章', title: '平行 STL 演算法（C++17）', href: '/ind14-parallel-stl' },
+      { slug: 'ind15-coroutines', chapterLabel: '第 15 章', title: '協程（C++20）', href: '/ind15-coroutines' },
+      { slug: 'ind16-senders-receivers', chapterLabel: '第 16 章', title: 'Senders/Receivers 與 std::execution', href: '/ind16-senders-receivers' },
+    ],
+  },
+  {
+    id: 'industrial-simd',
+    heading: 'M · 第五部：資料平行與向量化',
+    items: [
+      { slug: 'ind17-std-simd', chapterLabel: '第 17 章', title: 'std::simd（C++26, P1928）', href: '/ind17-std-simd' },
+      { slug: 'ind18-vectorization-friendly-code', chapterLabel: '第 18 章', title: '對編譯器與 CPU 友善的程式碼', href: '/ind18-vectorization-friendly-code' },
+    ],
+  },
+  {
+    id: 'industrial-perf-eng',
+    heading: 'N · 第六部：效能工程',
+    items: [
+      { slug: 'ind19-measurement-profiling', chapterLabel: '第 19 章', title: '量測與剖析', href: '/ind19-measurement-profiling' },
+      { slug: 'ind20-memory-numa-optimization', chapterLabel: '第 20 章', title: '記憶體與 NUMA 優化', href: '/ind20-memory-numa-optimization' },
+      { slug: 'ind21-thread-pools-scheduling', chapterLabel: '第 21 章', title: '執行緒池與任務排程', href: '/ind21-thread-pools-scheduling' },
+      { slug: 'ind22-reproducible-benchmarking', chapterLabel: '第 22 章', title: '效能可重現性與基準紀律', href: '/ind22-reproducible-benchmarking' },
+    ],
+  },
+  {
+    id: 'industrial-correctness',
+    heading: 'O · 第七部：正確性、測試與除錯',
+    items: [
+      { slug: 'ind23-catching-concurrency-bugs', chapterLabel: '第 23 章', title: '並行 bug 的捕捉', href: '/ind23-catching-concurrency-bugs' },
+      { slug: 'ind24-exception-safety-resource-mgmt', chapterLabel: '第 24 章', title: '例外安全與資源管理', href: '/ind24-exception-safety-resource-mgmt' },
+    ],
+  },
+  {
+    id: 'industrial-numerics',
+    heading: 'P · 第八部：數值核心與可重現性',
+    items: [
+      { slug: 'ind25-floating-point-reduction-reproducibility', chapterLabel: '第 25 章', title: '浮點、歸約與可重現性', href: '/ind25-floating-point-reduction-reproducibility' },
+      { slug: 'ind26-mdspan-linalg', chapterLabel: '第 26 章', title: 'std::mdspan 與 std::linalg', href: '/ind26-mdspan-linalg' },
+    ],
+  },
+  {
+    id: 'industrial-heterogeneous',
+    heading: 'Q · 第九部：異質運算',
+    items: [
+      { slug: 'ind27-offloading-data-movement', chapterLabel: '第 27 章', title: 'Offloading 模型與資料搬移成本', href: '/ind27-offloading-data-movement' },
+      { slug: 'ind28-portable-heterogeneous-convergence', chapterLabel: '第 28 章', title: '可攜異質程式設計的收斂趨勢', href: '/ind28-portable-heterogeneous-convergence' },
+    ],
+  },
+  {
+    id: 'industrial-architecture',
+    heading: 'R · 第十部：架構、樣式與整合',
+    items: [
+      { slug: 'ind29-parallel-design-patterns', chapterLabel: '第 29 章', title: '並行設計樣式', href: '/ind29-parallel-design-patterns' },
+      { slug: 'ind30-openmp-mpi-interop', chapterLabel: '第 30 章', title: '與 OpenMP／MPI 的分工與互操作', href: '/ind30-openmp-mpi-interop' },
+    ],
+  },
+  {
+    id: 'industrial-capstone',
+    heading: 'S · 第十一部：綜合實戰',
+    items: [
+      { slug: 'ind31-capstone-project', chapterLabel: '第 31 章', title: '綜合專案 Capstone', href: '/ind31-capstone-project' },
+    ],
+  },
+  {
+    id: 'industrial-appendix',
+    heading: 'T · 附錄',
+    items: [
+      { slug: 'appendix-a-feature-timeline', chapterLabel: '附錄 A', title: 'C++11→C++26 並行特性年表', href: '/appendix-a-feature-timeline' },
+      { slug: 'appendix-b-tool-cheatsheet', chapterLabel: '附錄 B', title: '工具速查', href: '/appendix-b-tool-cheatsheet' },
+      { slug: 'appendix-c-ub-antipatterns', chapterLabel: '附錄 C', title: '反面教材集', href: '/appendix-c-ub-antipatterns' },
+      { slug: 'appendix-d-references', chapterLabel: '附錄 D', title: '參考書目與標準提案', href: '/appendix-d-references' },
+    ],
+  },
+  {
     id: 'lab',
     heading: '平行化實驗室',
     items: [
