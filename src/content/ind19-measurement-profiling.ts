@@ -2,14 +2,14 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ind19MeasurementProfiling: ChapterContent = {
   slug: 'ind19-measurement-profiling',
-  chapterLabel: '第 19 章',
+  chapterLabel: '第 48 章',
   title: '量測與剖析',
-  group: 'N · 第六部：效能工程',
+  group: '第 14 部：效能工程',
   description:
     '微基準陷阱、Google Benchmark，perf／VTune／LIKWID／rocprof 的使用，以及 roofline 實測。',
   concept: {
     standard: 'C++20',
-    body: '第 1 章用 Roofline 模型畫出了「理論上限」，但理論值需要靠實測才能填成一張可信的圖；沒有量測紀律，任何最佳化決策都只是猜測。微基準（microbenchmark）看似簡單，卻充滿陷阱：編譯器可能把沒有副作用的計算整段刪除、CPU 頻率調節（turbo/throttling）與冷快取會讓前幾次迭代失真、只取平均數而忽略雜訊分佈都會導致誤判。Google Benchmark 提供 `benchmark::DoNotOptimize` 與 `benchmark::ClobberMemory` 兩個工具正面對抗編譯器最佳化。當基準之外要看真實程式的行為時，需要剖析工具：Linux `perf` 是通用取樣剖析器，Intel VTune 深入微架構瓶頸（如記憶體延遲、前端停滯），LIKWID 是輕量的硬體計數器套件，AMD `rocprof` 則是 ROCm GPU 核心的剖析工具。把這些工具量出的 FLOPs 與記憶體流量換算成 arithmetic intensity，就能把實測點畫回 Roofline 圖，親眼看到自己的程式是 compute-bound 還是 memory-bound。',
+    body: '第 30 章用 Roofline 模型畫出了「理論上限」，但理論值需要靠實測才能填成一張可信的圖；沒有量測紀律，任何最佳化決策都只是猜測。微基準（microbenchmark）看似簡單，卻充滿陷阱：編譯器可能把沒有副作用的計算整段刪除、CPU 頻率調節（turbo/throttling）與冷快取會讓前幾次迭代失真、只取平均數而忽略雜訊分佈都會導致誤判。Google Benchmark 提供 `benchmark::DoNotOptimize` 與 `benchmark::ClobberMemory` 兩個工具正面對抗編譯器最佳化。當基準之外要看真實程式的行為時，需要剖析工具：Linux `perf` 是通用取樣剖析器，Intel VTune 深入微架構瓶頸（如記憶體延遲、前端停滯），LIKWID 是輕量的硬體計數器套件，AMD `rocprof` 則是 ROCm GPU 核心的剖析工具。把這些工具量出的 FLOPs 與記憶體流量換算成 arithmetic intensity，就能把實測點畫回 Roofline 圖，親眼看到自己的程式是 compute-bound 還是 memory-bound。',
   },
   code: {
     lang: 'cpp',
@@ -21,43 +21,43 @@ const ind19MeasurementProfiling: ChapterContent = {
 // [1] 待測函式：對一個 vector 做逐元素平方根加總。
 //     刻意讓它「有副作用地」回傳結果，方便呼叫端用 DoNotOptimize 固定它。
 double SumSqrt(const std::vector<double>& data) {
-  double acc = 0.0;
-  for (double x : data) {
-    acc += std::sqrt(x);
-  }
-  return acc;
+    double acc = 0.0;
+    for (double x : data) {
+        acc += std::sqrt(x);
+    }
+    return acc;
 }
 
 // [2] 反例（僅供對照，未註冊）：若把 acc 宣告在迴圈內且未使用回傳值，
 //     編譯器在 -O2/-O3 下很可能整段迴圈視為死碼直接刪除。
 static void BM_SumSqrt_Naive(benchmark::State& state) {
-  std::vector<double> data(state.range(0), 2.0);
-  for (auto _ : state) {
-    SumSqrt(data);  // 回傳值被丟棄，最佳化器有權把呼叫連同迴圈本體一起消除
-  }
+    std::vector<double> data(state.range(0), 2.0);
+    for (auto _ : state) {
+        SumSqrt(data);  // 回傳值被丟棄，最佳化器有權把呼叫連同迴圈本體一起消除
+    }
 }
 
 // [3] 正確作法：用 DoNotOptimize 告訴編譯器「這個值之後仍會被用到」，
 //     強迫它保留計算過程，不能整段最佳化掉。
 static void BM_SumSqrt_Correct(benchmark::State& state) {
-  std::vector<double> data(state.range(0), 2.0);
-  for (auto _ : state) {
-    double result = SumSqrt(data);
-    benchmark::DoNotOptimize(result);  // [4]
-  }
+    std::vector<double> data(state.range(0), 2.0);
+    for (auto _ : state) {
+        double result = SumSqrt(data);
+        benchmark::DoNotOptimize(result);  // [4]
+    }
 }
 
 // [5] 若待測函式會透過指標／記憶體寫入產生副作用（而非回傳值），
 //     額外呼叫 ClobberMemory 強迫編譯器把暫存器內容真的寫回記憶體，
 //     避免整批寫入被合併或延後到計時區間之外。
 static void BM_VectorFill_Correct(benchmark::State& state) {
-  std::vector<double> data(state.range(0));
-  for (auto _ : state) {
-    for (auto& x : data) {
-      x = std::sqrt(x + 1.0);
+    std::vector<double> data(state.range(0));
+    for (auto _ : state) {
+        for (auto& x : data) {
+            x = std::sqrt(x + 1.0);
+        }
+        benchmark::ClobberMemory();  // [6]
     }
-    benchmark::ClobberMemory();  // [6]
-  }
 }
 
 BENCHMARK(BM_SumSqrt_Naive)->Range(1 << 10, 1 << 16);
@@ -188,31 +188,30 @@ BENCHMARK_MAIN();`,
 // 簡易示範：手刻的「防死碼消除」寫法，概念與 benchmark::DoNotOptimize 相同。
 // 用 volatile sink 強迫編譯器保留計算結果，避免整段迴圈被最佳化掉。
 double SumSqrt(const std::vector<double>& data) {
-  double acc = 0.0;
-  for (double x : data) {
-    acc += std::sqrt(x);
-  }
-  return acc;
+    double acc = 0.0;
+    for (double x : data) {
+        acc += std::sqrt(x);
+    }
+    return acc;
 }
 
 int main() {
-  std::vector<double> data(1'000'000, 2.0);
-  volatile double sink = 0.0;  // 防止整段被刪除
+    std::vector<double> data(1'000'000, 2.0);
+    volatile double sink = 0.0;  // 防止整段被刪除
 
-  // 暖身：先跑幾次讓快取與分支預測器進入穩態，結果不計入統計。
-  for (int i = 0; i < 3; ++i) {
-    sink = SumSqrt(data);
-  }
+    // 暖身：先跑幾次讓快取與分支預測器進入穩態，結果不計入統計。
+    for (int i = 0; i < 3; ++i) {
+        sink = SumSqrt(data);
+    }
 
-  auto t0 = std::chrono::steady_clock::now();
-  double result = SumSqrt(data);
-  sink = result;
-  auto t1 = std::chrono::steady_clock::now();
+    auto t0 = std::chrono::steady_clock::now();
+    double result = SumSqrt(data);
+    sink = result;
+    auto t1 = std::chrono::steady_clock::now();
 
-  std::cout << "elapsed = "
-            << std::chrono::duration<double, std::milli>(t1 - t0).count()
-            << " ms, result = " << result << '\\n';
-  return 0;
+    std::cout << "elapsed = " << std::chrono::duration<double, std::milli>(t1 - t0).count()
+              << " ms, result = " << result << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [

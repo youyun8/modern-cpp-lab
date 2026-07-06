@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ind06WeakMemoryFences: ChapterContent = {
   slug: 'ind06-weak-memory-fences',
-  chapterLabel: '第 6 章',
+  chapterLabel: '第 35 章',
   title: '進階記憶體序與弱記憶體',
-  group: 'I · 第一部：C++ 記憶體模型與原子操作',
+  group: '第 9 部：C++ 記憶體模型與原子操作',
   description:
     'seq_cst 的全域總序成本、atomic_thread_fence、consume 的歷史，以及 litmus tests 建立的弱記憶體直覺。',
   concept: {
@@ -48,29 +48,29 @@ int r1 = 0, r2 = 0;
 
 // Store Buffering litmus test：兩執行緒互相讀對方的旗標。 [1]
 void thread1() {
-  x.store(1, std::memory_order_relaxed);                // [2]
-  std::atomic_thread_fence(std::memory_order_seq_cst);  // [3]
-  r1 = y.load(std::memory_order_relaxed);
+    x.store(1, std::memory_order_relaxed);                // [2]
+    std::atomic_thread_fence(std::memory_order_seq_cst);  // [3]
+    r1 = y.load(std::memory_order_relaxed);
 }
 
 void thread2() {
-  y.store(1, std::memory_order_relaxed);                // [4]
-  std::atomic_thread_fence(std::memory_order_seq_cst);  // [3]
-  r2 = x.load(std::memory_order_relaxed);
+    y.store(1, std::memory_order_relaxed);                // [4]
+    std::atomic_thread_fence(std::memory_order_seq_cst);  // [3]
+    r2 = x.load(std::memory_order_relaxed);
 }
 
 int main() {
-  std::thread t1(thread1);
-  std::thread t2(thread2);
-  t1.join();
-  t2.join();
+    std::thread t1(thread1);
+    std::thread t2(thread2);
+    t1.join();
+    t2.join();
 
-  // 若拿掉 [3] 的兩個 fence，在弱序硬體（ARM/POWER）上
-  // r1 == 0 && r2 == 0 是合法結果——兩個 store 都還留在
-  // store buffer 裡，尚未對另一執行緒可見。 [5]
-  // 加上成對的 seq_cst fence 後，全域總序排除了這個結果，
-  // 讓程式在所有架構上行為一致。 [6]
-  return (r1 == 0 && r2 == 0) ? 1 : 0;
+    // 若拿掉 [3] 的兩個 fence，在弱序硬體（ARM/POWER）上
+    // r1 == 0 && r2 == 0 是合法結果——兩個 store 都還留在
+    // store buffer 裡，尚未對另一執行緒可見。 [5]
+    // 加上成對的 seq_cst fence 後，全域總序排除了這個結果，
+    // 讓程式在所有架構上行為一致。 [6]
+    return (r1 == 0 && r2 == 0) ? 1 : 0;
 }`,
     callouts: [
       {
@@ -175,25 +175,25 @@ std::atomic<int> y{0};
 int r1 = 0, r2 = 0;
 
 void thread1() {
-  x.store(1, std::memory_order_relaxed);
-  r1 = y.load(std::memory_order_relaxed);
+    x.store(1, std::memory_order_relaxed);
+    r1 = y.load(std::memory_order_relaxed);
 }
 
 void thread2() {
-  y.store(1, std::memory_order_relaxed);
-  r2 = x.load(std::memory_order_relaxed);
+    y.store(1, std::memory_order_relaxed);
+    r2 = x.load(std::memory_order_relaxed);
 }
 
 int main() {
-  std::thread t1(thread1);
-  std::thread t2(thread2);
-  t1.join();
-  t2.join();
+    std::thread t1(thread1);
+    std::thread t2(thread2);
+    t1.join();
+    t2.join();
 
-  // 在強序的 x86 上幾乎總是看到 r1 或 r2 至少一個為 1；
-  // 在弱序硬體上重複執行足夠多次，r1 == 0 && r2 == 0 是合法結果。
-  std::printf("r1=%d r2=%d\\n", r1, r2);
-  return 0;
+    // 在強序的 x86 上幾乎總是看到 r1 或 r2 至少一個為 1；
+    // 在弱序硬體上重複執行足夠多次，r1 == 0 && r2 == 0 是合法結果。
+    std::printf("r1=%d r2=%d\\n", r1, r2);
+    return 0;
 }`,
   },
   furtherReading: [

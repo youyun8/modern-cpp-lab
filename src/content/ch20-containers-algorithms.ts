@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ch20ContainersAlgorithms: ChapterContent = {
   slug: 'ch20-containers-algorithms',
-  chapterLabel: 'Ch.20',
+  chapterLabel: '第 20 章',
   title: '容器與演算法',
-  group: 'D · STL 與工具庫',
+  group: '第 4 部：STL 與工具庫',
   description:
     '序列與關聯容器、迭代器、ranges 以及標準演算法：如何依存取模式選擇容器，並以演算法取代手寫迴圈。',
   concept: {
@@ -20,21 +20,20 @@ const ch20ContainersAlgorithms: ChapterContent = {
 #include <vector>
 
 int main() {
-  std::vector<int> v{5, 3, 8, 1, 9, 2, 7};
+    std::vector<int> v{5, 3, 8, 1, 9, 2, 7};
 
-  std::ranges::sort(v);                      // [1] ranges 版直接吃容器
-  auto it = std::ranges::lower_bound(v, 7);  // [2] 有序區間二分搜尋
-  std::println("first >= 7 at index {}", it - v.begin());
+    std::ranges::sort(v);                      // [1] ranges 版直接吃容器
+    auto it = std::ranges::lower_bound(v, 7);  // [2] 有序區間二分搜尋
+    std::println("first >= 7 at index {}", it - v.begin());
 
-  int big = std::ranges::count_if(v,  // [3] 宣告式計數
-                                  [](int x) { return x > 4; });
-  std::println("count > 4 = {}", big);
+    int big = std::ranges::count_if(v,  // [3] 宣告式計數
+                                    [](int x) { return x > 4; });
+    std::println("count > 4 = {}", big);
 
-  std::unordered_map<std::string, int> freq;  // [4] 平均 O(1) 查找
-  for (std::string w : {"a", "b", "a", "c", "a"})
-    ++freq[w];  // [5] operator[] 自動插入
-  std::println("freq[a] = {}", freq["a"]);
-  return 0;
+    std::unordered_map<std::string, int> freq;                  // [4] 平均 O(1) 查找
+    for (std::string w : {"a", "b", "a", "c", "a"}) ++freq[w];  // [5] operator[] 自動插入
+    std::println("freq[a] = {}", freq["a"]);
+    return 0;
 }`,
     callouts: [
       { n: 1, text: 'std::ranges::sort 直接接受容器，免去 begin()／end() 的樣板寫法。' },
@@ -125,13 +124,13 @@ int main() {
 #include <vector>
 
 int main() {
-  std::vector<int> v{5, 3, 8, 1, 9, 2, 7};
-  std::ranges::sort(v);
-  for (int x : v) std::cout << x << ' ';
-  std::cout << '\\n';
-  auto big = std::ranges::count_if(v, [](int x) { return x > 4; });
-  std::cout << "count > 4 = " << big << '\\n';
-  return 0;
+    std::vector<int> v{5, 3, 8, 1, 9, 2, 7};
+    std::ranges::sort(v);
+    for (int x : v) std::cout << x << ' ';
+    std::cout << '\\n';
+    auto big = std::ranges::count_if(v, [](int x) { return x > 4; });
+    std::cout << "count > 4 = " << big << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { DiagramComponentProps } from '@/types/DiagramProps';
 
 /**
- * Animated thread timeline for Ch.22. Two threads compete for a mutex; the
+ * Animated thread timeline for the concurrency chapters. Two threads compete for a mutex; the
  * playhead sweeps left-to-right and the lock highlights whichever thread holds
  * it. Demonstrates mutual exclusion of the critical section.
  */

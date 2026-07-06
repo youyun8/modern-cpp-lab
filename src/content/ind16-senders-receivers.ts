@@ -2,19 +2,19 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ind16SendersReceivers: ChapterContent = {
   slug: 'ind16-senders-receivers',
-  chapterLabel: '第 16 章',
+  chapterLabel: '第 45 章',
   title: 'Senders/Receivers 與 std::execution（C++26, P2300）',
-  group: 'L · 第四部：高階平行抽象',
+  group: '第 12 部：高階平行抽象',
   description:
     '結構化並行、scheduler 抽象、then／when_all／bulk，以及此模型與執行緒池、GPU 後端解耦的意義。',
   concept: {
     standard: 'C++26',
-    body: 'P2300「std::execution」是預計併入 C++26 標準庫的結構化並行框架，核心是 sender／receiver 這對抽象：sender 描述一段「尚未開始執行」的非同步計算（懶惰、可組合），receiver 則是計算完成時的「接收端」，透過 set_value／set_error／set_stopped 三個管道之一收到結果。這與第 13 章介紹的 std::future 形成鮮明對比：future 一旦建立就已經在背景執行（eager），且沒有標準化的方式接續下一步工作；sender 則是純粹的描述，必須顯式「啟動」才會真正執行，因此可以先組合出完整的非同步計算圖，再一次性交給某個執行環境（scheduler）去跑。截至目前，這套機制尚未在所有主流編譯器中完整實作，讀者若想在 C++26 之前實驗，通常需要借助 NVIDIA／Meta 主導的 stdexec 參考實作（一個獨立函式庫，目標是最終被各編譯器廠商採納為標準庫實作基礎）。',
+    body: 'P2300「std::execution」是預計併入 C++26 標準庫的結構化並行框架，核心是 sender／receiver 這對抽象：sender 描述一段「尚未開始執行」的非同步計算（懶惰、可組合），receiver 則是計算完成時的「接收端」，透過 set_value／set_error／set_stopped 三個管道之一收到結果。這與第 42 章介紹的 std::future 形成鮮明對比：future 一旦建立就已經在背景執行（eager），且沒有標準化的方式接續下一步工作；sender 則是純粹的描述，必須顯式「啟動」才會真正執行，因此可以先組合出完整的非同步計算圖，再一次性交給某個執行環境（scheduler）去跑。截至目前，這套機制尚未在所有主流編譯器中完整實作，讀者若想在 C++26 之前實驗，通常需要借助 NVIDIA／Meta 主導的 stdexec 參考實作（一個獨立函式庫，目標是最終被各編譯器廠商採納為標準庫實作基礎）。',
   },
   deepDive: [
     {
       heading: 'Sender／Receiver 概念模型：懶惰、可組合的非同步計算',
-      body: '一個 `sender` 本質上是一份「食譜」，描述了要做什麼運算、在何種條件下完成、以及完成時會傳遞哪種型別的值，但它本身不持有任何執行緒或已經啟動的工作。要讓 sender 真正執行，必須把它與一個 `receiver`（完成的接收端）連接（`connect`）成一個 `operation_state`，再呼叫 `start` 啟動這個操作狀態，執行完成後 receiver 會收到三種完成訊號之一：`set_value`（成功並帶有結果值）、`set_error`（發生例外或錯誤）、`set_stopped`（被取消，例如收到 stop_token 的停止請求）。\n\n這與 `std::future` 的差異是根本性的：`std::async` 回傳的 future 在建立當下工作可能已經在其他執行緒開始執行（eager），而且 future 沒有標準化的「完成後接著做什麼」機制——你只能呼叫 `get()` 阻塞等待，無法用 `.then(...)` 接續，這正是第 13 章指出的組合性侷限。Sender 反過來是完全懶惰（lazy）的：組合 `then`、`when_all`、`bulk` 等 adaptor 時，只是在建構描述計算圖的型別，沒有任何一行使用者程式碼被執行，直到整個計算圖被 `start`（或透過 `sync_wait` 等便利函式間接觸發 `start`）才會真正跑起來。這個「先描述、後啟動」的分離，讓工具鏈可以在編譯期分析、最佳化整張非同步計算圖，也讓錯誤處理與取消語意可以貫穿整條鏈路，而不必為每個非同步步驟各自手動傳遞 error callback。',
+      body: '一個 `sender` 本質上是一份「食譜」，描述了要做什麼運算、在何種條件下完成、以及完成時會傳遞哪種型別的值，但它本身不持有任何執行緒或已經啟動的工作。要讓 sender 真正執行，必須把它與一個 `receiver`（完成的接收端）連接（`connect`）成一個 `operation_state`，再呼叫 `start` 啟動這個操作狀態，執行完成後 receiver 會收到三種完成訊號之一：`set_value`（成功並帶有結果值）、`set_error`（發生例外或錯誤）、`set_stopped`（被取消，例如收到 stop_token 的停止請求）。\n\n這與 `std::future` 的差異是根本性的：`std::async` 回傳的 future 在建立當下工作可能已經在其他執行緒開始執行（eager），而且 future 沒有標準化的「完成後接著做什麼」機制——你只能呼叫 `get()` 阻塞等待，無法用 `.then(...)` 接續，這正是第 42 章指出的組合性侷限。Sender 反過來是完全懶惰（lazy）的：組合 `then`、`when_all`、`bulk` 等 adaptor 時，只是在建構描述計算圖的型別，沒有任何一行使用者程式碼被執行，直到整個計算圖被 `start`（或透過 `sync_wait` 等便利函式間接觸發 `start`）才會真正跑起來。這個「先描述、後啟動」的分離，讓工具鏈可以在編譯期分析、最佳化整張非同步計算圖，也讓錯誤處理與取消語意可以貫穿整條鏈路，而不必為每個非同步步驟各自手動傳遞 error callback。',
     },
     {
       heading: 'Scheduler：把「在哪裡執行」從演算法邏輯中抽離',
@@ -22,11 +22,11 @@ const ind16SendersReceivers: ChapterContent = {
     },
     {
       heading: '核心演算法：then（接續）、when_all（匯合）、bulk（資料平行展開）',
-      body: '`then(sender, func)` 是最基本的序列組合：等待前一個 sender 完成並取得其 `set_value` 傳出的值，再以該值呼叫 `func`，並把 `func` 的回傳值作為新 sender 的完成值往下傳遞——語意上等同 future 想要卻做不到的「接續（continuation）」。\n\n`when_all(sender1, sender2, ...)` 則是扇入（fan-in）／匯合（join）語意：把多個彼此獨立、可以平行啟動的 sender 包成一個新 sender，只有當所有輸入 sender 都以 `set_value` 完成時，`when_all` 才會以「所有輸入值的 tuple」完成；只要任何一個輸入以 `set_error` 完成，整體就會以該錯誤完成（其餘尚未完成的分支視實作而定，通常會被要求停止）。這讓「同時做三件互不相依的事，等三件都做完再繼續」這種常見的結構化並行模式，可以用一行程式碼表達，而不必手動管理計數器或 condition_variable。\n\n`bulk(sender, shape, func)` 則是資料平行的扇出（fan-out）：對一段索引範圍（`shape`，例如 `0` 到 `n-1`）中的每一個索引並行呼叫 `func(index, ...)`，概念上類似 `std::for_each`（第 10 章執行策略）加上顯式索引，但因為它本身也是一個 sender，可以被無縫接到 `then`／`when_all` 組成的更大計算圖中，並且交給任何 scheduler 執行——同一份 `bulk` 呼叫，換成 GPU scheduler 就可能被映射為一次 kernel launch，換成執行緒池 scheduler 就可能被映射為切成數個區塊平行執行的迴圈。',
+      body: '`then(sender, func)` 是最基本的序列組合：等待前一個 sender 完成並取得其 `set_value` 傳出的值，再以該值呼叫 `func`，並把 `func` 的回傳值作為新 sender 的完成值往下傳遞——語意上等同 future 想要卻做不到的「接續（continuation）」。\n\n`when_all(sender1, sender2, ...)` 則是扇入（fan-in）／匯合（join）語意：把多個彼此獨立、可以平行啟動的 sender 包成一個新 sender，只有當所有輸入 sender 都以 `set_value` 完成時，`when_all` 才會以「所有輸入值的 tuple」完成；只要任何一個輸入以 `set_error` 完成，整體就會以該錯誤完成（其餘尚未完成的分支視實作而定，通常會被要求停止）。這讓「同時做三件互不相依的事，等三件都做完再繼續」這種常見的結構化並行模式，可以用一行程式碼表達，而不必手動管理計數器或 condition_variable。\n\n`bulk(sender, shape, func)` 則是資料平行的扇出（fan-out）：對一段索引範圍（`shape`，例如 `0` 到 `n-1`）中的每一個索引並行呼叫 `func(index, ...)`，概念上類似第 43 章的平行 STL 執行策略加上顯式索引，但因為它本身也是一個 sender，可以被無縫接到 `then`／`when_all` 組成的更大計算圖中，並且交給任何 scheduler 執行——同一份 `bulk` 呼叫，換成 GPU scheduler 就可能被映射為一次 kernel launch，換成執行緒池 scheduler 就可能被映射為切成數個區塊平行執行的迴圈。',
     },
     {
       heading: '為何這是未來十年的平行框架方向：對 HPC 排程的意義',
-      body: 'HPC 系統的核心痛點之一，是不同硬體後端（多核 CPU 執行緒池、GPU stream、甚至未來的加速器）各自擁有語意不相容的非同步 API，導致排程邏輯必須為每種後端各寫一份，跨後端組合（例如「CPU 前處理 → GPU 運算 → CPU 後處理」）更是充滿手寫的同步與回呼地獄。Senders/receivers 之所以被視為未來十年的方向，正是因為它把「非同步計算的結構」（先做什麼、平行做什麼、匯合什麼、出錯怎麼辦）與「這段計算實際跑在哪個硬體上」徹底解耦：只要某個硬體廠商提供符合概念的 scheduler，該硬體就能無縫加入既有的 sender 計算圖。\n\n對 HPC 排程而言，這代表單一一張結構化並行圖（structured concurrency graph）就能橫跨異質後端：排程器（例如未來的 runtime 或任務圖執行引擎）可以在編譯期或執行期分析整張 sender 圖的相依關係，做全局最佳化（例如決定哪些子圖該搬到 GPU、如何重疊通訊與計算），而不必依賴每個函式庫各自為政的 ad-hoc 同步機制。這也呼應了第 15 章 executors 提案演進的脈絡——P2300 正是那條演進路線最終匯聚而成的標準化答案，NVIDIA、Meta 等業界重量級單位投入 stdexec 參考實作並持續向標準委員會回饋經驗，顯示這不只是學術提案，而是已經在真實 HPC／GPU 程式碼庫中驗證可行性的工業級設計。',
+      body: 'HPC 系統的核心痛點之一，是不同硬體後端（多核 CPU 執行緒池、GPU stream、甚至未來的加速器）各自擁有語意不相容的非同步 API，導致排程邏輯必須為每種後端各寫一份，跨後端組合（例如「CPU 前處理 → GPU 運算 → CPU 後處理」）更是充滿手寫的同步與回呼地獄。Senders/receivers 之所以被視為未來十年的方向，正是因為它把「非同步計算的結構」（先做什麼、平行做什麼、匯合什麼、出錯怎麼辦）與「這段計算實際跑在哪個硬體上」徹底解耦：只要某個硬體廠商提供符合概念的 scheduler，該硬體就能無縫加入既有的 sender 計算圖。\n\n對 HPC 排程而言，這代表單一一張結構化並行圖（structured concurrency graph）就能橫跨異質後端：排程器（例如未來的 runtime 或任務圖執行引擎）可以在編譯期或執行期分析整張 sender 圖的相依關係，做全局最佳化（例如決定哪些子圖該搬到 GPU、如何重疊通訊與計算），而不必依賴每個函式庫各自為政的 ad-hoc 同步機制。這也呼應了 executors 提案一路演進到 P2300 的脈絡：NVIDIA、Meta 等業界重量級單位投入 stdexec 參考實作並持續向標準委員會回饋經驗，顯示這不只是學術提案，而是已經在真實 HPC／GPU 程式碼庫中驗證可行性的工業級設計。',
     },
   ],
   code: {
@@ -38,32 +38,31 @@ const ind16SendersReceivers: ChapterContent = {
 #include <stdexec/execution.hpp>
 
 int main() {
-  // 建立一個小型執行緒池，並取得其 scheduler。 [1]
-  exec::static_thread_pool pool(4);
-  stdexec::scheduler auto sch = pool.get_scheduler();
+    // 建立一個小型執行緒池，並取得其 scheduler。 [1]
+    exec::static_thread_pool pool(4);
+    stdexec::scheduler auto sch = pool.get_scheduler();
 
-  // schedule() 回傳一個 sender：描述「排入這個執行環境」的懶惰計算。 [2]
-  auto work = stdexec::schedule(sch) | stdexec::then([] { return 21; })  // [3]
-              | stdexec::then([](int x) { return x * 2; });
+    // schedule() 回傳一個 sender：描述「排入這個執行環境」的懶惰計算。 [2]
+    auto work = stdexec::schedule(sch) | stdexec::then([] { return 21; })  // [3]
+                | stdexec::then([](int x) { return x * 2; });
 
-  // when_all 把兩個獨立分支匯合成一個 tuple 結果。 [4]
-  auto combined = stdexec::when_all(
-      work, stdexec::schedule(sch) | stdexec::then([] { return 100; }));
+    // when_all 把兩個獨立分支匯合成一個 tuple 結果。 [4]
+    auto combined =
+        stdexec::when_all(work, stdexec::schedule(sch) | stdexec::then([] { return 100; }));
 
-  // bulk 對索引範圍 [0, 4) 做資料平行展開，仍然回傳一個 sender。 [5]
-  auto fanned_out =
-      stdexec::schedule(sch) | stdexec::bulk(4, [](std::size_t index) {
-        // 每個索引平行處理各自的一份工作。
-        (void)index;
-      });
+    // bulk 對索引範圍 [0, 4) 做資料平行展開，仍然回傳一個 sender。 [5]
+    auto fanned_out = stdexec::schedule(sch) | stdexec::bulk(4, [](std::size_t index) {
+                          // 每個索引平行處理各自的一份工作。
+                          (void)index;
+                      });
 
-  // 在此之前，上面所有變數都只是「描述」，尚未執行任何一行使用者程式碼。
-  // sync_wait 才會真正 start 整張計算圖並阻塞等待完成。 [6]
-  auto [sum_tuple] = stdexec::sync_wait(combined).value();
-  auto [a, b] = sum_tuple;
+    // 在此之前，上面所有變數都只是「描述」，尚未執行任何一行使用者程式碼。
+    // sync_wait 才會真正 start 整張計算圖並阻塞等待完成。 [6]
+    auto [sum_tuple] = stdexec::sync_wait(combined).value();
+    auto [a, b] = sum_tuple;
 
-  stdexec::sync_wait(fanned_out);
-  return (a + b == 142) ? 0 : 1;
+    stdexec::sync_wait(fanned_out);
+    return (a + b == 142) ? 0 : 1;
 }`,
     callouts: [
       {
@@ -170,17 +169,17 @@ int main() {
 #include <stdexec/execution.hpp>
 
 int main() {
-  exec::static_thread_pool pool(2);
-  auto sch = pool.get_scheduler();
+    exec::static_thread_pool pool(2);
+    auto sch = pool.get_scheduler();
 
-  // 描述「排入執行緒池 -> 算出 21 -> 乘以 2」的計算圖，此刻尚未執行。
-  auto pipeline = stdexec::schedule(sch) | stdexec::then([] { return 21; }) |
-                  stdexec::then([](int x) { return x * 2; });
+    // 描述「排入執行緒池 -> 算出 21 -> 乘以 2」的計算圖，此刻尚未執行。
+    auto pipeline = stdexec::schedule(sch) | stdexec::then([] { return 21; }) |
+                    stdexec::then([](int x) { return x * 2; });
 
-  // sync_wait 才會真正啟動整張圖並阻塞取得結果。
-  auto [result] = stdexec::sync_wait(pipeline).value();
-  std::cout << "result = " << result << "\\n";  // 預期輸出 42
-  return 0;
+    // sync_wait 才會真正啟動整張圖並阻塞取得結果。
+    auto [result] = stdexec::sync_wait(pipeline).value();
+    std::cout << "result = " << result << "\\n";  // 預期輸出 42
+    return 0;
 }`,
   },
   furtherReading: [

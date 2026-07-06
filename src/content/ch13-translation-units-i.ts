@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ch13TranslationUnitsI: ChapterContent = {
   slug: 'ch13-translation-units-i',
-  chapterLabel: 'Ch.13',
+  chapterLabel: '第 13 章',
   title: '轉譯單元 I：連結與 ODR',
-  group: 'C · 建置系統與慣例',
+  group: '第 3 部：建置系統與慣例',
   description:
     '轉譯單元、連結性（linkage）與單一定義原則（ODR）：宣告與定義的差異、internal／external linkage，以及如何避免多重定義。',
   concept: {
@@ -17,7 +17,7 @@ const ch13TranslationUnitsI: ChapterContent = {
 #pragma once
 int add(int a, int b);      // [1] 宣告：無函式本體
 inline int square(int x) {  // [2] inline 允許出現在多個單元
-  return x * x;
+    return x * x;
 }
 constexpr double kPi = 3.141592653589793;  // [3] constexpr 隱含 inline
 
@@ -124,10 +124,10 @@ int secret() { return 42; }  // internal linkage
 }  // namespace
 
 int main() {
-  std::cout << "square(5) = " << square(5) << '\\n';
-  std::cout << "kPi = " << kPi << '\\n';
-  std::cout << "secret = " << secret() << '\\n';
-  return 0;
+    std::cout << "square(5) = " << square(5) << '\\n';
+    std::cout << "kPi = " << kPi << '\\n';
+    std::cout << "secret = " << secret() << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [

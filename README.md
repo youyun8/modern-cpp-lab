@@ -3,7 +3,7 @@
 > Modern C++ Programming — an interactive learning site focused on parallelism, concurrency & performance optimization.
 
 以 [Federico Busato 的「Modern C++ Programming」課程](https://github.com/federico-busato/Modern-CPP-Programming)
-為藍本的互動式繁體中文學習網站。課程完整保留原始的 29 章編號，並以**平行化、並行與效能最佳化**作為編輯重心。
+為藍本的互動式繁體中文學習網站。內容整理成連續的 60 章手冊，並以**平行化、並行與效能最佳化**作為編輯重心。
 
 網站以 Next.js 14（App Router、TypeScript、Tailwind CSS）建置，透過 `output: 'export'`
 產生純靜態網頁並部署至 GitHub Pages，執行期不需任何後端或 API 呼叫。
@@ -12,11 +12,11 @@
 
 ## 專案簡介
 
-- **課程對應**：29 章依主題分為 7 個側邊欄群組（基礎概念、物件導向與泛型、建置系統與慣例、STL 與工具庫、進階 C++、效能最佳化、軟體設計與工具）。每頁保留原始章節編號（如 `Ch.22`），方便對照課程 PDF 投影片。
+- **手冊結構**：全書以 `第 1 章` 到 `第 60 章` 連續編號，分為 19 個部別；原始課程 PDF 的章節號保留在延伸閱讀與解析文字中，作為來源對照。
 - **平行化實驗室**：另有五個深入專頁（記憶體模型、無鎖資料結構、平行 STL、協程、CPU–GPU 橋接）。
 - **六面板版面**：每頁包含「概念卡片、程式碼區塊、互動測驗、視覺圖表、試試看、延伸閱讀」。
 - **互動視覺化**：全部以 React SVG/Canvas 元件實作，包括執行緒時間軸、記憶體階層階梯、快取行視覺化，以及可拖曳滑桿的 Amdahl 定律加速曲線。
-- **完整實作頁面**：`Ch.22 並行程式設計`、`Ch.23 架構與記憶體階層`、`/lab/parallel-stl`、`/lab/memory-model`。其餘章節與實驗室頁面為佔位頁（路由與版面已就緒）。
+- **完整實作頁面**：`第 22 章 並行程式設計`、`第 23 章 架構與記憶體階層`、`/lab/parallel-stl`、`/lab/memory-model`。其餘章節與實驗室頁面為佔位頁（路由與版面已就緒）。
 
 技術堆疊：Next.js 14、TypeScript（strict）、Tailwind CSS（class 深色模式）、
 Zustand（`quizSlice` + `uiSlice`）、shiki（語法高亮）、CodeMirror 6（唯讀編輯器）。

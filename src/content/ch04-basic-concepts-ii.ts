@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ch04BasicConceptsII: ChapterContent = {
   slug: 'ch04-basic-concepts-ii',
-  chapterLabel: 'Ch.04',
+  chapterLabel: '第 4 章',
   title: '基本概念 II：整數型別',
-  group: 'A · 基礎概念',
+  group: '第 1 部：基礎概念 Foundations',
   description:
     '整數型別、溢位與算術運算的細節與陷阱：有號與無號的差異、整數提升、隱式轉換與未定義行為。',
   concept: {
@@ -18,22 +18,21 @@ const ch04BasicConceptsII: ChapterContent = {
 #include <print>
 
 int main() {
-  int smax = std::numeric_limits<int>::max();  // [1]
-  // smax + 1;   // [2] 有號溢位是未定義行為，切勿依賴
+    int smax = std::numeric_limits<int>::max();  // [1]
+    // smax + 1;   // [2] 有號溢位是未定義行為，切勿依賴
 
-  unsigned int u = 0;
-  --u;  // [3] 無號回繞：變成 UINT_MAX，行為有定義但常非本意
+    unsigned int u = 0;
+    --u;  // [3] 無號回繞：變成 UINT_MAX，行為有定義但常非本意
 
-  int a = -1;
-  unsigned int b = 1;
-  bool surprising = (a < b);  // [4] a 被轉為無號，結果可能與直覺相反
+    int a = -1;
+    unsigned int b = 1;
+    bool surprising = (a < b);  // [4] a 被轉為無號，結果可能與直覺相反
 
-  std::int8_t small = 100;
-  auto promoted = small + small;  // [5] 先提升為 int 再相加，型別為 int
+    std::int8_t small = 100;
+    auto promoted = small + small;  // [5] 先提升為 int 再相加，型別為 int
 
-  std::println("u={}, (a<b)={}, promoted type size={}", u, surprising,
-               sizeof(promoted));
-  return 0;
+    std::println("u={}, (a<b)={}, promoted type size={}", u, surprising, sizeof(promoted));
+    return 0;
 }`,
     callouts: [
       { n: 1, text: 'std::numeric_limits<T> 查詢型別的極值，是安全處理邊界的標準工具。' },
@@ -121,14 +120,14 @@ int main() {
 #include <limits>
 
 int main() {
-  unsigned int u = 0;
-  --u;  // 無號回繞
-  int a = -1;
-  unsigned int b = 1;
-  std::cout << "u = " << u << '\\n';
-  std::cout << "(a < b) = " << (a < b) << "  (可能與直覺不同)\\n";
-  std::cout << "INT_MAX = " << std::numeric_limits<int>::max() << '\\n';
-  return 0;
+    unsigned int u = 0;
+    --u;  // 無號回繞
+    int a = -1;
+    unsigned int b = 1;
+    std::cout << "u = " << u << '\\n';
+    std::cout << "(a < b) = " << (a < b) << "  (可能與直覺不同)\\n";
+    std::cout << "INT_MAX = " << std::numeric_limits<int>::max() << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [

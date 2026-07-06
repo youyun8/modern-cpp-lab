@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ind05AtomicsMemoryOrder: ChapterContent = {
   slug: 'ind05-atomics-memory-order',
-  chapterLabel: '第 5 章',
+  chapterLabel: '第 34 章',
   title: 'std::atomic 與記憶體序',
-  group: 'I · 第一部：C++ 記憶體模型與原子操作',
+  group: '第 9 部：C++ 記憶體模型與原子操作',
   description:
     'memory_order 全譜：relaxed／acquire／release／acq_rel／seq_cst，release-acquire 配對、std::atomic_ref 與 CAS。',
   concept: {
@@ -40,34 +40,33 @@ constexpr int kNumBuckets = 16;
 
 void accumulateHistogram(const int* data, int begin, int end,
                          long long* histogram) {  // [2]
-  for (int i = begin; i < end; ++i) {
-    int bucket = data[i] % kNumBuckets;
-    // 用 atomic_ref 包裹既有的 long long 元素，陣列本身仍是普通記憶體。 [3]
-    std::atomic_ref<long long> slot(histogram[bucket]);
-    slot.fetch_add(1, std::memory_order_relaxed);  // [4] 純計數，不需跨變數排序
-  }
+    for (int i = begin; i < end; ++i) {
+        int bucket = data[i] % kNumBuckets;
+        // 用 atomic_ref 包裹既有的 long long 元素，陣列本身仍是普通記憶體。 [3]
+        std::atomic_ref<long long> slot(histogram[bucket]);
+        slot.fetch_add(1, std::memory_order_relaxed);  // [4] 純計數，不需跨變數排序
+    }
 }
 
 int main() {
-  constexpr int kN = 1'000'000;
-  std::vector<int> data(kN);
-  for (int i = 0; i < kN; ++i) data[i] = i * 7 + 3;
+    constexpr int kN = 1'000'000;
+    std::vector<int> data(kN);
+    for (int i = 0; i < kN; ++i) data[i] = i * 7 + 3;
 
-  long long histogram[kNumBuckets] =
-      {};  // [5] 一般陣列，非 atomic<long long>[]
+    long long histogram[kNumBuckets] = {};  // [5] 一般陣列，非 atomic<long long>[]
 
-  constexpr int kThreads = 4;
-  std::vector<std::thread> pool;
-  for (int t = 0; t < kThreads; ++t) {
-    int begin = t * (kN / kThreads);
-    int end = (t + 1) * (kN / kThreads);
-    pool.emplace_back(accumulateHistogram, data.data(), begin, end, histogram);
-  }
-  for (auto& th : pool) th.join();  // [6] join 之後才能安全讀取 histogram
+    constexpr int kThreads = 4;
+    std::vector<std::thread> pool;
+    for (int t = 0; t < kThreads; ++t) {
+        int begin = t * (kN / kThreads);
+        int end = (t + 1) * (kN / kThreads);
+        pool.emplace_back(accumulateHistogram, data.data(), begin, end, histogram);
+    }
+    for (auto& th : pool) th.join();  // [6] join 之後才能安全讀取 histogram
 
-  long long total = 0;
-  for (int b = 0; b < kNumBuckets; ++b) total += histogram[b];
-  return total == kN ? 0 : 1;
+    long long total = 0;
+    for (int b = 0; b < kNumBuckets; ++b) total += histogram[b];
+    return total == kN ? 0 : 1;
 }`,
     callouts: [
       { n: 1, text: '多執行緒對同一塊共享陣列做歸約累加，是數值核心中常見的平行模式。' },
@@ -162,24 +161,24 @@ int shared_data = 0;
 std::atomic<bool> ready{false};
 
 void producer() {
-  shared_data = 42;                              // 一般（非原子）寫入
-  ready.store(true, std::memory_order_release);  // 發佈
+    shared_data = 42;                              // 一般（非原子）寫入
+    ready.store(true, std::memory_order_release);  // 發佈
 }
 
 void consumer() {
-  while (!ready.load(std::memory_order_acquire)) {
-    // 忙等直到旗標被設定
-  }
-  // release-acquire 配對保證這裡一定看得到 shared_data == 42
-  std::cout << "shared_data = " << shared_data << '\\n';
+    while (!ready.load(std::memory_order_acquire)) {
+        // 忙等直到旗標被設定
+    }
+    // release-acquire 配對保證這裡一定看得到 shared_data == 42
+    std::cout << "shared_data = " << shared_data << '\\n';
 }
 
 int main() {
-  std::thread p(producer);
-  std::thread c(consumer);
-  p.join();
-  c.join();
-  return 0;
+    std::thread p(producer);
+    std::thread c(consumer);
+    p.join();
+    c.join();
+    return 0;
 }`,
   },
   furtherReading: [

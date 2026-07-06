@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ch17DebuggingTesting: ChapterContent = {
   slug: 'ch17-debugging-testing',
-  chapterLabel: 'Ch.17',
+  chapterLabel: '第 17 章',
   title: '除錯與測試',
-  group: 'C · 建置系統與慣例',
+  group: '第 3 部：建置系統與慣例',
   description:
     'Sanitizers、valgrind、單元測試與測試驅動開發（TDD）：如何以工具與紀律及早發現記憶體錯誤與邏輯缺陷。',
   concept: {
@@ -117,10 +117,10 @@ int add(int a, int b) { return a + b; }
 
 // 迷你單元測試：以 assert 驗證行為。以 -fsanitize=undefined 編譯更佳。
 int main() {
-  assert(add(2, 3) == 5);
-  assert(add(-1, 1) == 0);
-  std::cout << "all tests passed\\n";
-  return 0;
+    assert(add(2, 3) == 5);
+    assert(add(-1, 1) == 0);
+    std::cout << "all tests passed\\n";
+    return 0;
 }`,
   },
   furtherReading: [

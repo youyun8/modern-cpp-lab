@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ind25FloatingPointReductionReproducibility: ChapterContent = {
   slug: 'ind25-floating-point-reduction-reproducibility',
-  chapterLabel: '第 25 章',
+  chapterLabel: '第 54 章',
   title: '浮點、歸約與可重現性',
-  group: 'P · 第八部：數值核心與可重現性',
+  group: '第 16 部：數值核心與可重現性',
   description:
     '浮點非結合性、確定性歸約策略（固定分割樹、pairwise summation、Kahan/Neumaier 補償求和）與 bitwise 可重現的代價。',
   concept: {
@@ -38,61 +38,60 @@ const ind25FloatingPointReductionReproducibility: ChapterContent = {
 
 // 樸素循序求和：誤差隨元素個數 n 線性累積，O(n * eps)。 [1]
 double naiveSum(const std::vector<double>& xs) {
-  double total = 0.0;
-  for (double x : xs) {
-    total += x;
-  }
-  return total;
+    double total = 0.0;
+    for (double x : xs) {
+        total += x;
+    }
+    return total;
 }
 
 // Neumaier（Kahan-Babuska）補償求和：維護補償項 c 追蹤遺失的低位元。 [2]
 double neumaierSum(const std::vector<double>& xs) {
-  double sum = 0.0;
-  double c = 0.0;  // 目前為止遺失的低位元總和
+    double sum = 0.0;
+    double c = 0.0;  // 目前為止遺失的低位元總和
 
-  for (double x : xs) {
-    double t = sum + x;
-    if (std::fabs(sum) >= std::fabs(x)) {
-      // sum 量級較大：x 的低位元在對齊時被吃掉，補償量來自 x。 [3]
-      c += (sum - t) + x;
-    } else {
-      // x 量級較大（原始 Kahan 未處理的情況）：改由 sum 端計算遺失量。 [4]
-      c += (x - t) + sum;
+    for (double x : xs) {
+        double t = sum + x;
+        if (std::fabs(sum) >= std::fabs(x)) {
+            // sum 量級較大：x 的低位元在對齊時被吃掉，補償量來自 x。 [3]
+            c += (sum - t) + x;
+        } else {
+            // x 量級較大（原始 Kahan 未處理的情況）：改由 sum 端計算遺失量。 [4]
+            c += (x - t) + sum;
+        }
+        sum = t;
     }
-    sum = t;
-  }
-  return sum + c;  // [5] 最後把累積的補償加回，得到修正後的和
+    return sum + c;  // [5] 最後把累積的補償加回，得到修正後的和
 }
 
 // 兩兩配對（pairwise / cascade）求和：誤差上界為 O(log n * eps)。 [6]
-double pairwiseSum(const std::vector<double>& xs, std::size_t lo,
-                   std::size_t hi) {
-  std::size_t n = hi - lo;
-  if (n <= 8) {
-    double total = 0.0;
-    for (std::size_t i = lo; i < hi; ++i) {
-      total += xs[i];
+double pairwiseSum(const std::vector<double>& xs, std::size_t lo, std::size_t hi) {
+    std::size_t n = hi - lo;
+    if (n <= 8) {
+        double total = 0.0;
+        for (std::size_t i = lo; i < hi; ++i) {
+            total += xs[i];
+        }
+        return total;
     }
-    return total;
-  }
-  std::size_t mid = lo + n / 2;
-  return pairwiseSum(xs, lo, mid) + pairwiseSum(xs, mid, hi);
+    std::size_t mid = lo + n / 2;
+    return pairwiseSum(xs, lo, mid) + pairwiseSum(xs, mid, hi);
 }
 
 int main() {
-  // 刻意混入量級懸殊的數字：大量小值加總後再加一個大值，凸顯捨入誤差。
-  std::vector<double> data(1'000'000, 1e-8);
-  data.push_back(1.0);
+    // 刻意混入量級懸殊的數字：大量小值加總後再加一個大值，凸顯捨入誤差。
+    std::vector<double> data(1'000'000, 1e-8);
+    data.push_back(1.0);
 
-  double naive = naiveSum(data);
-  double neumaier = neumaierSum(data);
-  double pairwise = pairwiseSum(data, 0, data.size());
+    double naive = naiveSum(data);
+    double neumaier = neumaierSum(data);
+    double pairwise = pairwiseSum(data, 0, data.size());
 
-  std::println("naive    = {:.17f}", naive);
-  std::println("neumaier = {:.17f}", neumaier);
-  std::println("pairwise = {:.17f}", pairwise);
-  std::println("naive vs neumaier diff = {:.3e}", std::fabs(naive - neumaier));
-  return 0;
+    std::println("naive    = {:.17f}", naive);
+    std::println("neumaier = {:.17f}", neumaier);
+    std::println("pairwise = {:.17f}", pairwise);
+    std::println("naive vs neumaier diff = {:.3e}", std::fabs(naive - neumaier));
+    return 0;
 }`,
     callouts: [
       { n: 1, text: '樸素循序求和沒有誤差補償機制，元素愈多、量級差異愈大，累積捨入誤差愈明顯。' },
@@ -186,40 +185,40 @@ int main() {
 
 // Neumaier 補償求和：比原始 Kahan 更穩健地處理新元素量級較大的情況。
 double neumaierSum(const std::vector<double>& xs) {
-  double sum = 0.0;
-  double c = 0.0;
-  for (double x : xs) {
-    double t = sum + x;
-    if (std::fabs(sum) >= std::fabs(x)) {
-      c += (sum - t) + x;
-    } else {
-      c += (x - t) + sum;
+    double sum = 0.0;
+    double c = 0.0;
+    for (double x : xs) {
+        double t = sum + x;
+        if (std::fabs(sum) >= std::fabs(x)) {
+            c += (sum - t) + x;
+        } else {
+            c += (x - t) + sum;
+        }
+        sum = t;
     }
-    sum = t;
-  }
-  return sum + c;
+    return sum + c;
 }
 
 double naiveSum(const std::vector<double>& xs) {
-  double total = 0.0;
-  for (double x : xs) {
-    total += x;
-  }
-  return total;
+    double total = 0.0;
+    for (double x : xs) {
+        total += x;
+    }
+    return total;
 }
 
 int main() {
-  std::vector<double> data(100'000, 1e-8);
-  data.push_back(1.0);
+    std::vector<double> data(100'000, 1e-8);
+    data.push_back(1.0);
 
-  double naive = naiveSum(data);
-  double compensated = neumaierSum(data);
+    double naive = naiveSum(data);
+    double compensated = neumaierSum(data);
 
-  std::cout.precision(17);
-  std::cout << "naive        = " << naive << '\\n';
-  std::cout << "compensated  = " << compensated << '\\n';
-  std::cout << "abs diff     = " << std::fabs(naive - compensated) << '\\n';
-  return 0;
+    std::cout.precision(17);
+    std::cout << "naive        = " << naive << '\\n';
+    std::cout << "compensated  = " << compensated << '\\n';
+    std::cout << "abs diff     = " << std::fabs(naive - compensated) << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [

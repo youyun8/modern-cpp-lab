@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ch18Ecosystem: ChapterContent = {
   slug: 'ch18-ecosystem',
-  chapterLabel: 'Ch.18',
+  chapterLabel: '第 18 章',
   title: '生態系與工具',
-  group: 'C · 建置系統與慣例',
+  group: '第 3 部：建置系統與慣例',
   description:
     'CMake 建置、doxygen 文件與各式線上開發工具：如何用現代工具鏈組織、建置、文件化並分享 C++ 專案。',
   concept: {
@@ -115,14 +115,14 @@ clang-tidy src/main.cpp -- -std=c++23`,
 /// \\param n 非負整數
 /// \\return n!
 unsigned long long factorial(int n) {
-  unsigned long long r = 1;
-  for (int i = 2; i <= n; ++i) r *= i;
-  return r;
+    unsigned long long r = 1;
+    for (int i = 2; i <= n; ++i) r *= i;
+    return r;
 }
 
 int main() {
-  std::cout << "10! = " << factorial(10) << '\\n';
-  return 0;
+    std::cout << "10! = " << factorial(10) << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [

@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ind08MutexLocks: ChapterContent = {
   slug: 'ind08-mutex-locks',
-  chapterLabel: '第 8 章',
+  chapterLabel: '第 37 章',
   title: '互斥與鎖',
-  group: 'J · 第二部：執行緒與同步',
+  group: '第 10 部：執行緒與同步',
   description:
     'mutex／shared_mutex（C++17 讀寫鎖）、lock_guard／unique_lock／scoped_lock，死結四條件與鎖排序。',
   concept: {
@@ -18,39 +18,39 @@ const ind08MutexLocks: ChapterContent = {
 #include <thread>
 
 struct Account {
-  std::mutex m;
-  long balance = 0;
+    std::mutex m;
+    long balance = 0;
 };
 
 // 危險版本：依序個別上鎖，鎖定順序取決於呼叫者，可能死結。 [1]
 void transferNaive(Account& from, Account& to, long amount) {
-  std::lock_guard<std::mutex> lockFrom(from.m);  // [2]
-  std::lock_guard<std::mutex> lockTo(to.m);
-  from.balance -= amount;
-  to.balance += amount;
+    std::lock_guard<std::mutex> lockFrom(from.m);  // [2]
+    std::lock_guard<std::mutex> lockTo(to.m);
+    from.balance -= amount;
+    to.balance += amount;
 }
 
 // 安全版本：std::scoped_lock 一次鎖住兩個 mutex，內部用
 // std::lock 演算法避免死結，無論呼叫順序為何都安全。 [3]
 void transferSafe(Account& from, Account& to, long amount) {
-  std::scoped_lock lock(from.m, to.m);  // [4] C++17 多鎖建構
-  from.balance -= amount;
-  to.balance += amount;
+    std::scoped_lock lock(from.m, to.m);  // [4] C++17 多鎖建構
+    from.balance -= amount;
+    to.balance += amount;
 }  // [5] 離開作用域自動、依序釋放兩把鎖
 
 int main() {
-  Account a, b;
-  a.balance = 100;
+    Account a, b;
+    a.balance = 100;
 
-  // 兩個方向同時轉帳：naive 版本在 a→b、b→a 交錯執行時可能死結；
-  // scoped_lock 版本則保證不會。 [6]
-  std::thread t1(transferSafe, std::ref(a), std::ref(b), 30);
-  std::thread t2(transferSafe, std::ref(b), std::ref(a), 10);
-  t1.join();
-  t2.join();
+    // 兩個方向同時轉帳：naive 版本在 a→b、b→a 交錯執行時可能死結；
+    // scoped_lock 版本則保證不會。 [6]
+    std::thread t1(transferSafe, std::ref(a), std::ref(b), 30);
+    std::thread t2(transferSafe, std::ref(b), std::ref(a), 10);
+    t1.join();
+    t2.join();
 
-  std::println("a.balance = {}, b.balance = {}", a.balance, b.balance);
-  return 0;
+    std::println("a.balance = {}, b.balance = {}", a.balance, b.balance);
+    return 0;
 }`,
     callouts: [
       {
@@ -163,28 +163,27 @@ int main() {
 #include <thread>
 
 struct Account {
-  std::mutex m;
-  long balance = 0;
+    std::mutex m;
+    long balance = 0;
 };
 
 void transferSafe(Account& from, Account& to, long amount) {
-  std::scoped_lock lock(from.m, to.m);  // 一次鎖住兩個 mutex，死結安全
-  from.balance -= amount;
-  to.balance += amount;
+    std::scoped_lock lock(from.m, to.m);  // 一次鎖住兩個 mutex，死結安全
+    from.balance -= amount;
+    to.balance += amount;
 }
 
 int main() {
-  Account a, b;
-  a.balance = 100;
+    Account a, b;
+    a.balance = 100;
 
-  std::thread t1(transferSafe, std::ref(a), std::ref(b), 30);
-  std::thread t2(transferSafe, std::ref(b), std::ref(a), 10);
-  t1.join();
-  t2.join();
+    std::thread t1(transferSafe, std::ref(a), std::ref(b), 30);
+    std::thread t2(transferSafe, std::ref(b), std::ref(a), 10);
+    t1.join();
+    t2.join();
 
-  std::cout << "a.balance = " << a.balance << ", b.balance = " << b.balance
-            << '\\n';
-  return 0;
+    std::cout << "a.balance = " << a.balance << ", b.balance = " << b.balance << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [

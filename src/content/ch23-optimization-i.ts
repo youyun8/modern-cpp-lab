@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ch23OptimizationI: ChapterContent = {
   slug: 'ch23-optimization-i',
-  chapterLabel: 'Ch.23',
+  chapterLabel: '第 23 章',
   title: '最佳化 I：架構與記憶體階層',
-  group: 'F · 效能最佳化',
+  group: '第 6 部：效能最佳化',
   description:
     '效能最佳化的理論基礎：Amdahl 定律、Gustafson 定律、指令層級平行（ILP）、SIMD／SIMT、記憶體階層、快取一致性，以及 TLP 與 DLP 的差異。',
   concept: {
@@ -18,28 +18,24 @@ const ch23OptimizationI: ChapterContent = {
 
 // Row-major traversal is cache-friendly: consecutive iterations touch
 // consecutive addresses, maximising spatial locality. [1]
-double sumRowMajor(const std::vector<double>& matrix, std::size_t rows,
-                   std::size_t cols) {
-  double acc = 0.0;
-  for (std::size_t r = 0; r < rows; ++r)  // [2]
-    for (std::size_t c = 0; c < cols; ++c) acc += matrix[r * cols + c];
-  return acc;
+double sumRowMajor(const std::vector<double>& matrix, std::size_t rows, std::size_t cols) {
+    double acc = 0.0;
+    for (std::size_t r = 0; r < rows; ++r)  // [2]
+        for (std::size_t c = 0; c < cols; ++c) acc += matrix[r * cols + c];
+    return acc;
 }
 
 // Column-major traversal jumps by 'cols' each step, defeating the cache
 // and causing frequent DRAM misses. [3]
-double sumColMajor(const std::vector<double>& matrix, std::size_t rows,
-                   std::size_t cols) {
-  double acc = 0.0;
-  for (std::size_t c = 0; c < cols; ++c)
-    for (std::size_t r = 0; r < rows; ++r) acc += matrix[r * cols + c];  // [4]
-  return acc;
+double sumColMajor(const std::vector<double>& matrix, std::size_t rows, std::size_t cols) {
+    double acc = 0.0;
+    for (std::size_t c = 0; c < cols; ++c)
+        for (std::size_t r = 0; r < rows; ++r) acc += matrix[r * cols + c];  // [4]
+    return acc;
 }
 
 // Amdahl's Law: theoretical speedup with fraction p parallelised. [5]
-constexpr double amdahlSpeedup(double p, double n) {
-  return 1.0 / ((1.0 - p) + p / n);
-}`,
+constexpr double amdahlSpeedup(double p, double n) { return 1.0 / ((1.0 - p) + p / n); }`,
     callouts: [
       { n: 1, text: '列優先（row-major）走訪符合 C++ 陣列的記憶體佈局，善用空間區域性。' },
       { n: 2, text: '內層迴圈連續存取相鄰位址，一條快取行可服務多次迭代。' },
@@ -128,29 +124,28 @@ constexpr double amdahlSpeedup(double p, double n) {
 // Demonstrates spatial locality: the same reduction is far faster in
 // row-major order than column-major, purely due to cache behaviour.
 int main() {
-  constexpr std::size_t kN = 4096;
-  std::vector<double> matrix(kN * kN, 1.0);
+    constexpr std::size_t kN = 4096;
+    std::vector<double> matrix(kN * kN, 1.0);
 
-  auto time = [&matrix](bool row_major) {
-    auto start = std::chrono::steady_clock::now();
-    double acc = 0.0;
-    if (row_major) {
-      for (std::size_t r = 0; r < kN; ++r)
-        for (std::size_t c = 0; c < kN; ++c) acc += matrix[r * kN + c];
-    } else {
-      for (std::size_t c = 0; c < kN; ++c)
-        for (std::size_t r = 0; r < kN; ++r) acc += matrix[r * kN + c];
-    }
-    auto end = std::chrono::steady_clock::now();
-    return std::pair{
-        acc, std::chrono::duration<double, std::milli>(end - start).count()};
-  };
+    auto time = [&matrix](bool row_major) {
+        auto start = std::chrono::steady_clock::now();
+        double acc = 0.0;
+        if (row_major) {
+            for (std::size_t r = 0; r < kN; ++r)
+                for (std::size_t c = 0; c < kN; ++c) acc += matrix[r * kN + c];
+        } else {
+            for (std::size_t c = 0; c < kN; ++c)
+                for (std::size_t r = 0; r < kN; ++r) acc += matrix[r * kN + c];
+        }
+        auto end = std::chrono::steady_clock::now();
+        return std::pair{acc, std::chrono::duration<double, std::milli>(end - start).count()};
+    };
 
-  auto [sum_row, ms_row] = time(true);
-  auto [sum_col, ms_col] = time(false);
-  std::cout << "row-major: " << ms_row << " ms\\n";
-  std::cout << "col-major: " << ms_col << " ms\\n";
-  return static_cast<int>(sum_row + sum_col) & 0;
+    auto [sum_row, ms_row] = time(true);
+    auto [sum_col, ms_col] = time(false);
+    std::cout << "row-major: " << ms_row << " ms\\n";
+    std::cout << "col-major: " << ms_col << " ms\\n";
+    return static_cast<int>(sum_row + sum_col) & 0;
 }`,
   },
   furtherReading: [

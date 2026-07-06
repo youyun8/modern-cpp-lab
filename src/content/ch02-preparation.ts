@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ch02Preparation: ChapterContent = {
   slug: 'ch02-preparation',
-  chapterLabel: 'Ch.02',
+  chapterLabel: '第 2 章',
   title: '環境準備',
-  group: 'A · 基礎概念',
+  group: '第 1 部：基礎概念 Foundations',
   description:
     '工具鏈、編譯器選擇與第一支 Hello World 程式的建置流程：從原始碼經前置處理、編譯、組譯到連結成可執行檔。',
   concept: {
@@ -113,8 +113,8 @@ g++ hello.o -o hello                                   # [4]
 
 // 最小可編譯範例。以 g++ -std=c++23 -Wall try.cpp -o try 編譯。
 int main() {
-  std::cout << "工具鏈已就緒！\\n";
-  return 0;
+    std::cout << "工具鏈已就緒！\\n";
+    return 0;
 }`,
   },
   furtherReading: [

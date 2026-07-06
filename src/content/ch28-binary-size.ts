@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ch28BinarySize: ChapterContent = {
   slug: 'ch28-binary-size',
-  chapterLabel: 'Ch.28',
+  chapterLabel: '第 28 章',
   title: '二進位檔大小',
-  group: 'G · 軟體設計與工具',
+  group: '第 7 部：軟體設計與工具',
   description:
     'symbol visibility、LTO 與樣板膨脹（template bloat）的控制：如何診斷並縮減可執行檔與函式庫的體積。',
   concept: {
@@ -120,22 +120,22 @@ size app ; bloaty app                                      # [5]`,
 // 抽出與型別無關的共通實作到非樣板函式，減少樣板膨脹。
 namespace detail {
 std::size_t countPositive(const int* p, std::size_t n) {
-  std::size_t c = 0;
-  for (std::size_t i = 0; i < n; ++i)
-    if (p[i] > 0) ++c;
-  return c;
+    std::size_t c = 0;
+    for (std::size_t i = 0; i < n; ++i)
+        if (p[i] > 0) ++c;
+    return c;
 }
 }  // namespace detail
 
 template <class Container>
 std::size_t countPositive(const Container& c) {
-  return detail::countPositive(c.data(), c.size());  // 薄樣板包裝
+    return detail::countPositive(c.data(), c.size());  // 薄樣板包裝
 }
 
 int main() {
-  std::vector<int> v{-1, 2, -3, 4, 5};
-  std::cout << "positive = " << countPositive(v) << '\\n';
-  return 0;
+    std::vector<int> v{-1, 2, -3, 4, 5};
+    std::cout << "positive = " << countPositive(v) << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [

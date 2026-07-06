@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ind15Coroutines: ChapterContent = {
   slug: 'ind15-coroutines',
-  chapterLabel: '第 15 章',
+  chapterLabel: '第 44 章',
   title: '協程（C++20）',
-  group: 'L · 第四部：高階平行抽象',
+  group: '第 12 部：高階平行抽象',
   description:
     'co_await／co_yield／co_return 與 coroutine handle、std::generator（C++23），以及非同步通訊／計算重疊的表達。',
   concept: {
@@ -39,63 +39,60 @@ const ind15Coroutines: ChapterContent = {
 // coroutine_handle 以達成保證尾呼叫，避免鏈式協程造成堆疊成長。 [1]
 template <typename T>
 struct Task {
-  struct promise_type {
-    T result{};
-    std::coroutine_handle<> continuation;  // [2] 完成後要恢復的呼叫端協程
+    struct promise_type {
+        T result{};
+        std::coroutine_handle<> continuation;  // [2] 完成後要恢復的呼叫端協程
 
-    Task get_return_object() {
-      return Task{std::coroutine_handle<promise_type>::from_promise(*this)};
-    }
-    std::suspend_always initial_suspend() noexcept { return {}; }
+        Task get_return_object() {
+            return Task{std::coroutine_handle<promise_type>::from_promise(*this)};
+        }
+        std::suspend_always initial_suspend() noexcept { return {}; }
 
-    // final_suspend 回傳的 awaiter 之 await_suspend 會回傳 continuation，
-    // 這就是「對稱轉移」：不呼叫 continuation.resume()，而是交給編譯器
-    // 以尾呼叫方式直接跳轉，堆疊深度不因鏈長增加而增加。 [3]
-    struct FinalAwaiter {
-      bool await_ready() noexcept { return false; }
-      std::coroutine_handle<> await_suspend(
-          std::coroutine_handle<promise_type> h) noexcept {
-        auto& promise = h.promise();
-        return promise.continuation ? promise.continuation
-                                    : std::noop_coroutine();  // [4]
-      }
-      void await_resume() noexcept {}
+        // final_suspend 回傳的 awaiter 之 await_suspend 會回傳 continuation，
+        // 這就是「對稱轉移」：不呼叫 continuation.resume()，而是交給編譯器
+        // 以尾呼叫方式直接跳轉，堆疊深度不因鏈長增加而增加。 [3]
+        struct FinalAwaiter {
+            bool await_ready() noexcept { return false; }
+            std::coroutine_handle<> await_suspend(std::coroutine_handle<promise_type> h) noexcept {
+                auto& promise = h.promise();
+                return promise.continuation ? promise.continuation : std::noop_coroutine();  // [4]
+            }
+            void await_resume() noexcept {}
+        };
+        FinalAwaiter final_suspend() noexcept { return {}; }
+
+        void return_value(T v) { result = std::move(v); }
+        void unhandled_exception() { std::terminate(); }
     };
-    FinalAwaiter final_suspend() noexcept { return {}; }
 
-    void return_value(T v) { result = std::move(v); }
-    void unhandled_exception() { std::terminate(); }
-  };
+    std::coroutine_handle<promise_type> h;
 
-  std::coroutine_handle<promise_type> h;
+    // Task 本身可被 co_await：把呼叫端 handle 存為 continuation，
+    // 再回傳自己的 handle 交由編譯器做尾呼叫式恢復。 [5]
+    bool await_ready() noexcept { return false; }
+    std::coroutine_handle<> await_suspend(std::coroutine_handle<> caller) noexcept {
+        h.promise().continuation = caller;
+        return h;
+    }
+    T await_resume() { return std::move(h.promise().result); }
 
-  // Task 本身可被 co_await：把呼叫端 handle 存為 continuation，
-  // 再回傳自己的 handle 交由編譯器做尾呼叫式恢復。 [5]
-  bool await_ready() noexcept { return false; }
-  std::coroutine_handle<> await_suspend(
-      std::coroutine_handle<> caller) noexcept {
-    h.promise().continuation = caller;
-    return h;
-  }
-  T await_resume() { return std::move(h.promise().result); }
-
-  ~Task() {
-    if (h) h.destroy();
-  }
+    ~Task() {
+        if (h) h.destroy();
+    }
 };
 
 // 模擬非同步通訊：實務上 await_suspend 會把 handle 註冊給
 // 事件迴圈／通訊完成回呼，此處僅示範介面形狀。 [6]
 Task<int> async_partial_sum(int n) {
-  int total = 0;
-  for (int i = 0; i < n; ++i) total += i;
-  co_return total;
+    int total = 0;
+    for (int i = 0; i < n; ++i) total += i;
+    co_return total;
 }
 
 Task<int> overlap_comm_and_compute(int n) {
-  // co_await 另一個 Task：以對稱轉移串接，不論鏈多長皆不增加堆疊深度。
-  int partial = co_await async_partial_sum(n);
-  co_return partial * 2;
+    // co_await 另一個 Task：以對稱轉移串接，不論鏈多長皆不增加堆疊深度。
+    int partial = co_await async_partial_sum(n);
+    co_return partial * 2;
 }`,
     callouts: [
       {
@@ -199,67 +196,64 @@ Task<int> overlap_comm_and_compute(int n) {
 
 template <typename T>
 struct Task {
-  struct promise_type {
-    T result{};
-    std::coroutine_handle<> continuation;
+    struct promise_type {
+        T result{};
+        std::coroutine_handle<> continuation;
 
-    Task get_return_object() {
-      return Task{std::coroutine_handle<promise_type>::from_promise(*this)};
-    }
-    std::suspend_always initial_suspend() noexcept { return {}; }
+        Task get_return_object() {
+            return Task{std::coroutine_handle<promise_type>::from_promise(*this)};
+        }
+        std::suspend_always initial_suspend() noexcept { return {}; }
 
-    struct FinalAwaiter {
-      bool await_ready() noexcept { return false; }
-      std::coroutine_handle<> await_suspend(
-          std::coroutine_handle<promise_type> h) noexcept {
-        auto& promise = h.promise();
-        return promise.continuation ? promise.continuation
-                                    : std::noop_coroutine();
-      }
-      void await_resume() noexcept {}
+        struct FinalAwaiter {
+            bool await_ready() noexcept { return false; }
+            std::coroutine_handle<> await_suspend(std::coroutine_handle<promise_type> h) noexcept {
+                auto& promise = h.promise();
+                return promise.continuation ? promise.continuation : std::noop_coroutine();
+            }
+            void await_resume() noexcept {}
+        };
+        FinalAwaiter final_suspend() noexcept { return {}; }
+
+        void return_value(T v) { result = std::move(v); }
+        void unhandled_exception() { std::terminate(); }
     };
-    FinalAwaiter final_suspend() noexcept { return {}; }
 
-    void return_value(T v) { result = std::move(v); }
-    void unhandled_exception() { std::terminate(); }
-  };
+    std::coroutine_handle<promise_type> h;
 
-  std::coroutine_handle<promise_type> h;
+    bool await_ready() noexcept { return false; }
+    std::coroutine_handle<> await_suspend(std::coroutine_handle<> caller) noexcept {
+        h.promise().continuation = caller;
+        return h;
+    }
+    T await_resume() { return std::move(h.promise().result); }
 
-  bool await_ready() noexcept { return false; }
-  std::coroutine_handle<> await_suspend(
-      std::coroutine_handle<> caller) noexcept {
-    h.promise().continuation = caller;
-    return h;
-  }
-  T await_resume() { return std::move(h.promise().result); }
-
-  ~Task() {
-    if (h) h.destroy();
-  }
+    ~Task() {
+        if (h) h.destroy();
+    }
 };
 
 Task<int> compute_partial(int n) {
-  int total = 0;
-  for (int i = 0; i < n; ++i) total += i;
-  co_return total;
+    int total = 0;
+    for (int i = 0; i < n; ++i) total += i;
+    co_return total;
 }
 
 Task<int> overlap(int n) {
-  int partial = co_await compute_partial(n);
-  co_return partial * 2;
+    int partial = co_await compute_partial(n);
+    co_return partial * 2;
 }
 
 Task<int> run() {
-  int v = co_await overlap(10);
-  std::cout << v << '\\n';
-  co_return v;
+    int v = co_await overlap(10);
+    std::cout << v << '\\n';
+    co_return v;
 }
 
 int main() {
-  auto t = run();
-  t.h.resume();
-  return 0;
+    auto t = run();
+    t.h.resume();
+    return 0;
 }`,
   },
   furtherReading: [

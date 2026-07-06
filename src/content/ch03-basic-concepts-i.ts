@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ch03BasicConceptsI: ChapterContent = {
   slug: 'ch03-basic-concepts-i',
-  chapterLabel: 'Ch.03',
+  chapterLabel: '第 3 章',
   title: '基本概念 I：型別系統',
-  group: 'A · 基礎概念',
+  group: '第 1 部：基礎概念 Foundations',
   description:
     'C++ 型別系統、基本型別與運算子的入門介紹，說明靜態型別、值類別與運算式如何構成程式的骨架。',
   concept: {
@@ -18,16 +18,15 @@ const ch03BasicConceptsI: ChapterContent = {
 #include <type_traits>
 
 int main() {
-  auto a = 42;                           // [1] 推導為 int
-  std::int64_t big = 1'000'000'000'000;  // [2] 固定寬度，數字分隔符
-  constexpr double pi = 3.14159;         // [3] 編譯期常數
-  bool flag = a > 10;                    // [4] 關係運算子產生 bool
+    auto a = 42;                           // [1] 推導為 int
+    std::int64_t big = 1'000'000'000'000;  // [2] 固定寬度，數字分隔符
+    constexpr double pi = 3.14159;         // [3] 編譯期常數
+    bool flag = a > 10;                    // [4] 關係運算子產生 bool
 
-  static_assert(std::is_same_v<decltype(a), int>);  // [5] 編譯期型別檢查
+    static_assert(std::is_same_v<decltype(a), int>);  // [5] 編譯期型別檢查
 
-  std::println("sizeof(int)={}, sizeof(int64)={}, flag={}", sizeof(a),
-               sizeof(big), flag);
-  return 0;
+    std::println("sizeof(int)={}, sizeof(int64)={}, flag={}", sizeof(a), sizeof(big), flag);
+    return 0;
 }`,
     callouts: [
       { n: 1, text: 'auto 讓編譯器由初始值推導型別；此處字面值 42 為 int。' },
@@ -117,12 +116,11 @@ int main() {
 #include <iostream>
 
 int main() {
-  auto a = 42;
-  std::int64_t big = 1'000'000'000'000;
-  constexpr double pi = 3.14159;
-  std::cout << "int=" << sizeof(a) << " int64=" << sizeof(big) << " pi=" << pi
-            << '\\n';
-  return 0;
+    auto a = 42;
+    std::int64_t big = 1'000'000'000'000;
+    constexpr double pi = 3.14159;
+    std::cout << "int=" << sizeof(a) << " int64=" << sizeof(big) << " pi=" << pi << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [

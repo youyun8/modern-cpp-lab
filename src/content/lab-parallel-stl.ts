@@ -2,8 +2,8 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const labParallelStl: ChapterContent = {
   slug: 'lab-parallel-stl',
-  title: '平行化實驗室：平行 STL',
-  group: '平行化實驗室',
+  title: '實驗室：平行 STL',
+  group: '實驗室',
   description:
     'std::execution 執行策略深入解析：seq／par／par_unseq／unseq 的差異、std::transform_reduce 與 std::for_each 的用法，以及 par_unseq 何時不安全。',
   concept: {
@@ -18,18 +18,17 @@ const labParallelStl: ChapterContent = {
 #include <vector>
 
 double parallelDot(const std::vector<double>& a, const std::vector<double>& b) {
-  return std::transform_reduce(   // [2]
-      std::execution::par_unseq,  // [3]
-      a.begin(), a.end(), b.begin(),
-      0.0,                   // init
-      std::plus<>{},         // reduce
-      std::multiplies<>{});  // transform
+    return std::transform_reduce(   // [2]
+        std::execution::par_unseq,  // [3]
+        a.begin(), a.end(), b.begin(),
+        0.0,                   // init
+        std::plus<>{},         // reduce
+        std::multiplies<>{});  // transform
 }
 
 void normalizeInPlace(std::vector<double>& data, double scale) {
-  std::for_each(std::execution::par,  // [4]
-                data.begin(), data.end(),
-                [scale](double& x) { x *= scale; });  // [5]
+    std::for_each(std::execution::par,                                            // [4]
+                  data.begin(), data.end(), [scale](double& x) { x *= scale; });  // [5]
 }
 
 // DANGER: taking a lock inside a par_unseq element function may deadlock,
@@ -129,19 +128,17 @@ void normalizeInPlace(std::vector<double>& data, double scale) {
 //   g++ -std=c++23 -O2 -pthread -march=native main.cpp
 // On some toolchains libtbb is required to link the parallel algorithms.
 int main() {
-  std::vector<double> a(1'000'000, 1.5);
-  std::vector<double> b(1'000'000, 2.0);
+    std::vector<double> a(1'000'000, 1.5);
+    std::vector<double> b(1'000'000, 2.0);
 
-  double dot =
-      std::transform_reduce(std::execution::par_unseq, a.begin(), a.end(),
-                            b.begin(), 0.0, std::plus<>{}, std::multiplies<>{});
+    double dot = std::transform_reduce(std::execution::par_unseq, a.begin(), a.end(), b.begin(),
+                                       0.0, std::plus<>{}, std::multiplies<>{});
 
-  std::for_each(std::execution::par, a.begin(), a.end(),
-                [](double& x) { x *= 0.5; });
+    std::for_each(std::execution::par, a.begin(), a.end(), [](double& x) { x *= 0.5; });
 
-  std::cout << "dot = " << dot << '\\n';
-  std::cout << "a[0] = " << a.front() << '\\n';
-  return 0;
+    std::cout << "dot = " << dot << '\\n';
+    std::cout << "a[0] = " << a.front() << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [

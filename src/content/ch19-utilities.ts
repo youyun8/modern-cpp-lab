@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ch19Utilities: ChapterContent = {
   slug: 'ch19-utilities',
-  chapterLabel: 'Ch.19',
+  chapterLabel: '第 19 章',
   title: '工具庫：span、format、variant',
-  group: 'D · STL 與工具庫',
+  group: '第 4 部：STL 與工具庫',
   description:
     'std::span、std::mdspan、std::format 與 std::variant 等現代工具：如何以零成本檢視、安全格式化與型別安全的和型別改善程式。',
   concept: {
@@ -21,30 +21,30 @@ const ch19Utilities: ChapterContent = {
 
 // std::span：接受任意連續序列而不複製、不樣板化。 [1]
 long long sum(std::span<const int> data) {
-  long long s = 0;
-  for (int x : data) s += x;
-  return s;
+    long long s = 0;
+    for (int x : data) s += x;
+    return s;
 }
 
 using Value = std::variant<int, double, std::string>;  // [2] 型別安全和型別
 
 std::string describe(const Value& v) {
-  return std::visit(
-      [](const auto& x) {             // [3] 窮盡式處理
-        return std::format("{}", x);  // [4]
-      },
-      v);
+    return std::visit(
+        [](const auto& x) {               // [3] 窮盡式處理
+            return std::format("{}", x);  // [4]
+        },
+        v);
 }
 
 int main() {
-  std::vector<int> v{1, 2, 3, 4};
-  int raw[] = {10, 20, 30};
-  std::println("vector sum = {}", sum(v));    // [5] 傳 vector
-  std::println("array sum  = {}", sum(raw));  //    傳 C 陣列
+    std::vector<int> v{1, 2, 3, 4};
+    int raw[] = {10, 20, 30};
+    std::println("vector sum = {}", sum(v));    // [5] 傳 vector
+    std::println("array sum  = {}", sum(raw));  //    傳 C 陣列
 
-  Value a = 42, b = 3.14, c = std::string{"hi"};
-  std::println("{} / {} / {}", describe(a), describe(b), describe(c));
-  return 0;
+    Value a = 42, b = 3.14, c = std::string{"hi"};
+    std::println("{} / {} / {}", describe(a), describe(b), describe(c));
+    return 0;
 }`,
     callouts: [
       {
@@ -136,16 +136,14 @@ int main() {
 #include <span>
 #include <vector>
 
-long long sum(std::span<const int> data) {
-  return std::accumulate(data.begin(), data.end(), 0LL);
-}
+long long sum(std::span<const int> data) { return std::accumulate(data.begin(), data.end(), 0LL); }
 
 int main() {
-  std::vector<int> v{1, 2, 3, 4};
-  int raw[] = {10, 20, 30};
-  std::cout << "vector sum = " << sum(v) << '\\n';
-  std::cout << "array sum  = " << sum(raw) << '\\n';
-  return 0;
+    std::vector<int> v{1, 2, 3, 4};
+    int raw[] = {10, 20, 30};
+    std::cout << "vector sum = " << sum(v) << '\\n';
+    std::cout << "array sum  = " << sum(raw) << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [

@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ind03ConcurrencyVsParallelism: ChapterContent = {
   slug: 'ind03-concurrency-vs-parallelism',
-  chapterLabel: '第 3 章',
+  chapterLabel: '第 32 章',
   title: '並行 vs 平行、任務 vs 資料平行',
-  group: 'H · 第零部：先修與心智模型',
+  group: '第 8 部：先修與心智模型',
   description:
     'Concurrency 與 Parallelism 的本質區別、latency-bound vs throughput-bound，以及 SPMD、fork-join、BSP 等 HPC 常見拓撲。',
   concept: {
@@ -21,50 +21,47 @@ const ind03ConcurrencyVsParallelism: ChapterContent = {
 
 // 任務平行：兩個「不同」工作同時進行，彼此邏輯獨立。 [1]
 void loadConfigAndWarmCache(const std::string& path) {
-  std::future<Config> configFut = std::async(
-      std::launch::async, [path] { return parseConfig(path); });  // [2]
-  std::future<void> warmFut =
-      std::async(std::launch::async, [] { warmDiskCache(); });
+    std::future<Config> configFut =
+        std::async(std::launch::async, [path] { return parseConfig(path); });  // [2]
+    std::future<void> warmFut = std::async(std::launch::async, [] { warmDiskCache(); });
 
-  Config cfg =
-      configFut.get();  // [3] 兩個future在此處匯合，屬於fork-join的join
-  warmFut.get();
-  applyConfig(cfg);
+    Config cfg = configFut.get();  // [3] 兩個future在此處匯合，屬於fork-join的join
+    warmFut.get();
+    applyConfig(cfg);
 }
 
 // 資料平行：同一運算套用到資料的不同切片，工作內容完全相同。 [4]
-void scaleInPlace(std::vector<double>& data, double factor,
-                  unsigned numWorkers) {
-  const std::size_t n = data.size();
-  const std::size_t chunk = (n + numWorkers - 1) / numWorkers;
+void scaleInPlace(std::vector<double>& data, double factor, unsigned numWorkers) {
+    const std::size_t n = data.size();
+    const std::size_t chunk = (n + numWorkers - 1) / numWorkers;
 
-  std::vector<std::thread> workers;
-  for (unsigned w = 0; w < numWorkers; ++w) {  // [5] fork
-    std::size_t begin = w * chunk;
-    std::size_t end = std::min(n, begin + chunk);
-    if (begin >= end) break;
-    workers.emplace_back([&data, factor, begin, end] {
-      for (std::size_t i = begin; i < end; ++i) data[i] *= factor;
-    });
-  }
-  for (auto& t : workers) t.join();  // [6] join：所有worker必須完成才能往下走
+    std::vector<std::thread> workers;
+    for (unsigned w = 0; w < numWorkers; ++w) {  // [5] fork
+        std::size_t begin = w * chunk;
+        std::size_t end = std::min(n, begin + chunk);
+        if (begin >= end) break;
+        workers.emplace_back([&data, factor, begin, end] {
+            for (std::size_t i = begin; i < end; ++i) data[i] *= factor;
+        });
+    }
+    for (auto& t : workers) t.join();  // [6] join：所有worker必須完成才能往下走
 }
 
 // BSP 超步：std::barrier 讓所有執行緒在每一輪的邊界同步。
 void bspRelaxationStep(std::vector<double>& grid, int iterations) {
-  const unsigned p = std::thread::hardware_concurrency();
-  std::barrier sync_point(p, [] { /* 選擇性：每輪結束時的協調動作 */ });
+    const unsigned p = std::thread::hardware_concurrency();
+    std::barrier sync_point(p, [] { /* 選擇性：每輪結束時的協調動作 */ });
 
-  auto worker = [&](unsigned id) {
-    for (int iter = 0; iter < iterations; ++iter) {
-      // 本地運算階段：只碰自己的資料切片，不與其他執行緒溝通。
-      localRelax(grid, id, p);
-      sync_point.arrive_and_wait();  // 等待所有執行緒完成這一輪
-    }
-  };
-  std::vector<std::thread> threads;
-  for (unsigned id = 0; id < p; ++id) threads.emplace_back(worker, id);
-  for (auto& t : threads) t.join();
+    auto worker = [&](unsigned id) {
+        for (int iter = 0; iter < iterations; ++iter) {
+            // 本地運算階段：只碰自己的資料切片，不與其他執行緒溝通。
+            localRelax(grid, id, p);
+            sync_point.arrive_and_wait();  // 等待所有執行緒完成這一輪
+        }
+    };
+    std::vector<std::thread> threads;
+    for (unsigned id = 0; id < p; ++id) threads.emplace_back(worker, id);
+    for (auto& t : threads) t.join();
 }`,
     callouts: [
       {
@@ -174,28 +171,27 @@ void bspRelaxationStep(std::vector<double>& grid, int iterations) {
 // 用 std::barrier 示範一個最小的 BSP 風格迴圈：
 // 每一輪所有執行緒各自遞增自己的計數器，然後在屏障處等待彼此。
 int main() {
-  constexpr unsigned kWorkers = 4;
-  constexpr int kSupersteps = 3;
-  std::vector<int> counters(kWorkers, 0);
+    constexpr unsigned kWorkers = 4;
+    constexpr int kSupersteps = 3;
+    std::vector<int> counters(kWorkers, 0);
 
-  std::barrier sync_point(kWorkers,
-                          [] { std::cout << "-- superstep 完成 --\\n"; });
+    std::barrier sync_point(kWorkers, [] { std::cout << "-- superstep 完成 --\\n"; });
 
-  auto worker = [&](unsigned id) {
-    for (int step = 0; step < kSupersteps; ++step) {
-      counters[id] += 1;  // 本地運算，不碰其他執行緒的資料
-      sync_point.arrive_and_wait();  // 等待這一輪所有執行緒完成
+    auto worker = [&](unsigned id) {
+        for (int step = 0; step < kSupersteps; ++step) {
+            counters[id] += 1;             // 本地運算，不碰其他執行緒的資料
+            sync_point.arrive_and_wait();  // 等待這一輪所有執行緒完成
+        }
+    };
+
+    std::vector<std::thread> threads;
+    for (unsigned id = 0; id < kWorkers; ++id) threads.emplace_back(worker, id);
+    for (auto& t : threads) t.join();
+
+    for (unsigned id = 0; id < kWorkers; ++id) {
+        std::cout << "worker " << id << " -> " << counters[id] << '\\n';
     }
-  };
-
-  std::vector<std::thread> threads;
-  for (unsigned id = 0; id < kWorkers; ++id) threads.emplace_back(worker, id);
-  for (auto& t : threads) t.join();
-
-  for (unsigned id = 0; id < kWorkers; ++id) {
-    std::cout << "worker " << id << " -> " << counters[id] << '\\n';
-  }
-  return 0;
+    return 0;
 }`,
   },
   furtherReading: [

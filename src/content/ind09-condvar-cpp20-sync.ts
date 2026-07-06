@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ind09CondvarCpp20Sync: ChapterContent = {
   slug: 'ind09-condvar-cpp20-sync',
-  chapterLabel: '第 9 章',
+  chapterLabel: '第 38 章',
   title: '條件變數與 C++20 新同步原語',
-  group: 'J · 第二部：執行緒與同步',
+  group: '第 10 部：執行緒與同步',
   description:
     'condition_variable 的 spurious/lost wakeup、C++20 的 latch／barrier／counting_semaphore，以及 atomic 的 wait/notify。',
   concept: {
@@ -49,30 +49,30 @@ std::vector<double> current(kRows, 0.0);
 std::vector<double> next(kRows, 0.0);
 
 void onPhaseComplete() noexcept {  // [1]
-  std::swap(current, next);        // [2]
+    std::swap(current, next);      // [2]
 }
 
 int main() {
-  std::barrier phase_barrier(kThreads, onPhaseComplete);  // [3]
+    std::barrier phase_barrier(kThreads, onPhaseComplete);  // [3]
 
-  std::vector<std::thread> workers;
-  for (int t = 0; t < kThreads; ++t) {
-    workers.emplace_back([t, &phase_barrier]() {
-      for (int iter = 0; iter < kIterations; ++iter) {
-        int row = t;  // [4]
-        double left = current[(row + kRows - 1) % kRows];
-        double right = current[(row + 1) % kRows];
-        next[row] = 0.5 * (left + right);  // local stencil update
+    std::vector<std::thread> workers;
+    for (int t = 0; t < kThreads; ++t) {
+        workers.emplace_back([t, &phase_barrier]() {
+            for (int iter = 0; iter < kIterations; ++iter) {
+                int row = t;  // [4]
+                double left = current[(row + kRows - 1) % kRows];
+                double right = current[(row + 1) % kRows];
+                next[row] = 0.5 * (left + right);  // local stencil update
 
-        phase_barrier.arrive_and_wait();  // [5]
-      }
-    });
-  }
-  for (auto& w : workers) w.join();
+                phase_barrier.arrive_and_wait();  // [5]
+            }
+        });
+    }
+    for (auto& w : workers) w.join();
 
-  for (double v : current) std::cout << v << ' ';
-  std::cout << '\\n';
-  return 0;
+    for (double v : current) std::cout << v << ' ';
+    std::cout << '\\n';
+    return 0;
 }`,
     callouts: [
       {
@@ -168,28 +168,28 @@ int main() {
 #include <vector>
 
 int main() {
-  constexpr int kThreads = 3;
-  constexpr int kRounds = 2;
+    constexpr int kThreads = 3;
+    constexpr int kRounds = 2;
 
-  std::atomic<int> round_counter{0};
-  std::barrier sync_point(kThreads, [&round_counter]() noexcept {
-    // Runs once per round after every thread has arrived.
-    round_counter.fetch_add(1, std::memory_order_relaxed);
-  });
-
-  std::vector<std::thread> workers;
-  for (int t = 0; t < kThreads; ++t) {
-    workers.emplace_back([t, &sync_point]() {
-      for (int r = 0; r < kRounds; ++r) {
-        std::cout << "thread " << t << " working round " << r << '\\n';
-        sync_point.arrive_and_wait();
-      }
+    std::atomic<int> round_counter{0};
+    std::barrier sync_point(kThreads, [&round_counter]() noexcept {
+        // Runs once per round after every thread has arrived.
+        round_counter.fetch_add(1, std::memory_order_relaxed);
     });
-  }
-  for (auto& w : workers) w.join();
 
-  std::cout << "rounds completed = " << round_counter.load() << '\\n';
-  return 0;
+    std::vector<std::thread> workers;
+    for (int t = 0; t < kThreads; ++t) {
+        workers.emplace_back([t, &sync_point]() {
+            for (int r = 0; r < kRounds; ++r) {
+                std::cout << "thread " << t << " working round " << r << '\\n';
+                sync_point.arrive_and_wait();
+            }
+        });
+    }
+    for (auto& w : workers) w.join();
+
+    std::cout << "rounds completed = " << round_counter.load() << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [

@@ -4,7 +4,7 @@ const appendixDReferences: ChapterContent = {
   slug: 'appendix-d-references',
   chapterLabel: '附錄 D',
   title: '參考書目與標準提案',
-  group: 'T · 附錄',
+  group: '附錄',
   description: '延伸閱讀書目與關鍵標準提案（P2300、P1673、P1928、P0019 等）的索引。',
   concept: {
     standard: 'C++26',
@@ -13,11 +13,11 @@ const appendixDReferences: ChapterContent = {
   deepDive: [
     {
       heading: '關鍵標準提案索引：本書引用的四份核心 paper',
-      body: '`std::execution`（senders/receivers，第 16 章）對應 P2300，這是目前 WG21 內部討論份量最大、修訂版本也最多的提案之一，讀者查閱時務必確認版本號（如 P2300R10），因為早期版本與最終併入 C++26 的版本在 API 細節上可能有落差。\n\n`std::linalg`（第 26 章，矩陣與線性代數運算）對應 P1673，目標是把 BLAS 風格的稠密矩陣運算標準化為 `std::linalg` 命名空間下的一組演算法。\n\n`std::simd`（第 17 章，資料平行型別）對應 P1928，其前身是 Parallelism TS2 中的 `std::experimental::simd`（源自 Vc 函式庫），P1928 的工作是把它「扶正」為標準命名空間下的 `std::simd`。\n\n`std::atomic_ref`（涉及對非 atomic 物件做原子存取的章節）對應 P0019，這是四份提案中定案最早、也最穩定的一份，已隨 C++20 併入標準，語意上不會再有重大變動。\n\n除了以上四份確定編號的提案，書中偶爾提及的較新構造（例如 `std::generator` 這類協程輔助設施）可能仍在編號與內容上持續調整，**若讀者對某個提案編號不完全確定，最保險的作法是直接到 wg21.link 的論文索引查詢最新版本，而不是照抄可能已過時或記錯的編號**——本書寧可誠實標註「請以 wg21.link 最新清單為準」，也不願為了看似完整而給出未經查證、可能錯誤的編號。',
+      body: '`std::execution`（senders/receivers，第 45 章）對應 P2300，這是目前 WG21 內部討論份量最大、修訂版本也最多的提案之一，讀者查閱時務必確認版本號（如 P2300R10），因為早期版本與最終併入 C++26 的版本在 API 細節上可能有落差。\n\n`std::linalg`（第 55 章，矩陣與線性代數運算）對應 P1673，目標是把 BLAS 風格的稠密矩陣運算標準化為 `std::linalg` 命名空間下的一組演算法。\n\n`std::simd`（第 46 章，資料平行型別）對應 P1928，其前身是 Parallelism TS2 中的 `std::experimental::simd`（源自 Vc 函式庫），P1928 的工作是把它「扶正」為標準命名空間下的 `std::simd`。\n\n`std::atomic_ref`（涉及對非 atomic 物件做原子存取的章節）對應 P0019，這是四份提案中定案最早、也最穩定的一份，已隨 C++20 併入標準，語意上不會再有重大變動。\n\n除了以上四份確定編號的提案，書中偶爾提及的較新構造（例如 `std::generator` 這類協程輔助設施）可能仍在編號與內容上持續調整，**若讀者對某個提案編號不完全確定，最保險的作法是直接到 wg21.link 的論文索引查詢最新版本，而不是照抄可能已過時或記錯的編號**——本書寧可誠實標註「請以 wg21.link 最新清單為準」，也不願為了看似完整而給出未經查證、可能錯誤的編號。',
     },
     {
       heading: '經典書籍：兩本奠基性的並行程式設計專書',
-      body: '《C++ Concurrency in Action》（Anthony Williams 著，Manning 出版，目前為第二版）是 C++ 標準函式庫並行工具（`std::thread`、`std::mutex`、`std::atomic`、`std::future` 等）最權威、最完整的實務指南，作者本人是 Boost.Thread 與 C++11 執行緒函式庫標準化過程的核心貢獻者之一。適合用來補強本書第一部到第三部（執行緒基礎、記憶體模型、鎖與同步原語）的細節，尤其是記憶體順序（memory order）與無鎖資料結構章節，書中有大量本書篇幅無法涵蓋的邊角案例分析。\n\n《The Art of Multiprocessor Programming》（Maurice Herlihy 與 Nir Shavit 合著）則是理論導向的並行演算法經典，涵蓋共識問題（consensus）、線性化（linearizability）、無鎖與無等待（lock-free／wait-free）資料結構的正確性證明，語言無關（書中範例以 Java 偽碼為主，但概念完全適用於 C++）。適合在理解本書的鎖、無鎖佇列、記憶體順序等章節之後，進一步深入演算法正確性與理論基礎，尤其對想要自行設計無鎖資料結構的讀者是必讀。',
+      body: '《C++ Concurrency in Action》（Anthony Williams 著，Manning 出版，目前為第二版）是 C++ 標準函式庫並行工具（`std::thread`、`std::mutex`、`std::atomic`、`std::future` 等）最權威、最完整的實務指南，作者本人是 Boost.Thread 與 C++11 執行緒函式庫標準化過程的核心貢獻者之一。適合用來補強本書第 9 部到第 11 部（記憶體模型、執行緒基礎、鎖與同步原語）的細節，尤其是記憶體順序（memory order）與無鎖資料結構章節，書中有大量本書篇幅無法涵蓋的邊角案例分析。\n\n《The Art of Multiprocessor Programming》（Maurice Herlihy 與 Nir Shavit 合著）則是理論導向的並行演算法經典，涵蓋共識問題（consensus）、線性化（linearizability）、無鎖與無等待（lock-free／wait-free）資料結構的正確性證明，語言無關（書中範例以 Java 偽碼為主，但概念完全適用於 C++）。適合在理解本書的鎖、無鎖佇列、記憶體順序等章節之後，進一步深入演算法正確性與理論基礎，尤其對想要自行設計無鎖資料結構的讀者是必讀。',
     },
     {
       heading: '線上參考：應長期追蹤而非一次性閱讀的資源',
@@ -25,7 +25,7 @@ const appendixDReferences: ChapterContent = {
     },
     {
       heading: '閱讀順序建議：把參考資料對應回全書章節',
-      body: '若讀者是循序讀完全書後想做系統性複習，建議的延伸閱讀順序是：先讀《C++ Concurrency in Action》對應第一部到第三部（執行緒、記憶體模型、鎖與同步原語）的章節，鞏固基礎工具的實務細節；接著查閱 P0019（`atomic_ref`）與 cppreference 上的記憶體順序頁面，加深對第三部無鎖與原子操作章節的理解。\n\n進入第四部（高階平行抽象）與第 16 章 senders/receivers 時，直接對照 P2300 原文與 stdexec 參考實作的原始碼，會比任何二手教學文章更貼近實際語意；第五部資料平行與向量化（第 17 章 `std::simd`）則對照 P1928 與 cppreference 的 `std::experimental::simd` 頁面。第 26 章矩陣與線性代數運算（`std::linalg`）建議直接查閱 P1673，其提案文件本身就包含大量與現有 BLAS 介面對照的範例，比教材更適合作為 API 速查表。最後，《The Art of Multiprocessor Programming》適合在讀完全書、對並行程式設計的實務工具已有整體概念後再讀，作為從「怎麼用」轉向「為什麼正確」的理論補完。',
+      body: '若讀者是循序讀完全書後想做系統性複習，建議的延伸閱讀順序是：先讀《C++ Concurrency in Action》對應第 9 部到第 11 部（記憶體模型、執行緒、鎖與同步原語）的章節，鞏固基礎工具的實務細節；接著查閱 P0019（`atomic_ref`）與 cppreference 上的記憶體順序頁面，加深對第 11 部無鎖與原子操作章節的理解。\n\n進入第 12 部（高階平行抽象）與第 45 章 senders/receivers 時，直接對照 P2300 原文與 stdexec 參考實作的原始碼，會比任何二手教學文章更貼近實際語意；第 13 部資料平行與向量化（第 46 章 `std::simd`）則對照 P1928 與 cppreference 的 `std::experimental::simd` 頁面。第 55 章矩陣與線性代數運算（`std::linalg`）建議直接查閱 P1673，其提案文件本身就包含大量與現有 BLAS 介面對照的範例，比教材更適合作為 API 速查表。最後，《The Art of Multiprocessor Programming》適合在讀完全書、對並行程式設計的實務工具已有整體概念後再讀，作為從「怎麼用」轉向「為什麼正確」的理論補完。',
     },
   ],
   code: {
@@ -38,28 +38,28 @@ const appendixDReferences: ChapterContent = {
 // #include <simd>        // std::simd（資料平行型別）
 
 void referenceLookupTable() {
-  // [1] std::execution::sender / receiver / schedule / then / when_all
-  //     see: P2300 — std::execution（第 16 章）
-  //     截至本書寫作時仍在修訂，建議以 wg21.link/p2300 的最新版本為準。
+    // [1] std::execution::sender / receiver / schedule / then / when_all
+    //     see: P2300 — std::execution（第 45 章）
+    //     截至本書寫作時仍在修訂，建議以 wg21.link/p2300 的最新版本為準。
 
-  // [2] std::linalg::matrix_product 等稠密矩陣運算
-  //     see: P1673 — std::linalg（第 26 章）
-  //     提案文件本身含大量與傳統 BLAS 介面對照的範例。
+    // [2] std::linalg::matrix_product 等稠密矩陣運算
+    //     see: P1673 — std::linalg（第 55 章）
+    //     提案文件本身含大量與傳統 BLAS 介面對照的範例。
 
-  // [3] std::simd<T, N> 資料平行型別與 simd_mask
-  //     see: P1928 — std::simd（第 17 章）
-  //     前身為 Parallelism TS2 的 std::experimental::simd。
+    // [3] std::simd<T, N> 資料平行型別與 simd_mask
+    //     see: P1928 — std::simd（第 46 章）
+    //     前身為 Parallelism TS2 的 std::experimental::simd。
 
-  // [4] std::atomic_ref<T>：對既有（非 atomic）物件做原子存取
-  //     see: P0019 — Atomic Ref（涉及原子操作與記憶體順序的章節）
-  std::atomic_ref<int> counter_ref(*(new int(0)));  // 僅示意，非完整範例
-  counter_ref.fetch_add(1, std::memory_order_relaxed);
+    // [4] std::atomic_ref<T>：對既有（非 atomic）物件做原子存取
+    //     see: P0019 — Atomic Ref（涉及原子操作與記憶體順序的章節）
+    std::atomic_ref<int> counter_ref(*(new int(0)));  // 僅示意，非完整範例
+    counter_ref.fetch_add(1, std::memory_order_relaxed);
 
-  // [5] 提案編號會隨審議進度修訂版本號（如 P2300R10），
-  //     引用時務必連同版本號一併查證，避免依賴已過時的段落內容。
+    // [5] 提案編號會隨審議進度修訂版本號（如 P2300R10），
+    //     引用時務必連同版本號一併查證，避免依賴已過時的段落內容。
 
-  // [6] 若不確定某構造的確切提案編號，優先查 wg21.link 論文索引，
-  //     不要憑印象或轉述文章給出未經查證的編號。
+    // [6] 若不確定某構造的確切提案編號，優先查 wg21.link 論文索引，
+    //     不要憑印象或轉述文章給出未經查證的編號。
 }`,
     callouts: [
       {
@@ -165,39 +165,38 @@ void referenceLookupTable() {
 #include <unordered_map>
 
 int main() {
-  const std::unordered_map<std::string, std::string> paperOf{
-      {"std::execution", "P2300"},
-      {"std::linalg", "P1673"},
-      {"std::simd", "P1928"},
-      {"std::atomic_ref", "P0019"},
-  };
+    const std::unordered_map<std::string, std::string> paperOf{
+        {"std::execution", "P2300"},
+        {"std::linalg", "P1673"},
+        {"std::simd", "P1928"},
+        {"std::atomic_ref", "P0019"},
+    };
 
-  for (const auto& construct :
-       {"std::execution", "std::simd", "std::atomic_ref"}) {
-    auto it = paperOf.find(construct);
-    if (it != paperOf.end()) {
-      std::cout << construct << " -> " << it->second << " (see wg21.link/"
-                << it->second << ")\\n";
+    for (const auto& construct : {"std::execution", "std::simd", "std::atomic_ref"}) {
+        auto it = paperOf.find(construct);
+        if (it != paperOf.end()) {
+            std::cout << construct << " -> " << it->second << " (see wg21.link/" << it->second
+                      << ")\\n";
+        }
     }
-  }
-  return 0;
+    return 0;
 }`,
   },
   furtherReading: [
     {
       title: 'P2300 — std::execution',
       href: 'https://wg21.link/p2300',
-      description: 'senders/receivers 與 std::execution 的正式提案文件，第 16 章的主要標準依據。',
+      description: 'senders/receivers 與 std::execution 的正式提案文件，第 45 章的主要標準依據。',
     },
     {
       title: 'P1673 — A free function linear algebra interface based on the BLAS',
       href: 'https://wg21.link/p1673',
-      description: 'std::linalg 的正式提案文件，第 26 章矩陣／線性代數運算的主要標準依據。',
+      description: 'std::linalg 的正式提案文件，第 55 章矩陣／線性代數運算的主要標準依據。',
     },
     {
       title: 'P1928 — std::simd — Merge data-parallel types from the Parallelism TS2',
       href: 'https://wg21.link/p1928',
-      description: 'std::simd 的正式提案文件，第 17 章資料平行型別的主要標準依據。',
+      description: 'std::simd 的正式提案文件，第 46 章資料平行型別的主要標準依據。',
     },
     {
       title: 'cppreference.com — C++ reference',

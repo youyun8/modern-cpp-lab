@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ch16CodeConventionsII: ChapterContent = {
   slug: 'ch16-code-conventions-ii',
-  chapterLabel: 'Ch.16',
+  chapterLabel: '第 16 章',
   title: '程式慣例 II：現代寫法',
-  group: 'C · 建置系統與慣例',
+  group: '第 3 部：建置系統與慣例',
   description:
     'auto、現代 C++ 特性與提升可讀性的實務：結構化繫結、range-based for、ranges 與一致初始化如何讓程式更清楚。',
   concept: {
@@ -20,24 +20,24 @@ const ch16CodeConventionsII: ChapterContent = {
 #include <vector>
 
 int main() {
-  std::map<std::string, int> scores{{"amy", 90}, {"ben", 75}, {"cy", 60}};
+    std::map<std::string, int> scores{{"amy", 90}, {"ben", 75}, {"cy", 60}};
 
-  for (const auto& [name, score] : scores)  // [1] 結構化繫結
-    std::println("{}: {}", name, score);
+    for (const auto& [name, score] : scores)  // [1] 結構化繫結
+        std::println("{}: {}", name, score);
 
-  std::vector<int> v{1, 2, 3, 4, 5, 6};
-  auto evens = v  // [2] ranges 管線
-               | std::views::filter([](int x) { return x % 2 == 0; }) |
-               std::views::transform([](int x) { return x * x; });  // [3]
+    std::vector<int> v{1, 2, 3, 4, 5, 6};
+    auto evens = v  // [2] ranges 管線
+                 | std::views::filter([](int x) { return x % 2 == 0; }) |
+                 std::views::transform([](int x) { return x * x; });  // [3]
 
-  for (int x : evens)  // [4] 惰性求值
-    std::print("{} ", x);
-  std::println("");
+    for (int x : evens)  // [4] 惰性求值
+        std::print("{} ", x);
+    std::println("");
 
-  int total{0};  // [5] 一致初始化，防止窄化
-  for (int x : evens) total += x;
-  std::println("sum of squared evens = {}", total);
-  return 0;
+    int total{0};  // [5] 一致初始化，防止窄化
+    for (int x : evens) total += x;
+    std::println("sum of squared evens = {}", total);
+    return 0;
 }`,
     callouts: [
       {
@@ -129,16 +129,16 @@ int main() {
 #include <vector>
 
 int main() {
-  std::vector<int> v{1, 2, 3, 4, 5, 6};
-  auto evens = v | std::views::filter([](int x) { return x % 2 == 0; }) |
-               std::views::transform([](int x) { return x * x; });
-  int total = 0;
-  for (int x : evens) {
-    std::cout << x << ' ';
-    total += x;
-  }
-  std::cout << "\\nsum = " << total << '\\n';
-  return 0;
+    std::vector<int> v{1, 2, 3, 4, 5, 6};
+    auto evens = v | std::views::filter([](int x) { return x % 2 == 0; }) |
+                 std::views::transform([](int x) { return x * x; });
+    int total = 0;
+    for (int x : evens) {
+        std::cout << x << ' ';
+        total += x;
+    }
+    std::cout << "\\nsum = " << total << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [

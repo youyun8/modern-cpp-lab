@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ch01Introduction: ChapterContent = {
   slug: 'ch01-introduction',
-  chapterLabel: 'Ch.01',
+  chapterLabel: '第 1 章',
   title: '導論',
-  group: 'A · 基礎概念',
+  group: '第 1 部：基礎概念 Foundations',
   description:
     'C++ 的歷史沿革、設計哲學與主要應用領域概觀，說明為何直到今天 C++ 仍是高效能與系統程式設計的首選語言之一。',
   concept: {
@@ -20,12 +20,12 @@ const ch01Introduction: ChapterContent = {
 // 一支「現代」的 Hello World：善用標準函式庫的高階抽象，
 // 而非手動管理記憶體或使用 C 風格 I/O。
 int main() {
-  std::vector<std::string> langs{"C", "C++98", "C++11", "現代 C++"};  // [2]
+    std::vector<std::string> langs{"C", "C++98", "C++11", "現代 C++"};  // [2]
 
-  for (const auto& lang : langs) {         // [3] range-based for + auto
-    std::println("Hello from {}!", lang);  // [4] std::format 風格
-  }
-  return 0;  // [5] 回傳 0 代表成功
+    for (const auto& lang : langs) {           // [3] range-based for + auto
+        std::println("Hello from {}!", lang);  // [4] std::format 風格
+    }
+    return 0;  // [5] 回傳 0 代表成功
 }`,
     callouts: [
       {
@@ -124,9 +124,9 @@ int main() {
 
 // 若你的編譯器尚未支援 C++23 的 <print>，可退回 iostream 版本。
 int main() {
-  std::vector<std::string> langs{"C", "C++98", "C++11", "Modern C++"};
-  for (const auto& lang : langs) std::cout << "Hello from " << lang << "!\\n";
-  return 0;
+    std::vector<std::string> langs{"C", "C++98", "C++11", "Modern C++"};
+    for (const auto& lang : langs) std::cout << "Hello from " << lang << "!\\n";
+    return 0;
 }`,
   },
   furtherReading: [

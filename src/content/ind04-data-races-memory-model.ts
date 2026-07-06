@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ind04DataRacesMemoryModel: ChapterContent = {
   slug: 'ind04-data-races-memory-model',
-  chapterLabel: '第 4 章',
+  chapterLabel: '第 33 章',
   title: '資料競爭與 C++ 記憶體模型',
-  group: 'I · 第一部：C++ 記憶體模型與原子操作',
+  group: '第 9 部：C++ 記憶體模型與原子操作',
   description:
     'happens-before、sequenced-before、synchronizes-with 三個關係，資料競爭即未定義行為，以及為何 volatile 不是同步原語。',
   concept: {
@@ -23,17 +23,17 @@ volatile bool legacy_ready = false;  // [1]
 int legacy_payload = 0;              // plain, non-atomic, non-volatile data
 
 void legacy_producer() {
-  legacy_payload = 42;  // [2] ordinary write, no ordering guarantee
-  legacy_ready = true;  // [3] volatile write: reordering across
-                        //     threads is still permitted
+    legacy_payload = 42;  // [2] ordinary write, no ordering guarantee
+    legacy_ready = true;  // [3] volatile write: reordering across
+                          //     threads is still permitted
 }
 
 void legacy_consumer() {
-  while (!legacy_ready) {  // [4] volatile read is not atomic and is not
-    // spin                //     an acquire: the compiler/CPU may still
-  }  //     reorder or the read may tear on some
-     //     targets
-  std::printf("legacy_payload = %d\\n", legacy_payload);  // may print 0
+    while (!legacy_ready) {  // [4] volatile read is not atomic and is not
+                             // spin                //     an acquire: the compiler/CPU may still
+    }                        //     reorder or the read may tear on some
+                             //     targets
+    std::printf("legacy_payload = %d\\n", legacy_payload);  // may print 0
 }
 
 // Correct fix: std::atomic with explicit release/acquire ordering.
@@ -41,23 +41,23 @@ std::atomic<bool> ready{false};  // [5]
 int payload = 0;
 
 void producer() {
-  payload = 42;                                  // sequenced-before [6]
-  ready.store(true, std::memory_order_release);  // [6] publishes payload
+    payload = 42;                                  // sequenced-before [6]
+    ready.store(true, std::memory_order_release);  // [6] publishes payload
 }
 
 void consumer() {
-  while (!ready.load(std::memory_order_acquire)) {  // [6] pairs with store
-                                                    // spin
-  }
-  std::printf("payload = %d\\n", payload);  // guaranteed to print 42
+    while (!ready.load(std::memory_order_acquire)) {  // [6] pairs with store
+                                                      // spin
+    }
+    std::printf("payload = %d\\n", payload);  // guaranteed to print 42
 }
 
 int main() {
-  std::thread t1{producer};
-  std::thread t2{consumer};
-  t1.join();
-  t2.join();
-  return 0;
+    std::thread t1{producer};
+    std::thread t2{consumer};
+    t1.join();
+    t2.join();
+    return 0;
 }`,
     callouts: [
       {
@@ -186,36 +186,36 @@ std::atomic<bool> ready{false};
 int payload = 0;
 
 int main() {
-  std::thread producer([]() {
-    payload = 42;
-    ready.store(true, std::memory_order_release);
-  });
-  std::thread consumer([]() {
-    while (!ready.load(std::memory_order_acquire)) {
-      // spin
-    }
-    std::printf("payload = %d\\n", payload);  // always 42
-  });
-  producer.join();
-  consumer.join();
+    std::thread producer([]() {
+        payload = 42;
+        ready.store(true, std::memory_order_release);
+    });
+    std::thread consumer([]() {
+        while (!ready.load(std::memory_order_acquire)) {
+            // spin
+        }
+        std::printf("payload = %d\\n", payload);  // always 42
+    });
+    producer.join();
+    consumer.join();
 
-  // Try replacing the block above with the volatile-based version and
-  // reason about why the compiler is free to break it:
-  //
-  // std::thread p2([]() {
-  //     legacy_payload = 42;
-  //     legacy_ready = true;
-  // });
-  // std::thread c2([]() {
-  //     while (!legacy_ready) {
-  //         // spin
-  //     }
-  //     std::printf("legacy_payload = %d\\n", legacy_payload);
-  // });
-  // p2.join();
-  // c2.join();
+    // Try replacing the block above with the volatile-based version and
+    // reason about why the compiler is free to break it:
+    //
+    // std::thread p2([]() {
+    //     legacy_payload = 42;
+    //     legacy_ready = true;
+    // });
+    // std::thread c2([]() {
+    //     while (!legacy_ready) {
+    //         // spin
+    //     }
+    //     std::printf("legacy_payload = %d\\n", legacy_payload);
+    // });
+    // p2.join();
+    // c2.join();
 
-  return 0;
+    return 0;
 }`,
   },
   furtherReading: [

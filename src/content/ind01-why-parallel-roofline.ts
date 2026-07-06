@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ind01WhyParallelRoofline: ChapterContent = {
   slug: 'ind01-why-parallel-roofline',
-  chapterLabel: '第 1 章',
+  chapterLabel: '第 30 章',
   title: '為何平行、效能的上限在哪',
-  group: 'H · 第零部：先修與心智模型',
+  group: '第 8 部：先修與心智模型',
   description:
     'Amdahl／Gustafson 定律、strong/weak scaling 與 Roofline 模型，建立「先算上限、再談實作」的效能工程紀律。',
   concept: {
@@ -20,42 +20,39 @@ const ind01WhyParallelRoofline: ChapterContent = {
 //     speedup(p, s) = 1 / ((1 - p) + p / s)
 //     p：可平行化比例（0~1）；s：平行部分的加速倍數（約略等於核心數）。
 double amdahlSpeedup(double parallel_fraction, double speedup_factor) {
-  double serial_fraction = 1.0 - parallel_fraction;
-  return 1.0 / (serial_fraction + parallel_fraction / speedup_factor);  // [2]
+    double serial_fraction = 1.0 - parallel_fraction;
+    return 1.0 / (serial_fraction + parallel_fraction / speedup_factor);  // [2]
 }
 
 // [3] Gustafson 定律：固定「每個處理器的工作量」，隨處理器數增加問題規模。
 //     scaled_speedup(p, n) = (1 - p) + p * n
 double gustafsonSpeedup(double parallel_fraction, double num_processors) {
-  return (1.0 - parallel_fraction) + parallel_fraction * num_processors;
+    return (1.0 - parallel_fraction) + parallel_fraction * num_processors;
 }
 
 // [4] Roofline：算術強度 AI = FLOPs / Bytes；可達效能 = min(peak_flops, AI *
 // peak_bw)。
-double attainablePerformanceGFlops(double arithmetic_intensity,
-                                   double peak_gflops,
+double attainablePerformanceGFlops(double arithmetic_intensity, double peak_gflops,
                                    double peak_bandwidth_gbs) {
-  double memory_bound_estimate =
-      arithmetic_intensity * peak_bandwidth_gbs;  // [5]
-  return std::min(peak_gflops, memory_bound_estimate);
+    double memory_bound_estimate = arithmetic_intensity * peak_bandwidth_gbs;  // [5]
+    return std::min(peak_gflops, memory_bound_estimate);
 }
 
 int main() {
-  // 假設 90% 程式碼可平行化，在 32 核心上執行。
-  double p = 0.90;
-  double s = 32.0;
-  std::printf("Amdahl speedup (p=%.2f, s=%.0f) = %.2f\\n",  // [6]
-              p, s, amdahlSpeedup(p, s));
-  std::printf("Gustafson scaled speedup       = %.2f\\n",
-              gustafsonSpeedup(p, s));
+    // 假設 90% 程式碼可平行化，在 32 核心上執行。
+    double p = 0.90;
+    double s = 32.0;
+    std::printf("Amdahl speedup (p=%.2f, s=%.0f) = %.2f\\n",  // [6]
+                p, s, amdahlSpeedup(p, s));
+    std::printf("Gustafson scaled speedup       = %.2f\\n", gustafsonSpeedup(p, s));
 
-  // STREAM Triad 的 arithmetic intensity 大約是 1 FLOP / 24 bytes。
-  double ai = 1.0 / 24.0;
-  double peak_gflops = 2000.0;  // 假設峰值算力 2 TFLOPs
-  double peak_bw_gbs = 200.0;   // 假設峰值頻寬 200 GB/s
-  std::printf("Attainable = %.2f GFLOP/s (memory-bound)\\n",
-              attainablePerformanceGFlops(ai, peak_gflops, peak_bw_gbs));
-  return 0;
+    // STREAM Triad 的 arithmetic intensity 大約是 1 FLOP / 24 bytes。
+    double ai = 1.0 / 24.0;
+    double peak_gflops = 2000.0;  // 假設峰值算力 2 TFLOPs
+    double peak_bw_gbs = 200.0;   // 假設峰值頻寬 200 GB/s
+    std::printf("Attainable = %.2f GFLOP/s (memory-bound)\\n",
+                attainablePerformanceGFlops(ai, peak_gflops, peak_bw_gbs));
+    return 0;
 }`,
     callouts: [
       {
@@ -166,11 +163,11 @@ int main() {
 double amdahlSpeedup(double p, double n) { return 1.0 / ((1.0 - p) + p / n); }
 
 int main() {
-  double p = 0.95;
-  for (double n = 1.0; n <= 64.0; n *= 2.0) {
-    std::printf("n=%.0f speedup=%.2f\\n", n, amdahlSpeedup(p, n));
-  }
-  return 0;
+    double p = 0.95;
+    for (double n = 1.0; n <= 64.0; n *= 2.0) {
+        std::printf("n=%.0f speedup=%.2f\\n", n, amdahlSpeedup(p, n));
+    }
+    return 0;
 }`,
   },
   furtherReading: [

@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ch29BuildTime: ChapterContent = {
   slug: 'ch29-build-time',
-  chapterLabel: 'Ch.29',
+  chapterLabel: '第 29 章',
   title: '建置時間最佳化',
-  group: 'G · 軟體設計與工具',
+  group: '第 7 部：軟體設計與工具',
   description:
     'Precompiled headers、unity build、ThinLTO 與 include-what-you-use：如何縮短大型 C++ 專案的編譯時間。',
   concept: {
@@ -117,14 +117,14 @@ struct HeavyType;                  // 只宣告，不需完整定義
 void process(const HeavyType& h);  // 介面只需前置宣告
 
 struct HeavyType {
-  int data = 7;
+    int data = 7;
 };
 void process(const HeavyType& h) { std::cout << h.data << '\\n'; }
 
 int main() {
-  HeavyType h;
-  process(h);
-  return 0;
+    HeavyType h;
+    process(h);
+    return 0;
 }`,
   },
   furtherReading: [

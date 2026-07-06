@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ind21ThreadPoolsScheduling: ChapterContent = {
   slug: 'ind21-thread-pools-scheduling',
-  chapterLabel: '第 21 章',
+  chapterLabel: '第 50 章',
   title: '執行緒池與任務排程',
-  group: 'N · 第六部：效能工程',
+  group: '第 14 部：效能工程',
   description:
     'work-stealing 排程、任務粒度與負載平衡、優先權反轉，以及自建 vs TBB／OpenMP runtime 的取捨。',
   concept: {
@@ -40,71 +40,71 @@ const ind21ThreadPoolsScheduling: ChapterContent = {
 
 // 最小可用的執行緒池：共享任務佇列 + mutex/condition_variable。 [1]
 class ThreadPool {
- public:
-  explicit ThreadPool(std::size_t thread_count) {
-    workers_.reserve(thread_count);
-    for (std::size_t i = 0; i < thread_count; ++i) {
-      workers_.emplace_back([this] { WorkerLoop(); });  // [2]
-    }
-  }
-
-  ~ThreadPool() {
-    {
-      std::lock_guard<std::mutex> lock(mutex_);
-      stopping_ = true;
-    }
-    cv_.notify_all();  // [3]
-    for (std::thread& worker : workers_) {
-      worker.join();
-    }
-  }
-
-  // 提交任務；同一把鎖保護佇列，因此在高核心數下鎖競爭會隨執行緒數上升。
-  void Submit(std::function<void()> task) {
-    {
-      std::lock_guard<std::mutex> lock(mutex_);
-      tasks_.push(std::move(task));
-    }
-    cv_.notify_one();  // [4]
-  }
-
- private:
-  void WorkerLoop() {
-    while (true) {
-      std::function<void()> task;
-      {
-        std::unique_lock<std::mutex> lock(mutex_);
-        // 等待直到有任務或收到停止訊號，避免忙等（busy-wait）。 [5]
-        cv_.wait(lock, [this] { return stopping_ || !tasks_.empty(); });
-        if (stopping_ && tasks_.empty()) {
-          return;
+   public:
+    explicit ThreadPool(std::size_t thread_count) {
+        workers_.reserve(thread_count);
+        for (std::size_t i = 0; i < thread_count; ++i) {
+            workers_.emplace_back([this] { WorkerLoop(); });  // [2]
         }
-        task = std::move(tasks_.front());
-        tasks_.pop();
-      }
-      task();  // 鎖已釋放才執行任務本體，避免任務內再次呼叫 Submit 時死鎖。 [6]
     }
-  }
 
-  std::vector<std::thread> workers_;
-  std::queue<std::function<void()>> tasks_;
-  std::mutex mutex_;
-  std::condition_variable cv_;
-  bool stopping_ = false;
+    ~ThreadPool() {
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            stopping_ = true;
+        }
+        cv_.notify_all();  // [3]
+        for (std::thread& worker : workers_) {
+            worker.join();
+        }
+    }
+
+    // 提交任務；同一把鎖保護佇列，因此在高核心數下鎖競爭會隨執行緒數上升。
+    void Submit(std::function<void()> task) {
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            tasks_.push(std::move(task));
+        }
+        cv_.notify_one();  // [4]
+    }
+
+   private:
+    void WorkerLoop() {
+        while (true) {
+            std::function<void()> task;
+            {
+                std::unique_lock<std::mutex> lock(mutex_);
+                // 等待直到有任務或收到停止訊號，避免忙等（busy-wait）。 [5]
+                cv_.wait(lock, [this] { return stopping_ || !tasks_.empty(); });
+                if (stopping_ && tasks_.empty()) {
+                    return;
+                }
+                task = std::move(tasks_.front());
+                tasks_.pop();
+            }
+            task();  // 鎖已釋放才執行任務本體，避免任務內再次呼叫 Submit 時死鎖。 [6]
+        }
+    }
+
+    std::vector<std::thread> workers_;
+    std::queue<std::function<void()>> tasks_;
+    std::mutex mutex_;
+    std::condition_variable cv_;
+    bool stopping_ = false;
 };
 
 // 概念草圖：每執行緒一條 deque 的 work-stealing 介面（非完整實作）。
 // 真正的無鎖版本需要對頭尾各自的 CAS 協定與 ABA 防範，這裡只示意介面切分。
 class WorkStealingDeque {
- public:
-  // 只有擁有者執行緒呼叫：從頭部推入，屬本地端。
-  void PushFront(std::function<void()> task);
+   public:
+    // 只有擁有者執行緒呼叫：從頭部推入，屬本地端。
+    void PushFront(std::function<void()> task);
 
-  // 只有擁有者執行緒呼叫：從頭部彈出（LIFO，延續快取局部性）。
-  bool PopFront(std::function<void()>& out);
+    // 只有擁有者執行緒呼叫：從頭部彈出（LIFO，延續快取局部性）。
+    bool PopFront(std::function<void()>& out);
 
-  // 其他執行緒呼叫：從尾部偷（FIFO，與本地端相反，降低爭用）。
-  bool StealBack(std::function<void()>& out);
+    // 其他執行緒呼叫：從尾部偷（FIFO，與本地端相反，降低爭用）。
+    bool StealBack(std::function<void()>& out);
 };`,
     callouts: [
       {
@@ -210,72 +210,71 @@ class WorkStealingDeque {
 #include <vector>
 
 class ThreadPool {
- public:
-  explicit ThreadPool(std::size_t thread_count) {
-    for (std::size_t i = 0; i < thread_count; ++i) {
-      workers_.emplace_back([this] { WorkerLoop(); });
-    }
-  }
-
-  ~ThreadPool() {
-    {
-      std::lock_guard<std::mutex> lock(mutex_);
-      stopping_ = true;
-    }
-    cv_.notify_all();
-    for (std::thread& worker : workers_) {
-      worker.join();
-    }
-  }
-
-  void Submit(std::function<void()> task) {
-    {
-      std::lock_guard<std::mutex> lock(mutex_);
-      tasks_.push(std::move(task));
-    }
-    cv_.notify_one();
-  }
-
- private:
-  void WorkerLoop() {
-    while (true) {
-      std::function<void()> task;
-      {
-        std::unique_lock<std::mutex> lock(mutex_);
-        cv_.wait(lock, [this] { return stopping_ || !tasks_.empty(); });
-        if (stopping_ && tasks_.empty()) {
-          return;
+   public:
+    explicit ThreadPool(std::size_t thread_count) {
+        for (std::size_t i = 0; i < thread_count; ++i) {
+            workers_.emplace_back([this] { WorkerLoop(); });
         }
-        task = std::move(tasks_.front());
-        tasks_.pop();
-      }
-      task();
     }
-  }
 
-  std::vector<std::thread> workers_;
-  std::queue<std::function<void()>> tasks_;
-  std::mutex mutex_;
-  std::condition_variable cv_;
-  bool stopping_ = false;
+    ~ThreadPool() {
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            stopping_ = true;
+        }
+        cv_.notify_all();
+        for (std::thread& worker : workers_) {
+            worker.join();
+        }
+    }
+
+    void Submit(std::function<void()> task) {
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            tasks_.push(std::move(task));
+        }
+        cv_.notify_one();
+    }
+
+   private:
+    void WorkerLoop() {
+        while (true) {
+            std::function<void()> task;
+            {
+                std::unique_lock<std::mutex> lock(mutex_);
+                cv_.wait(lock, [this] { return stopping_ || !tasks_.empty(); });
+                if (stopping_ && tasks_.empty()) {
+                    return;
+                }
+                task = std::move(tasks_.front());
+                tasks_.pop();
+            }
+            task();
+        }
+    }
+
+    std::vector<std::thread> workers_;
+    std::queue<std::function<void()>> tasks_;
+    std::mutex mutex_;
+    std::condition_variable cv_;
+    bool stopping_ = false;
 };
 
 int main() {
-  ThreadPool pool(4);
-  std::atomic<int> completed{0};
+    ThreadPool pool(4);
+    std::atomic<int> completed{0};
 
-  for (int i = 0; i < 20; ++i) {
-    pool.Submit([i, &completed] {
-      completed.fetch_add(1, std::memory_order_relaxed);
-      std::cout << "task " << i << " done on thread "
-                << std::this_thread::get_id() << "\\n";
-    });
-  }
+    for (int i = 0; i < 20; ++i) {
+        pool.Submit([i, &completed] {
+            completed.fetch_add(1, std::memory_order_relaxed);
+            std::cout << "task " << i << " done on thread " << std::this_thread::get_id() << "\\n";
+        });
+    }
 
-  // 解構子會等待所有已提交任務完成後才結束，這裡先睡一下讓輸出更好觀察。
-  std::this_thread::sleep_for(std::chrono::milliseconds(50));
-  std::cout << "completed so far: " << completed.load() << "\\n";
-  return 0;
+    // 解構子會等待所有已提交任務完成後才結束，這裡先睡一下讓輸出更好觀察。
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    std::cout << "completed so far: " << completed.load() << "\\n";
+    return 0;
 }`,
   },
   furtherReading: [

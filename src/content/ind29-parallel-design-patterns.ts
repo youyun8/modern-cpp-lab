@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ind29ParallelDesignPatterns: ChapterContent = {
   slug: 'ind29-parallel-design-patterns',
-  chapterLabel: '第 29 章',
+  chapterLabel: '第 58 章',
   title: '並行設計樣式',
-  group: 'R · 第十部：架構、樣式與整合',
+  group: '第 18 部：架構、樣式與整合',
   description:
     'Producer-Consumer、Pipeline、Fork-Join、Actor、Active Object、Monitor 等樣式，以及 thread-per-request 對事件迴圈、SPMD/BSP 在 C++ 抽象下的表達。',
   concept: {
@@ -23,63 +23,62 @@ const ind29ParallelDesignPatterns: ChapterContent = {
 // Active Object：把「呼叫」與「執行」解耦。
 // 公開介面回傳 std::future，實際工作在內部專屬執行緒上依序執行。 [1]
 class Logger {
- public:
-  Logger() : worker_(&Logger::run, this) {}
+   public:
+    Logger() : worker_(&Logger::run, this) {}
 
-  ~Logger() {
-    {
-      std::lock_guard<std::mutex> lock(mutex_);
-      stop_ = true;
+    ~Logger() {
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            stop_ = true;
+        }
+        cv_.notify_all();
+        worker_.join();
     }
-    cv_.notify_all();
-    worker_.join();
-  }
 
-  // 公開方法立即返回 future，呼叫端不會被實際的 I/O 阻塞。 [2]
-  std::future<void> log(std::string message) {
-    auto task = std::make_shared<std::packaged_task<void()>>(
-        [msg = std::move(message)] {
-          std::println("[log] {}", msg);  // 模擬耗時的實際輸出
+    // 公開方法立即返回 future，呼叫端不會被實際的 I/O 阻塞。 [2]
+    std::future<void> log(std::string message) {
+        auto task = std::make_shared<std::packaged_task<void()>>([msg = std::move(message)] {
+            std::println("[log] {}", msg);  // 模擬耗時的實際輸出
         });
-    std::future<void> fut = task->get_future();
-    {
-      std::lock_guard<std::mutex> lock(mutex_);
-      queue_.push_back([task] { (*task)(); });  // [3] 請求進入內部佇列
+        std::future<void> fut = task->get_future();
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            queue_.push_back([task] { (*task)(); });  // [3] 請求進入內部佇列
+        }
+        cv_.notify_one();
+        return fut;
     }
-    cv_.notify_one();
-    return fut;
-  }
 
- private:
-  // 專屬執行緒：Monitor 風格，所有存取都在鎖保護下完成。 [4]
-  void run() {
-    while (true) {
-      std::function<void()> job;
-      {
-        std::unique_lock<std::mutex> lock(mutex_);
-        cv_.wait(lock, [this] { return stop_ || !queue_.empty(); });  // [5]
-        if (queue_.empty() && stop_) return;
-        job = std::move(queue_.front());
-        queue_.pop_front();
-      }
-      job();  // [6] 鎖已釋放，執行實際工作不阻塞其他呼叫端
+   private:
+    // 專屬執行緒：Monitor 風格，所有存取都在鎖保護下完成。 [4]
+    void run() {
+        while (true) {
+            std::function<void()> job;
+            {
+                std::unique_lock<std::mutex> lock(mutex_);
+                cv_.wait(lock, [this] { return stop_ || !queue_.empty(); });  // [5]
+                if (queue_.empty() && stop_) return;
+                job = std::move(queue_.front());
+                queue_.pop_front();
+            }
+            job();  // [6] 鎖已釋放，執行實際工作不阻塞其他呼叫端
+        }
     }
-  }
 
-  std::deque<std::function<void()>> queue_;
-  std::mutex mutex_;
-  std::condition_variable cv_;
-  bool stop_ = false;
-  std::thread worker_;
+    std::deque<std::function<void()>> queue_;
+    std::mutex mutex_;
+    std::condition_variable cv_;
+    bool stop_ = false;
+    std::thread worker_;
 };
 
 int main() {
-  Logger logger;
-  auto f1 = logger.log("hello");
-  auto f2 = logger.log("world");
-  f1.wait();
-  f2.wait();
-  return 0;
+    Logger logger;
+    auto f1 = logger.log("hello");
+    auto f2 = logger.log("world");
+    f1.wait();
+    f2.wait();
+    return 0;
 }`,
     callouts: [
       { n: 1, text: 'Active Object 的核心：介面（log）與執行（run 內部執行緒）分屬不同執行緒。' },
@@ -193,26 +192,26 @@ int main() {
 // SPMD + BSP：固定數量 worker 執行緒各自處理資料切片，
 // 每個超步結束後在 barrier 同步，確保下一階段能安全讀到上一階段結果。
 int main() {
-  constexpr int num_workers = 4;
-  constexpr int steps = 3;
-  std::vector<int> data(num_workers, 0);
+    constexpr int num_workers = 4;
+    constexpr int steps = 3;
+    std::vector<int> data(num_workers, 0);
 
-  std::barrier sync_point(num_workers);
-  std::vector<std::thread> workers;
+    std::barrier sync_point(num_workers);
+    std::vector<std::thread> workers;
 
-  for (int id = 0; id < num_workers; ++id) {
-    workers.emplace_back([&, id] {
-      for (int step = 0; step < steps; ++step) {
-        data[id] += id + step;  // 本地計算（SPMD：相同程式、不同資料）
-        sync_point.arrive_and_wait();  // BSP：等所有 worker 完成本超步
-      }
-    });
-  }
-  for (auto& t : workers) t.join();
+    for (int id = 0; id < num_workers; ++id) {
+        workers.emplace_back([&, id] {
+            for (int step = 0; step < steps; ++step) {
+                data[id] += id + step;  // 本地計算（SPMD：相同程式、不同資料）
+                sync_point.arrive_and_wait();  // BSP：等所有 worker 完成本超步
+            }
+        });
+    }
+    for (auto& t : workers) t.join();
 
-  for (int id = 0; id < num_workers; ++id)
-    std::cout << "worker " << id << " -> " << data[id] << "\\n";
-  return 0;
+    for (int id = 0; id < num_workers; ++id)
+        std::cout << "worker " << id << " -> " << data[id] << "\\n";
+    return 0;
 }`,
   },
   furtherReading: [

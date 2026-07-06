@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ind13AsyncFuturePromise: ChapterContent = {
   slug: 'ind13-async-future-promise',
-  chapterLabel: '第 13 章',
+  chapterLabel: '第 42 章',
   title: 'std::async／future／promise 與其侷限',
-  group: 'L · 第四部：高階平行抽象',
+  group: '第 12 部：高階平行抽象',
   description:
     'packaged_task 的用法，以及 future 無法組合（no continuation）的痛點，為 senders/receivers 鋪陳。',
   concept: {
@@ -38,46 +38,45 @@ const ind13AsyncFuturePromise: ChapterContent = {
 
 // 模擬第一階段：從「感測器」讀值，可能失敗。
 int read_sensor() {
-  std::this_thread::sleep_for(std::chrono::milliseconds(20));
-  return 21;
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    return 21;
 }
 
 // 模擬第二階段：依賴第一階段的結果做進一步運算。
 int scale_and_check(int raw) {
-  std::this_thread::sleep_for(std::chrono::milliseconds(20));
-  if (raw < 0) {
-    throw std::runtime_error("negative reading");  // [1]
-  }
-  return raw * 2;
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    if (raw < 0) {
+        throw std::runtime_error("negative reading");  // [1]
+    }
+    return raw * 2;
 }
 
 int main() {
-  // 顯式指定 launch::async，避免落入預設策略可能延後執行的陷阱。 [2]
-  std::future<int> stage1 = std::async(std::launch::async, read_sensor);
+    // 顯式指定 launch::async，避免落入預設策略可能延後執行的陷阱。 [2]
+    std::future<int> stage1 = std::async(std::launch::async, read_sensor);
 
-  // 沒有 .then()：想在 stage1 完成後接著跑 stage2，
-  // 唯一辦法是在這裡阻塞呼叫 get()，白白佔用目前這個執行緒空等。 [3]
-  int raw = stage1.get();  // 一次性操作：這個 future 之後不能再 get()
+    // 沒有 .then()：想在 stage1 完成後接著跑 stage2，
+    // 唯一辦法是在這裡阻塞呼叫 get()，白白佔用目前這個執行緒空等。 [3]
+    int raw = stage1.get();  // 一次性操作：這個 future 之後不能再 get()
 
-  // 手動把結果餵給下一個非同步工作，形成「偽管線」。
-  std::future<int> stage2 =
-      std::async(std::launch::async, scale_and_check, raw);
+    // 手動把結果餵給下一個非同步工作，形成「偽管線」。
+    std::future<int> stage2 = std::async(std::launch::async, scale_and_check, raw);
 
-  try {
-    // 例外要到這裡才會浮現；若中途忘了呼叫 get()，
-    // scale_and_check 丟出的例外將隨 future 解構被靜默吞掉。 [4]
-    int result = stage2.get();
-    std::cout << "result = " << result << '\\n';
-  } catch (const std::exception& e) {
-    // 若改用 senders/receivers，錯誤會沿著 pipeline 傳遞給
-    // 對應的 error channel，而不必集中在單一同步點處理。 [5]
-    std::cerr << "stage2 failed: " << e.what() << '\\n';
-  }
+    try {
+        // 例外要到這裡才會浮現；若中途忘了呼叫 get()，
+        // scale_and_check 丟出的例外將隨 future 解構被靜默吞掉。 [4]
+        int result = stage2.get();
+        std::cout << "result = " << result << '\\n';
+    } catch (const std::exception& e) {
+        // 若改用 senders/receivers，錯誤會沿著 pipeline 傳遞給
+        // 對應的 error channel，而不必集中在單一同步點處理。 [5]
+        std::cerr << "stage2 failed: " << e.what() << '\\n';
+    }
 
-  // 再次呼叫 stage1.get() 會丟出 std::future_error（no_state）。 [6]
-  // int again = stage1.get();  // 未定義前提下的合法錯誤，勿嘗試。
+    // 再次呼叫 stage1.get() 會丟出 std::future_error（no_state）。 [6]
+    // int again = stage1.get();  // 未定義前提下的合法錯誤，勿嘗試。
 
-  return 0;
+    return 0;
 }`,
     callouts: [
       { n: 1, text: '例外在生產端發生後，會被保存在共享狀態中，直到消費端呼叫 get() 才重新丟出。' },
@@ -179,24 +178,24 @@ int main() {
 #include <thread>
 
 int main() {
-  // launch::async：保證立即在新執行緒上執行。
-  std::future<int> f1 = std::async(std::launch::async, [] {
-    std::this_thread::sleep_for(std::chrono::milliseconds(30));
-    return 10;
-  });
+    // launch::async：保證立即在新執行緒上執行。
+    std::future<int> f1 = std::async(std::launch::async, [] {
+        std::this_thread::sleep_for(std::chrono::milliseconds(30));
+        return 10;
+    });
 
-  // 沒有 .then()：必須阻塞在這裡取值，才能把結果餵給下一步。
-  int a = f1.get();
+    // 沒有 .then()：必須阻塞在這裡取值，才能把結果餵給下一步。
+    int a = f1.get();
 
-  std::future<int> f2 = std::async(std::launch::async, [a] { return a * 4; });
+    std::future<int> f2 = std::async(std::launch::async, [a] { return a * 4; });
 
-  std::cout << "final = " << f2.get() << '\\n';
+    std::cout << "final = " << f2.get() << '\\n';
 
-  // 再次呼叫 f1.get() 會丟出 std::future_error（示範一次性語意，
-  // 實際執行請勿真的呼叫，以下僅為註解）：
-  // f1.get();
+    // 再次呼叫 f1.get() 會丟出 std::future_error（示範一次性語意，
+    // 實際執行請勿真的呼叫，以下僅為註解）：
+    // f1.get();
 
-  return 0;
+    return 0;
 }`,
   },
   furtherReading: [

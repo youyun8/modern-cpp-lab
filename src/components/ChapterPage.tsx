@@ -12,6 +12,16 @@ import DiagramFrame from '@/components/ui/DiagramFrame';
 import TryItPanel from '@/components/ui/TryItPanel';
 import FurtherReading from '@/components/ui/FurtherReading';
 
+function getSectionPrefix(chapterLabel?: string): string | undefined {
+  const chapter = chapterLabel?.match(/^第\s*(\d+)\s*章$/);
+  if (chapter) return chapter[1];
+
+  const appendix = chapterLabel?.match(/^附錄\s*([A-Z])$/);
+  if (appendix) return appendix[1];
+
+  return undefined;
+}
+
 /**
  * Renders the canonical six-panel layout for any chapter or lab page from a
  * single ChapterContent object plus its pre-highlighted code markup.
@@ -24,6 +34,7 @@ export default function ChapterPage({
   codeHtml: HighlightedCode;
 }) {
   const { prev, next } = getAdjacentNavItems(content.slug);
+  const sectionPrefix = getSectionPrefix(content.chapterLabel);
 
   return (
     <article className="mx-auto max-w-3xl space-y-8 pb-16">
@@ -54,7 +65,9 @@ export default function ChapterPage({
 
       <ConceptCard concept={content.concept} />
 
-      {content.deepDive && content.deepDive.length > 0 && <DeepDive sections={content.deepDive} />}
+      {content.deepDive && content.deepDive.length > 0 && (
+        <DeepDive sections={content.deepDive} sectionPrefix={sectionPrefix} />
+      )}
 
       <CodeBlock html={codeHtml} callouts={content.code.callouts} />
 

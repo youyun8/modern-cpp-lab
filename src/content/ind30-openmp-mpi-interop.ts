@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ind30OpenmpMpiInterop: ChapterContent = {
   slug: 'ind30-openmp-mpi-interop',
-  chapterLabel: '第 30 章',
+  chapterLabel: '第 59 章',
   title: '與 OpenMP／MPI 的分工與互操作',
-  group: 'R · 第十部：架構、樣式與整合',
+  group: '第 18 部：架構、樣式與整合',
   description:
     'std::execution 與 OpenMP task 的取捨、Hybrid MPI + C++ threads 的 MPI_THREAD_MULTIPLE 陷阱，以及漸進遷移策略。',
   concept: {
@@ -14,7 +14,7 @@ const ind30OpenmpMpiInterop: ChapterContent = {
   deepDive: [
     {
       heading: 'std::execution 何時能取代 OpenMP task，何時仍不能',
-      body: '`std::execution` 提供的是可移植、以型別與函式庫組合表達的結構化並行（sender／receiver、`then`、`bulk`、`when_all`，見第 16 章），優點是不需要編譯器特別支援 pragma 語法、可以和一般 C++ 泛型程式碼自然組合、錯誤與取消路徑（`set_error`／`set_stopped`）有統一的語意。這些特質使它適合表達「任務圖」明確、粒度中等、且希望程式碼可移植到不同執行環境（CPU 執行緒池、未來的 GPU scheduler）的場景。\n\n但 OpenMP 累積數十年的優勢並非空談：`#pragma omp parallel for` 搭配 `schedule(static|dynamic|guided, chunk)`、`proc_bind(close|spread|master)`、`num_threads` 等子句，讓程式設計者可以在原始碼層級精細控制 NUMA 親和性、負載平衡策略與執行緒綁定，這些能力目前在 `std::execution` 中沒有標準化的對應物——排程細節被刻意留給 scheduler 實作，但生態系尚未出現與 OpenMP 同等成熟、且被廣泛部署的 NUMA 感知 scheduler。此外，`#pragma omp simd`／`declare simd` 這類「原始碼層級提示」直接告訴編譯器在向量化時可以做哪些假設（例如忽略特定型別的別名疑慮），這是函式庫呼叫做不到的、編譯器前端層級的溝通管道。因此誠實的結論是：`std::execution` 是一個正在成形、值得投資學習的方向，但它目前是「函式庫層級的補充」，還不是能在效能敏感的 NUMA 感知迴圈或需要編譯器向量化提示的熱路徑上，直接取代 OpenMP 的生產級替代品。',
+      body: '`std::execution` 提供的是可移植、以型別與函式庫組合表達的結構化並行（sender／receiver、`then`、`bulk`、`when_all`，見第 45 章），優點是不需要編譯器特別支援 pragma 語法、可以和一般 C++ 泛型程式碼自然組合、錯誤與取消路徑（`set_error`／`set_stopped`）有統一的語意。這些特質使它適合表達「任務圖」明確、粒度中等、且希望程式碼可移植到不同執行環境（CPU 執行緒池、未來的 GPU scheduler）的場景。\n\n但 OpenMP 累積數十年的優勢並非空談：`#pragma omp parallel for` 搭配 `schedule(static|dynamic|guided, chunk)`、`proc_bind(close|spread|master)`、`num_threads` 等子句，讓程式設計者可以在原始碼層級精細控制 NUMA 親和性、負載平衡策略與執行緒綁定，這些能力目前在 `std::execution` 中沒有標準化的對應物——排程細節被刻意留給 scheduler 實作，但生態系尚未出現與 OpenMP 同等成熟、且被廣泛部署的 NUMA 感知 scheduler。此外，`#pragma omp simd`／`declare simd` 這類「原始碼層級提示」直接告訴編譯器在向量化時可以做哪些假設（例如忽略特定型別的別名疑慮），這是函式庫呼叫做不到的、編譯器前端層級的溝通管道。因此誠實的結論是：`std::execution` 是一個正在成形、值得投資學習的方向，但它目前是「函式庫層級的補充」，還不是能在效能敏感的 NUMA 感知迴圈或需要編譯器向量化提示的熱路徑上，直接取代 OpenMP 的生產級替代品。',
     },
     {
       heading: 'Hybrid MPI + C++ threads 的正確性：MPI thread support level',
@@ -22,7 +22,7 @@ const ind30OpenmpMpiInterop: ChapterContent = {
     },
     {
       heading: 'C++ 記憶體模型與 MPI 記憶體模型的交界',
-      body: 'C++ 標準的 happens-before 關係（第 4 章）只描述同一個位址空間內、由 C++ 同步原語（`std::atomic` 的 release／acquire、mutex 的 unlock／lock、`std::thread::join` 等）所建立的可見性保證。MPI 通訊發生在完全不同的同步網域：一次成功完成的 `MPI_Send`／`MPI_Recv`（或其非阻塞版本搭配 `MPI_Wait`）在傳送端與接收端之間建立的是 MPI 標準自身定義的排序與資料可見性保證，這個保證由 MPI 實作透過網路層、共享記憶體段（若在同一節點內，MPI 實作可能內部使用 shared memory 做最佳化）或其他機制達成，完全不經過、也不受 C++ 的 `std::atomic` 或記憶體屏障（fence）語意約束。\n\n這裡最容易出錯的地方，是在同一個行程內混合使用「MPI 訊息完成」與「C++ 執行緒間共享記憶體同步」這兩種機制時，把其中一種誤當成另一種的替代品：一個執行緒收到 `MPI_Recv` 完成，不代表這個行程裡其他執行緒能安全地讀取由該次接收更新的資料——如果另一個執行緒要讀取這份剛收到的資料，仍然需要一條標準的 C++ happens-before 邊（例如用 `std::atomic` 旗標或 mutex 把「MPI 接收完成」這個事實傳遞給其他執行緒），MPI 的完成語意本身不會自動延伸成 C++ 執行緒間的 synchronizes-with 關係。反過來，也不能用 C++ 的 `std::atomic` 去同步兩個不同行程（不同位址空間）——`std::atomic` 只對同一位址空間內的執行緒有意義，跨行程一定得靠 MPI（或其他 IPC 機制）本身的同步原語。',
+      body: 'C++ 標準的 happens-before 關係（第 33 章）只描述同一個位址空間內、由 C++ 同步原語（`std::atomic` 的 release／acquire、mutex 的 unlock／lock、`std::thread::join` 等）所建立的可見性保證。MPI 通訊發生在完全不同的同步網域：一次成功完成的 `MPI_Send`／`MPI_Recv`（或其非阻塞版本搭配 `MPI_Wait`）在傳送端與接收端之間建立的是 MPI 標準自身定義的排序與資料可見性保證，這個保證由 MPI 實作透過網路層、共享記憶體段（若在同一節點內，MPI 實作可能內部使用 shared memory 做最佳化）或其他機制達成，完全不經過、也不受 C++ 的 `std::atomic` 或記憶體屏障（fence）語意約束。\n\n這裡最容易出錯的地方，是在同一個行程內混合使用「MPI 訊息完成」與「C++ 執行緒間共享記憶體同步」這兩種機制時，把其中一種誤當成另一種的替代品：一個執行緒收到 `MPI_Recv` 完成，不代表這個行程裡其他執行緒能安全地讀取由該次接收更新的資料——如果另一個執行緒要讀取這份剛收到的資料，仍然需要一條標準的 C++ happens-before 邊（例如用 `std::atomic` 旗標或 mutex 把「MPI 接收完成」這個事實傳遞給其他執行緒），MPI 的完成語意本身不會自動延伸成 C++ 執行緒間的 synchronizes-with 關係。反過來，也不能用 C++ 的 `std::atomic` 去同步兩個不同行程（不同位址空間）——`std::atomic` 只對同一位址空間內的執行緒有意義，跨行程一定得靠 MPI（或其他 IPC 機制）本身的同步原語。',
     },
     {
       heading: '既有 OpenMP／MPI 程式碼的漸進遷移策略',
@@ -39,55 +39,54 @@ const ind30OpenmpMpiInterop: ChapterContent = {
 #include <vector>
 
 int main(int argc, char** argv) {
-  // 要求 MPI_THREAD_FUNNELED：只有呼叫 MPI_Init_thread 的這個
-  // （主）執行緒之後可以呼叫任何 MPI 函式，OpenMP 平行區塊內的
-  // worker 執行緒完全不可呼叫 MPI。 [1]
-  int provided = MPI_THREAD_SINGLE;
-  MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided);
-  if (provided < MPI_THREAD_FUNNELED) {
-    // 必須檢查實際獲得的等級，不能假設 required 一定被滿足。 [2]
-    std::fprintf(stderr,
-                 "MPI implementation does not provide "
-                 "MPI_THREAD_FUNNELED\\n");
-    MPI_Abort(MPI_COMM_WORLD, 1);
-  }
+    // 要求 MPI_THREAD_FUNNELED：只有呼叫 MPI_Init_thread 的這個
+    // （主）執行緒之後可以呼叫任何 MPI 函式，OpenMP 平行區塊內的
+    // worker 執行緒完全不可呼叫 MPI。 [1]
+    int provided = MPI_THREAD_SINGLE;
+    MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided);
+    if (provided < MPI_THREAD_FUNNELED) {
+        // 必須檢查實際獲得的等級，不能假設 required 一定被滿足。 [2]
+        std::fprintf(stderr,
+                     "MPI implementation does not provide "
+                     "MPI_THREAD_FUNNELED\\n");
+        MPI_Abort(MPI_COMM_WORLD, 1);
+    }
 
-  int rank = 0;
-  int world_size = 1;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+    int rank = 0;
+    int world_size = 1;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-  constexpr int kLocalSize = 1'000'000;
-  std::vector<double> local_data(kLocalSize, static_cast<double>(rank));
+    constexpr int kLocalSize = 1'000'000;
+    std::vector<double> local_data(kLocalSize, static_cast<double>(rank));
 
-  // 用 std::atomic 取代原本可能是 #pragma omp critical 的累加器：
-  // 這是「漸進遷移」中最低風險的一步，不改動外層 OpenMP 迴圈結構。 [3]
-  std::atomic<long long> processed_count{0};
+    // 用 std::atomic 取代原本可能是 #pragma omp critical 的累加器：
+    // 這是「漸進遷移」中最低風險的一步，不改動外層 OpenMP 迴圈結構。 [3]
+    std::atomic<long long> processed_count{0};
 
-  double local_sum = 0.0;
+    double local_sum = 0.0;
 #pragma omp parallel for reduction(+ : local_sum) schedule(static)
-  for (int i = 0; i < kLocalSize; ++i) {
-    // 熱路徑：純本地運算，完全不呼叫任何 MPI 函式。 [4]
-    local_data[static_cast<std::size_t>(i)] *= 2.0;
-    local_sum += local_data[static_cast<std::size_t>(i)];
-    processed_count.fetch_add(1, std::memory_order_relaxed);
-  }
+    for (int i = 0; i < kLocalSize; ++i) {
+        // 熱路徑：純本地運算，完全不呼叫任何 MPI 函式。 [4]
+        local_data[static_cast<std::size_t>(i)] *= 2.0;
+        local_sum += local_data[static_cast<std::size_t>(i)];
+        processed_count.fetch_add(1, std::memory_order_relaxed);
+    }
 
-  // 離開 OpenMP 平行區塊後，回到單一（主）執行緒的序列部分，
-  // 才是唯一允許呼叫 MPI 的地方（滿足 MPI_THREAD_FUNNELED 的要求）。 [5]
-  double global_sum = 0.0;
-  MPI_Reduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, 0,
-             MPI_COMM_WORLD);
+    // 離開 OpenMP 平行區塊後，回到單一（主）執行緒的序列部分，
+    // 才是唯一允許呼叫 MPI 的地方（滿足 MPI_THREAD_FUNNELED 的要求）。 [5]
+    double global_sum = 0.0;
+    MPI_Reduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
-  // 注意：MPI_Reduce 完成後 global_sum 在 rank 0 上有效，這個保證
-  // 來自 MPI 標準自身的語意，與 C++ 的 happens-before／std::atomic
-  // 無關——它們是兩套獨立的同步網域。 [6]
-  if (rank == 0) {
-    std::printf("global_sum = %f across %d ranks\\n", global_sum, world_size);
-  }
+    // 注意：MPI_Reduce 完成後 global_sum 在 rank 0 上有效，這個保證
+    // 來自 MPI 標準自身的語意，與 C++ 的 happens-before／std::atomic
+    // 無關——它們是兩套獨立的同步網域。 [6]
+    if (rank == 0) {
+        std::printf("global_sum = %f across %d ranks\\n", global_sum, world_size);
+    }
 
-  MPI_Finalize();
-  return 0;
+    MPI_Finalize();
+    return 0;
 }`,
     callouts: [
       {
@@ -196,20 +195,20 @@ int main(int argc, char** argv) {
 #include <cstdio>
 
 int main() {
-  constexpr int kSize = 1'000'000;
-  std::atomic<long long> processed_count{0};
+    constexpr int kSize = 1'000'000;
+    std::atomic<long long> processed_count{0};
 
-  double sum = 0.0;
+    double sum = 0.0;
 #pragma omp parallel for reduction(+ : sum) schedule(static)
-  for (int i = 0; i < kSize; ++i) {
-    sum += static_cast<double>(i);
-    // 取代 #pragma omp critical { ++processed_count; } 的低風險改動。
-    processed_count.fetch_add(1, std::memory_order_relaxed);
-  }
+    for (int i = 0; i < kSize; ++i) {
+        sum += static_cast<double>(i);
+        // 取代 #pragma omp critical { ++processed_count; } 的低風險改動。
+        processed_count.fetch_add(1, std::memory_order_relaxed);
+    }
 
-  std::printf("sum = %f, processed = %lld\\n", sum,
-              processed_count.load(std::memory_order_relaxed));
-  return 0;
+    std::printf("sum = %f, processed = %lld\\n", sum,
+                processed_count.load(std::memory_order_relaxed));
+    return 0;
 }`,
   },
   furtherReading: [

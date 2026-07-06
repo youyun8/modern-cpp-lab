@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ind31CapstoneProject: ChapterContent = {
   slug: 'ind31-capstone-project',
-  chapterLabel: '第 31 章',
+  chapterLabel: '第 60 章',
   title: '綜合專案 Capstone',
-  group: 'S · 第十一部：綜合實戰',
+  group: '第 19 部：綜合實戰',
   description:
     '三選一綜合專案（並行數值核心／高吞吐並行系統／平行圖處理引擎），交付效能報告與正確性證據。',
   concept: {
@@ -15,7 +15,7 @@ const ind31CapstoneProject: ChapterContent = {
       '（2）高吞吐並行系統（無鎖佇列驅動的任務 runtime 或網路服務）、' +
       '（3）平行圖處理引擎（BSP 模型＋work-stealing）。' +
       '每個題目都要求同時交付「效能報告」與「正確性證據」，而不是只交一份會跑的程式碼。' +
-      '評分標準不是「有沒有平行化」，而是「平行化的主張能不能被重現、被驗證」——這正是整本教材從第 1 章 roofline 到第 25 章可重現性一路鋪陳的核心價值觀。',
+      '評分標準不是「有沒有平行化」，而是「平行化的主張能不能被重現、被驗證」——這正是整本教材從第 30 章 roofline 到第 54 章可重現性一路鋪陳的核心價值觀。',
   },
   deepDive: [
     {
@@ -24,10 +24,10 @@ const ind31CapstoneProject: ChapterContent = {
         '目標：實作一個多執行緒、向量化、並可選擇性 offload 到 GPU 的 GEMM 或 stencil 核心，' +
         '並以 roofline 模型量化它離硬體上限還有多遠。' +
         '\n\n' +
-        '這個選項要求你把第 1 章的 roofline 分析（`operational intensity` vs. 可達到的 GFLOP/s）當成「起點」而非「事後補充」——' +
-        '先算出你的核心屬於 compute-bound 還是 memory-bound，再決定要優化的方向是向量化（`inline code` 使用第 17 章 `std::simd`）' +
-        '還是資料佈局（第 26 章 `std::mdspan` 描述多維陣列的 stride 與記憶體佈局）。' +
-        '若延伸到 GPU，第 27 章討論的 offload 與 host/device 資料搬移策略（pinned memory、非同步傳輸與計算重疊）將決定你能不能把理論峰值真正兌現成量測值。' +
+        '這個選項要求你把第 30 章的 roofline 分析（`operational intensity` vs. 可達到的 GFLOP/s）當成「起點」而非「事後補充」——' +
+        '先算出你的核心屬於 compute-bound 還是 memory-bound，再決定要優化的方向是向量化（`inline code` 使用第 46 章 `std::simd`）' +
+        '還是資料佈局（第 55 章 `std::mdspan` 描述多維陣列的 stride 與記憶體佈局）。' +
+        '若延伸到 GPU，第 56 章討論的 offload 與 host/device 資料搬移策略（pinned memory、非同步傳輸與計算重疊）將決定你能不能把理論峰值真正兌現成量測值。' +
         '交付物必須包含：一條或多條 roofline 圖上的量測點、不同執行緒數/向量寬度下的效能曲線，以及對「歸約」（例如矩陣乘法的內積累加）跨執行緒數可重現性的驗證。',
     },
     {
@@ -35,10 +35,10 @@ const ind31CapstoneProject: ChapterContent = {
       body:
         '目標：實作一個由無鎖佇列驅動的任務 runtime，或一個高並發網路服務，並提供 scaling 與尾延遲（tail latency）分析。' +
         '\n\n' +
-        '這個選項直接建立在第 12 章的並行容器（`inline code` 無鎖佇列、`std::hazard_pointer` 等記憶體回收策略）' +
-        '與第 21 章的執行緒池／排程設計之上：你需要決定任務分配策略（work-stealing vs. 集中式佇列）、' +
+        '這個選項直接建立在第 41 章的並行容器（`inline code` 無鎖佇列、`std::hazard_pointer` 等記憶體回收策略）' +
+        '與第 50 章的執行緒池／排程設計之上：你需要決定任務分配策略（work-stealing vs. 集中式佇列）、' +
         '如何避免 false sharing、以及如何在高負載下維持公平性。' +
-        '正確性上，第 23 章介紹的併發臭蟲偵測工具（ThreadSanitizer、AddressSanitizer）在這裡不是「跑一次就好」的檢查項，' +
+        '正確性上，第 52 章介紹的併發臭蟲偵測工具（ThreadSanitizer、AddressSanitizer）在這裡不是「跑一次就好」的檢查項，' +
         '而是整個開發過程中持續執行的守門員——任何一次 data race 或 use-after-free 都足以讓整份效能報告失去意義。' +
         '交付物必須包含：吞吐量 vs. 執行緒數的 scaling 曲線、p50/p95/p99 尾延遲分佈，以及在負載下維持穩定的證據（長時間跑測不崩潰、不洩漏）。',
     },
@@ -48,9 +48,9 @@ const ind31CapstoneProject: ChapterContent = {
         '目標：實作一個以 Bulk Synchronous Parallel（BSP）模型組織超步（superstep）、' +
         '並以 work-stealing 平衡負載的圖處理引擎（例如 PageRank、BFS 或連通元件），並提供負載平衡分析。' +
         '\n\n' +
-        '這個選項的骨架來自第 9 章的 `std::barrier`／`std::latch` 同步原語——BSP 的每一個超步都需要一個全域同步點，' +
+        '這個選項的骨架來自第 38 章的 `std::barrier`／`std::latch` 同步原語——BSP 的每一個超步都需要一個全域同步點，' +
         '確保所有執行緒在進入下一輪計算前都已完成局部更新與訊息交換。' +
-        '而圖的分割天生負載不均（power-law 度數分佈會讓少數頂點吃掉大部分工作），因此第 21 章介紹的 work-stealing 排程' +
+        '而圖的分割天生負載不均（power-law 度數分佈會讓少數頂點吃掉大部分工作），因此第 50 章介紹的 work-stealing 排程' +
         '在這裡不是錦上添花，而是效能的關鍵：你需要量測「工作竊取率」與「執行緒閒置時間」，並解釋負載不均的來源與緩解策略。' +
         '交付物必須包含：不同圖規模/度數分佈下的 scaling 曲線、每執行緒工作量的直方圖（或變異係數），以及正確性上與序列版本結果一致的證明。',
     },
@@ -59,13 +59,13 @@ const ind31CapstoneProject: ChapterContent = {
       body:
         '無論選哪個題目，以下四項是硬性驗收條件，任何一項不通過都視為未完成：' +
         '\n\n' +
-        '一、乾淨通過 ThreadSanitizer 與 AddressSanitizer（第 23 章）：在 CI 或本機以 `-fsanitize=thread` 與 `-fsanitize=address` 分別建置並執行完整測試與壓力測試，不得有任何警告或錯誤——即使是「看起來無害」的 race。' +
+        '一、乾淨通過 ThreadSanitizer 與 AddressSanitizer（第 52 章）：在 CI 或本機以 `-fsanitize=thread` 與 `-fsanitize=address` 分別建置並執行完整測試與壓力測試，不得有任何警告或錯誤——即使是「看起來無害」的 race。' +
         '\n\n' +
-        '二、達到目標 scaling 效率：在 8 執行緒下，相對於單執行緒基準應達到至少 70% 的平行效率（`speedup / 執行緒數 >= 0.7`）；若因演算法本質（如 Amdahl 定律中不可平行化的序列部分）無法達標，必須用第 1 章的模型定量解釋差距來源，而不是含糊帶過。' +
+        '二、達到目標 scaling 效率：在 8 執行緒下，相對於單執行緒基準應達到至少 70% 的平行效率（`speedup / 執行緒數 >= 0.7`）；若因演算法本質（如 Amdahl 定律中不可平行化的序列部分）無法達標，必須用第 30 章的模型定量解釋差距來源，而不是含糊帶過。' +
         '\n\n' +
-        '三、量測方法符合第 22 章的基準紀律：固定 CPU 頻率或記錄變異、暖機後才計時、報告多次執行的中位數與離散程度（而非單次最佳值）、明確交代硬體與編譯選項，讓別人能重現你的數字。' +
+        '三、量測方法符合第 51 章的基準紀律：固定 CPU 頻率或記錄變異、暖機後才計時、報告多次執行的中位數與離散程度（而非單次最佳值）、明確交代硬體與編譯選項，讓別人能重現你的數字。' +
         '\n\n' +
-        '四、數值結果符合第 25 章的容差標準：對浮點歸約結果，需說明所選容差（絕對誤差或相對誤差）的依據，並證明結果在不同執行緒數、不同排程下都落在容差內——而不是只在一次幸運的執行中「剛好對」。',
+        '四、數值結果符合第 54 章的容差標準：對浮點歸約結果，需說明所選容差（絕對誤差或相對誤差）的依據，並證明結果在不同執行緒數、不同排程下都落在容差內——而不是只在一次幸運的執行中「剛好對」。',
     },
   ],
   code: {
@@ -82,55 +82,54 @@ const ind31CapstoneProject: ChapterContent = {
 // engine) you choose; the harness shape stays the same.
 
 double reference_kernel(const std::vector<double>& data) {  // [1]
-  double sum = 0.0;
-  for (double x : data) {
-    sum += x;
-  }
-  return sum;
+    double sum = 0.0;
+    for (double x : data) {
+        sum += x;
+    }
+    return sum;
 }
 
 double candidate_kernel(const std::vector<double>& data,
                         int num_threads);  // [2]
 
 bool within_tolerance(double got, double want, double rel_tol) {  // [3]
-  double diff = std::fabs(got - want);
-  double scale = std::max(std::fabs(want), 1.0);
-  return diff <= rel_tol * scale;
+    double diff = std::fabs(got - want);
+    double scale = std::max(std::fabs(want), 1.0);
+    return diff <= rel_tol * scale;
 }
 
 struct RunResult {
-  double seconds;
-  bool correct;
+    double seconds;
+    bool correct;
 };
 
-RunResult time_one_run(const std::vector<double>& data, int num_threads,
-                       double reference, double rel_tol) {
-  auto start = std::chrono::steady_clock::now();
-  double got = candidate_kernel(data, num_threads);  // [4]
-  auto end = std::chrono::steady_clock::now();
+RunResult time_one_run(const std::vector<double>& data, int num_threads, double reference,
+                       double rel_tol) {
+    auto start = std::chrono::steady_clock::now();
+    double got = candidate_kernel(data, num_threads);  // [4]
+    auto end = std::chrono::steady_clock::now();
 
-  RunResult result;
-  result.seconds = std::chrono::duration<double>(end - start).count();
-  result.correct = within_tolerance(got, reference, rel_tol);
-  return result;
+    RunResult result;
+    result.seconds = std::chrono::duration<double>(end - start).count();
+    result.correct = within_tolerance(got, reference, rel_tol);
+    return result;
 }
 
 int main() {
-  const std::vector<double> data(1'000'000, 1.0);
-  const double reference = reference_kernel(data);
-  const double rel_tol = 1e-9;  // [5] Justify this number in your report.
+    const std::vector<double> data(1'000'000, 1.0);
+    const double reference = reference_kernel(data);
+    const double rel_tol = 1e-9;  // [5] Justify this number in your report.
 
-  const double baseline = time_one_run(data, 1, reference, rel_tol).seconds;
+    const double baseline = time_one_run(data, 1, reference, rel_tol).seconds;
 
-  for (int threads : {1, 2, 4, 8}) {
-    RunResult r = time_one_run(data, threads, reference, rel_tol);
-    double speedup = baseline / r.seconds;
-    double efficiency = speedup / static_cast<double>(threads);  // [6]
-    std::printf(
-        "threads=%d correct=%d time=%.6fs speedup=%.2fx efficiency=%.2f\\n",
-        threads, r.correct ? 1 : 0, r.seconds, speedup, efficiency);
-  }
-  return 0;
+    for (int threads : {1, 2, 4, 8}) {
+        RunResult r = time_one_run(data, threads, reference, rel_tol);
+        double speedup = baseline / r.seconds;
+        double efficiency = speedup / static_cast<double>(threads);  // [6]
+        std::printf("threads=%d correct=%d time=%.6fs speedup=%.2fx efficiency=%.2f\\n", threads,
+                    r.correct ? 1 : 0, r.seconds, speedup, efficiency);
+    }
+    return 0;
 }`,
     callouts: [
       {
@@ -143,7 +142,7 @@ int main() {
       },
       {
         n: 3,
-        text: '容差判斷需依第 25 章討論的相對誤差／絕對誤差取捨，並在報告中說明選擇依據，而非隨意取一個「看起來安全」的數字。',
+        text: '容差判斷需依第 54 章討論的相對誤差／絕對誤差取捨，並在報告中說明選擇依據，而非隨意取一個「看起來安全」的數字。',
       },
       {
         n: 4,
@@ -163,7 +162,7 @@ int main() {
     '只在一個執行緒數（例如「8 核最好」）跑一次就交差，沒有完整的 scaling 曲線，讓評審無法判斷平行化是否真的有效。',
     '把 ThreadSanitizer / AddressSanitizer 檢查留到專案最後一天才跑，結果一堆 data race 早已深埋在幾週前寫的程式碼裡，難以定位。',
     '隨手選一個數值容差（例如 `1e-6`）卻說不出理由，導致正確性驗證變成「反正過了就好」而非有依據的證明。',
-    '效能報告只放「最佳一次執行」的數字，沒有報告多次量測的中位數與變異，違反第 22 章的基準紀律。',
+    '效能報告只放「最佳一次執行」的數字，沒有報告多次量測的中位數與變異，違反第 51 章的基準紀律。',
     'GPU offload 或無鎖佇列版本在正確性上「大部分時候對」，卻把偶發性錯誤當成雜訊忽略，而非用容差或不變量測試系統性地抓出來。',
   ],
   bestPractices: [
@@ -246,19 +245,19 @@ int main() {
 // pass/fail line. Swap accumulate() for your real candidate kernel.
 
 int main() {
-  std::vector<double> data(100'000, 0.5);
+    std::vector<double> data(100'000, 0.5);
 
-  double reference = std::accumulate(data.begin(), data.end(), 0.0);
-  double candidate = std::accumulate(data.rbegin(), data.rend(), 0.0);
+    double reference = std::accumulate(data.begin(), data.end(), 0.0);
+    double candidate = std::accumulate(data.rbegin(), data.rend(), 0.0);
 
-  double rel_tol = 1e-9;
-  double diff = std::fabs(candidate - reference);
-  double scale = std::max(std::fabs(reference), 1.0);
-  bool ok = diff <= rel_tol * scale;
+    double rel_tol = 1e-9;
+    double diff = std::fabs(candidate - reference);
+    double scale = std::max(std::fabs(reference), 1.0);
+    bool ok = diff <= rel_tol * scale;
 
-  std::printf("reference=%.6f candidate=%.6f within_tolerance=%d\\n", reference,
-              candidate, ok ? 1 : 0);
-  return 0;
+    std::printf("reference=%.6f candidate=%.6f within_tolerance=%d\\n", reference, candidate,
+                ok ? 1 : 0);
+    return 0;
 }`,
   },
   furtherReading: [

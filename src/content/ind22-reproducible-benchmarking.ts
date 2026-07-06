@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ind22ReproducibleBenchmarking: ChapterContent = {
   slug: 'ind22-reproducible-benchmarking',
-  chapterLabel: '第 22 章',
+  chapterLabel: '第 51 章',
   title: '效能可重現性與基準紀律',
-  group: 'N · 第六部：效能工程',
+  group: '第 14 部：效能工程',
   description:
     '論文級量測方法：重複次數、統計顯著性與信賴區間，跨節點 variance、DVFS／C-state 的干擾與排除。',
   concept: {
@@ -25,74 +25,72 @@ const ind22ReproducibleBenchmarking: ChapterContent = {
 // discard a warm-up prefix, and report mean +/- a normal-approximation
 // 95% confidence interval as well as the median.
 struct BenchStats {
-  double mean_ns;
-  double ci95_halfwidth_ns;  // mean +/- this = 95% CI
-  double median_ns;
-  double stddev_ns;
-  std::size_t n;
+    double mean_ns;
+    double ci95_halfwidth_ns;  // mean +/- this = 95% CI
+    double median_ns;
+    double stddev_ns;
+    std::size_t n;
 };
 
 template <typename Fn>
 BenchStats benchmark(Fn&& fn, std::size_t warmup_iters,  // [1]
                      std::size_t measured_iters) {
-  // Warm-up: fills caches/branch predictors and lets DVFS/turbo settle
-  // into a steady state before any timing is recorded.  Discarded.
-  for (std::size_t i = 0; i < warmup_iters; ++i) {  // [2]
-    fn();
-  }
+    // Warm-up: fills caches/branch predictors and lets DVFS/turbo settle
+    // into a steady state before any timing is recorded.  Discarded.
+    for (std::size_t i = 0; i < warmup_iters; ++i) {  // [2]
+        fn();
+    }
 
-  std::vector<double> samples_ns;
-  samples_ns.reserve(measured_iters);
-  for (std::size_t i = 0; i < measured_iters; ++i) {
-    auto const t0 = std::chrono::steady_clock::now();  // [3]
-    fn();
-    auto const t1 = std::chrono::steady_clock::now();
-    double const ns = std::chrono::duration<double, std::nano>(t1 - t0).count();
-    samples_ns.push_back(ns);
-  }
+    std::vector<double> samples_ns;
+    samples_ns.reserve(measured_iters);
+    for (std::size_t i = 0; i < measured_iters; ++i) {
+        auto const t0 = std::chrono::steady_clock::now();  // [3]
+        fn();
+        auto const t1 = std::chrono::steady_clock::now();
+        double const ns = std::chrono::duration<double, std::nano>(t1 - t0).count();
+        samples_ns.push_back(ns);
+    }
 
-  double const sum = std::accumulate(samples_ns.begin(), samples_ns.end(), 0.0);
-  double const mean = sum / static_cast<double>(samples_ns.size());  // [4]
+    double const sum = std::accumulate(samples_ns.begin(), samples_ns.end(), 0.0);
+    double const mean = sum / static_cast<double>(samples_ns.size());  // [4]
 
-  double sq_diff_sum = 0.0;
-  for (double const v : samples_ns) {
-    double const d = v - mean;
-    sq_diff_sum += d * d;
-  }
-  double const variance =
-      sq_diff_sum / static_cast<double>(samples_ns.size() - 1);
-  double const stddev = std::sqrt(variance);
+    double sq_diff_sum = 0.0;
+    for (double const v : samples_ns) {
+        double const d = v - mean;
+        sq_diff_sum += d * d;
+    }
+    double const variance = sq_diff_sum / static_cast<double>(samples_ns.size() - 1);
+    double const stddev = std::sqrt(variance);
 
-  // Normal-approximation 95% CI on the sample mean: mean +/- 1.96 * SEM.
-  // Valid once measured_iters is reasonably large (CLT); for small n or
-  // skewed timing distributions prefer a bootstrap CI instead.          // [5]
-  double const sem = stddev / std::sqrt(static_cast<double>(samples_ns.size()));
-  double const ci95_halfwidth = 1.96 * sem;
+    // Normal-approximation 95% CI on the sample mean: mean +/- 1.96 * SEM.
+    // Valid once measured_iters is reasonably large (CLT); for small n or
+    // skewed timing distributions prefer a bootstrap CI instead.          // [5]
+    double const sem = stddev / std::sqrt(static_cast<double>(samples_ns.size()));
+    double const ci95_halfwidth = 1.96 * sem;
 
-  std::vector<double> sorted_ns = samples_ns;
-  std::sort(sorted_ns.begin(), sorted_ns.end());
-  double const median = sorted_ns[sorted_ns.size() / 2];  // [6]
+    std::vector<double> sorted_ns = samples_ns;
+    std::sort(sorted_ns.begin(), sorted_ns.end());
+    double const median = sorted_ns[sorted_ns.size() / 2];  // [6]
 
-  return BenchStats{mean, ci95_halfwidth, median, stddev, samples_ns.size()};
+    return BenchStats{mean, ci95_halfwidth, median, stddev, samples_ns.size()};
 }
 
 int main() {
-  auto const work = []() {
-    volatile long acc = 0;
-    for (int i = 0; i < 100000; ++i) {
-      acc += i;
-    }
-  };
+    auto const work = []() {
+        volatile long acc = 0;
+        for (int i = 0; i < 100000; ++i) {
+            acc += i;
+        }
+    };
 
-  BenchStats const stats = benchmark(work, /*warmup_iters=*/50,
-                                     /*measured_iters=*/500);
+    BenchStats const stats = benchmark(work, /*warmup_iters=*/50,
+                                       /*measured_iters=*/500);
 
-  std::printf(
-      "n=%zu  mean=%.1f ns  95%% CI=+/-%.1f ns  median=%.1f ns  stddev=%.1f "
-      "ns\\n",
-      stats.n, stats.mean_ns, stats.ci95_halfwidth_ns, stats.median_ns,
-      stats.stddev_ns);
-  return 0;
+    std::printf(
+        "n=%zu  mean=%.1f ns  95%% CI=+/-%.1f ns  median=%.1f ns  stddev=%.1f "
+        "ns\\n",
+        stats.n, stats.mean_ns, stats.ci95_halfwidth_ns, stats.median_ns, stats.stddev_ns);
+    return 0;
 }`,
     callouts: [
       {
@@ -220,40 +218,36 @@ int main() {
 // Simplified: run a workload 200 times (after 20 warm-up runs) and print
 // mean +/- a normal-approximation 95% confidence interval.
 int main() {
-  auto const work = []() {
-    volatile long acc = 0;
-    for (int i = 0; i < 50000; ++i) {
-      acc += i;
+    auto const work = []() {
+        volatile long acc = 0;
+        for (int i = 0; i < 50000; ++i) {
+            acc += i;
+        }
+    };
+
+    for (int i = 0; i < 20; ++i) {
+        work();  // warm-up, discarded
     }
-  };
 
-  for (int i = 0; i < 20; ++i) {
-    work();  // warm-up, discarded
-  }
+    std::vector<double> samples_ns;
+    for (int i = 0; i < 200; ++i) {
+        auto const t0 = std::chrono::steady_clock::now();
+        work();
+        auto const t1 = std::chrono::steady_clock::now();
+        samples_ns.push_back(std::chrono::duration<double, std::nano>(t1 - t0).count());
+    }
 
-  std::vector<double> samples_ns;
-  for (int i = 0; i < 200; ++i) {
-    auto const t0 = std::chrono::steady_clock::now();
-    work();
-    auto const t1 = std::chrono::steady_clock::now();
-    samples_ns.push_back(
-        std::chrono::duration<double, std::nano>(t1 - t0).count());
-  }
+    double const mean = std::accumulate(samples_ns.begin(), samples_ns.end(), 0.0) /
+                        static_cast<double>(samples_ns.size());
+    double sq_diff_sum = 0.0;
+    for (double const v : samples_ns) {
+        sq_diff_sum += (v - mean) * (v - mean);
+    }
+    double const stddev = std::sqrt(sq_diff_sum / (samples_ns.size() - 1));
+    double const ci95 = 1.96 * stddev / std::sqrt(static_cast<double>(samples_ns.size()));
 
-  double const mean =
-      std::accumulate(samples_ns.begin(), samples_ns.end(), 0.0) /
-      static_cast<double>(samples_ns.size());
-  double sq_diff_sum = 0.0;
-  for (double const v : samples_ns) {
-    sq_diff_sum += (v - mean) * (v - mean);
-  }
-  double const stddev = std::sqrt(sq_diff_sum / (samples_ns.size() - 1));
-  double const ci95 =
-      1.96 * stddev / std::sqrt(static_cast<double>(samples_ns.size()));
-
-  std::printf("mean=%.1f ns  95%% CI=+/-%.1f ns  (n=%zu)\\n", mean, ci95,
-              samples_ns.size());
-  return 0;
+    std::printf("mean=%.1f ns  95%% CI=+/-%.1f ns  (n=%zu)\\n", mean, ci95, samples_ns.size());
+    return 0;
 }`,
   },
   furtherReading: [

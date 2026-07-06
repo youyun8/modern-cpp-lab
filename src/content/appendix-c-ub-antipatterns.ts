@@ -4,7 +4,7 @@ const appendixCUbAntipatterns: ChapterContent = {
   slug: 'appendix-c-ub-antipatterns',
   chapterLabel: '附錄 C',
   title: '反面教材集',
-  group: 'T · 附錄',
+  group: '附錄',
   description: '常見的未定義行為與並行反面教材，逐一附上修正後的正確寫法。',
   concept: {
     standard: 'C++20',
@@ -22,39 +22,39 @@ const appendixCUbAntipatterns: ChapterContent = {
 int g_bad_counter = 0;  // [1] plain int, no protection
 
 void badIncrement() {
-  ++g_bad_counter;  // [1] BUG: read-modify-write race
-                    //     from multiple threads
+    ++g_bad_counter;  // [1] BUG: read-modify-write race
+                      //     from multiple threads
 }
 
 std::atomic<int> g_good_counter{0};  // [2]
 
 void goodIncrement() {
-  g_good_counter.fetch_add(1, std::memory_order_relaxed);  // [2] FIX
+    g_good_counter.fetch_add(1, std::memory_order_relaxed);  // [2] FIX
 }
 
 // -----------------------------------------------------------------------
 // 2) Deadlock: inconsistent lock acquisition order.
 // -----------------------------------------------------------------------
 struct Account {
-  std::mutex mtx;
-  int balance = 100;
+    std::mutex mtx;
+    int balance = 100;
 };
 
 void badTransfer(Account& from, Account& to, int amount) {  // [3] BUG
-  std::lock_guard<std::mutex> lock_from(from.mtx);          // [3] order depends
-  std::lock_guard<std::mutex> lock_to(to.mtx);              //     on call site;
+    std::lock_guard<std::mutex> lock_from(from.mtx);        // [3] order depends
+    std::lock_guard<std::mutex> lock_to(to.mtx);            //     on call site;
                                                             //     A->B and B->A
                                                             //     can deadlock
-  from.balance -= amount;
-  to.balance += amount;
+    from.balance -= amount;
+    to.balance += amount;
 }
 
 void goodTransfer(Account& from, Account& to, int amount) {  // [4] FIX
-  std::scoped_lock lock(from.mtx, to.mtx);  // [4] deadlock-avoiding
-                                            //     algorithm locks both
-                                            //     atomically
-  from.balance -= amount;
-  to.balance += amount;
+    std::scoped_lock lock(from.mtx, to.mtx);                 // [4] deadlock-avoiding
+                                                             //     algorithm locks both
+                                                             //     atomically
+    from.balance -= amount;
+    to.balance += amount;
 }
 
 // -----------------------------------------------------------------------
@@ -62,18 +62,18 @@ void goodTransfer(Account& from, Account& to, int amount) {  // [4] FIX
 //    threads share one cache line and ping-pong it between cores.
 // -----------------------------------------------------------------------
 struct BadCounters {
-  std::atomic<long> a{0};  // [5] BUG: a and b very likely land on the
-  std::atomic<long> b{0};  //     same 64-byte cache line
+    std::atomic<long> a{0};  // [5] BUG: a and b very likely land on the
+    std::atomic<long> b{0};  //     same 64-byte cache line
 };
 
 struct alignas(64) PaddedCounter {  // [6] FIX: force each counter onto
-  std::atomic<long> value{0};       //     its own cache line
-  char padding[64 - sizeof(std::atomic<long>)];
+    std::atomic<long> value{0};     //     its own cache line
+    char padding[64 - sizeof(std::atomic<long>)];
 };
 
 struct GoodCounters {
-  PaddedCounter a;  // [6]
-  PaddedCounter b;  // [6]
+    PaddedCounter a;  // [6]
+    PaddedCounter b;  // [6]
 };
 
 // -----------------------------------------------------------------------
@@ -86,18 +86,18 @@ std::atomic<bool> g_ready{false};  // [7] FIX: real synchronization
                                    //     primitive with release/acquire
 
 int main() {
-  badIncrement();
-  goodIncrement();
+    badIncrement();
+    goodIncrement();
 
-  Account acc_x, acc_y;
-  goodTransfer(acc_x, acc_y, 10);
+    Account acc_x, acc_y;
+    goodTransfer(acc_x, acc_y, 10);
 
-  GoodCounters counters;
-  counters.a.value.fetch_add(1, std::memory_order_relaxed);
+    GoodCounters counters;
+    counters.a.value.fetch_add(1, std::memory_order_relaxed);
 
-  std::printf("counter = %d, x = %d, y = %d\\n", g_good_counter.load(),
-              acc_x.balance, acc_y.balance);
-  return 0;
+    std::printf("counter = %d, x = %d, y = %d\\n", g_good_counter.load(), acc_x.balance,
+                acc_y.balance);
+    return 0;
 }`,
     callouts: [
       {
@@ -241,35 +241,35 @@ int main() {
 // function main() calls to compare the two behaviors.
 
 struct Account {
-  std::mutex mtx;
-  int balance = 100;
+    std::mutex mtx;
+    int balance = 100;
 };
 
 void badTransfer(Account& from, Account& to, int amount) {
-  std::lock_guard<std::mutex> lock_from(from.mtx);
-  std::lock_guard<std::mutex> lock_to(to.mtx);
-  from.balance -= amount;
-  to.balance += amount;
+    std::lock_guard<std::mutex> lock_from(from.mtx);
+    std::lock_guard<std::mutex> lock_to(to.mtx);
+    from.balance -= amount;
+    to.balance += amount;
 }
 
 void goodTransfer(Account& from, Account& to, int amount) {
-  std::scoped_lock lock(from.mtx, to.mtx);
-  from.balance -= amount;
-  to.balance += amount;
+    std::scoped_lock lock(from.mtx, to.mtx);
+    from.balance -= amount;
+    to.balance += amount;
 }
 
 int main() {
-  Account a, b;
+    Account a, b;
 
-  // Two threads transferring in opposite directions with badTransfer()
-  // can deadlock; with goodTransfer() they cannot, regardless of order.
-  std::thread t1([&]() { goodTransfer(a, b, 10); });
-  std::thread t2([&]() { goodTransfer(b, a, 5); });
-  t1.join();
-  t2.join();
+    // Two threads transferring in opposite directions with badTransfer()
+    // can deadlock; with goodTransfer() they cannot, regardless of order.
+    std::thread t1([&]() { goodTransfer(a, b, 10); });
+    std::thread t2([&]() { goodTransfer(b, a, 5); });
+    t1.join();
+    t2.join();
 
-  std::printf("a.balance = %d, b.balance = %d\\n", a.balance, b.balance);
-  return 0;
+    std::printf("a.balance = %d, b.balance = %d\\n", a.balance, b.balance);
+    return 0;
 }`,
   },
   furtherReading: [

@@ -2,14 +2,14 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ind26MdspanLinalg: ChapterContent = {
   slug: 'ind26-mdspan-linalg',
-  chapterLabel: '第 26 章',
+  chapterLabel: '第 55 章',
   title: 'std::mdspan 與 std::linalg（C++23／C++26, P1673）',
-  group: 'P · 第八部：數值核心與可重現性',
+  group: '第 16 部：數值核心與可重現性',
   description:
     'std::mdspan 的多維非擁有視圖與 layout/accessor，std::linalg 可攜 BLAS 抽象與退回廠商 BLAS 的時機。',
   concept: {
     standard: 'C++23',
-    body: 'std::mdspan（C++23）把 std::span（Ch.19）的「非擁有連續視圖」概念推廣到多維：它是一個輕量的 (data_handle, mapping, accessor) 三元組，讓既有的一維緩衝區能以矩陣、張量的形式被索引，而不複製、不擁有記憶體。layout policy（layout_right 列優先、layout_left 行優先、layout_stride 任意步幅）把「邏輯索引」轉成「線性偏移」，accessor policy 則控制實際的記憶體存取方式（例如原子存取或型別轉換）。std::linalg（P1673，目標 C++26，部分實作已可用）建立在 mdspan 之上，提供可攜的 BLAS 風格演算法（matrix_product、dot、scaled 等），語意對齊業界 BLAS 但以 C++ 範本與 mdspan 表達，可在缺乏廠商函式庫時提供合理預設，效能關鍵路徑則應retarget 到 rocBLAS／cuBLAS／MKL 等已針對硬體調校多年的實作。',
+    body: 'std::mdspan（C++23）把 std::span（第 19 章）的「非擁有連續視圖」概念推廣到多維：它是一個輕量的 (data_handle, mapping, accessor) 三元組，讓既有的一維緩衝區能以矩陣、張量的形式被索引，而不複製、不擁有記憶體。layout policy（layout_right 列優先、layout_left 行優先、layout_stride 任意步幅）把「邏輯索引」轉成「線性偏移」，accessor policy 則控制實際的記憶體存取方式（例如原子存取或型別轉換）。std::linalg（P1673，目標 C++26，部分實作已可用）建立在 mdspan 之上，提供可攜的 BLAS 風格演算法（matrix_product、dot、scaled 等），語意對齊業界 BLAS 但以 C++ 範本與 mdspan 表達，可在缺乏廠商函式庫時提供合理預設，效能關鍵路徑則應retarget 到 rocBLAS／cuBLAS／MKL 等已針對硬體調校多年的實作。',
   },
   code: {
     lang: 'cpp',
@@ -23,40 +23,39 @@ using ConstMatrixView = std::mdspan<const float, Extents2D>;
 
 // 以 mdspan 表達的天真 GEMM：C += A * B，維度由 extents 攜帶。 [2]
 void gemm_naive(ConstMatrixView a, ConstMatrixView b, MatrixView c) {
-  const size_t n = a.extent(0);
-  const size_t k_dim = a.extent(1);
-  const size_t m = b.extent(1);
+    const size_t n = a.extent(0);
+    const size_t k_dim = a.extent(1);
+    const size_t m = b.extent(1);
 
-  for (size_t i = 0; i < n; ++i) {
-    for (size_t k = 0; k < k_dim; ++k) {
-      const float a_ik = a(i, k);  // [3] operator() 取代手算 i * ld + k
-      for (size_t j = 0; j < m; ++j) {
-        c(i, j) +=
-            a_ik * b(k, j);  // [4] 內層對 b、c 皆連續存取（layout_right）
-      }
+    for (size_t i = 0; i < n; ++i) {
+        for (size_t k = 0; k < k_dim; ++k) {
+            const float a_ik = a(i, k);  // [3] operator() 取代手算 i * ld + k
+            for (size_t j = 0; j < m; ++j) {
+                c(i, j) += a_ik * b(k, j);  // [4] 內層對 b、c 皆連續存取（layout_right）
+            }
+        }
     }
-  }
 }
 
 // 1D stencil：以 mdspan 表達邊界安全的三點平均。 [5]
 void stencil_1d(std::mdspan<const float, std::dextents<size_t, 1>> in,
                 std::mdspan<float, std::dextents<size_t, 1>> out) {
-  const size_t n = in.extent(0);
-  for (size_t i = 1; i + 1 < n; ++i) {
-    out(i) = 0.25f * in(i - 1) + 0.5f * in(i) + 0.25f * in(i + 1);  // [6]
-  }
+    const size_t n = in.extent(0);
+    for (size_t i = 1; i + 1 < n; ++i) {
+        out(i) = 0.25f * in(i - 1) + 0.5f * in(i) + 0.25f * in(i + 1);  // [6]
+    }
 }
 
 int main() {
-  constexpr size_t n = 4;
-  std::vector<float> a(n * n, 1.0f), b(n * n, 2.0f), c(n * n, 0.0f);
+    constexpr size_t n = 4;
+    std::vector<float> a(n * n, 1.0f), b(n * n, 2.0f), c(n * n, 0.0f);
 
-  // mdspan 不擁有記憶體：底層仍是 vector<float> 的連續儲存。
-  gemm_naive(ConstMatrixView(a.data(), n, n), ConstMatrixView(b.data(), n, n),
-             MatrixView(c.data(), n, n));
+    // mdspan 不擁有記憶體：底層仍是 vector<float> 的連續儲存。
+    gemm_naive(ConstMatrixView(a.data(), n, n), ConstMatrixView(b.data(), n, n),
+               MatrixView(c.data(), n, n));
 
-  std::println("c(0, 0) = {}", c[0]);
-  return 0;
+    std::println("c(0, 0) = {}", c[0]);
+    return 0;
 }`,
     callouts: [
       {
@@ -88,7 +87,7 @@ int main() {
   deepDive: [
     {
       heading: 'mdspan：從一維視圖到多維視圖',
-      body: '`std::span`（Ch.19）只能表達一維、連續的「指標 + 長度」；一旦資料邏輯上是矩陣或張量，過去只能靠手算 `i * lda + j` 這類線性化索引，容易寫錯 stride 或搞混列/行主序。`std::mdspan` 把這個問題結構化：它由三個部分組成——`data_handle`（指向底層記憶體，通常是原始指標）、`mapping`（依 layout policy 把多維索引轉成線性偏移）、`accessor`（決定如何真正讀寫記憶體）。`mdspan` 本身仍是非擁有視圖，語意上是 span 的多維推廣，而非容器。',
+      body: '`std::span`（第 19 章）只能表達一維、連續的「指標 + 長度」；一旦資料邏輯上是矩陣或張量，過去只能靠手算 `i * lda + j` 這類線性化索引，容易寫錯 stride 或搞混列/行主序。`std::mdspan` 把這個問題結構化：它由三個部分組成——`data_handle`（指向底層記憶體，通常是原始指標）、`mapping`（依 layout policy 把多維索引轉成線性偏移）、`accessor`（決定如何真正讀寫記憶體）。`mdspan` 本身仍是非擁有視圖，語意上是 span 的多維推廣，而非容器。',
     },
     {
       heading: 'layout policy：row-major、col-major、strided、tiled',
@@ -104,7 +103,7 @@ int main() {
     },
     {
       heading: '重寫 GEMM／stencil：索引清晰度而非新演算法',
-      body: '把本書貫穿全書的 GEMM 範例（Ch.26 軟體設計章節、Ch.19 span）改寫成 mdspan 版本，重點不在改變演算法本身（i-k-j 迴圈順序、分塊、向量化等最佳化仍然適用），而是讓函式簽名攜帶維度與佈局資訊：`gemm(mdspan<const float, dextents<size_t,2>> a, ...)` 取代 `gemm(int n, const float* a, ...)`，呼叫端不再需要另外傳長度與 stride，也不會把列優先與行優先搞混。同樣地，stencil 的邊界條件（例如 1D 三點平均只在 `[1, n-2]` 上有效）用 `extent(0)` 表達比裸指標加迴圈更不容易寫錯。這種「索引清晰度」的收益在多維、多層迴圈的數值核心中尤其明顯。',
+      body: '把本書貫穿全書的 GEMM 範例（第 26 章軟體設計章節、第 19 章 span）改寫成 mdspan 版本，重點不在改變演算法本身（i-k-j 迴圈順序、分塊、向量化等最佳化仍然適用），而是讓函式簽名攜帶維度與佈局資訊：`gemm(mdspan<const float, dextents<size_t,2>> a, ...)` 取代 `gemm(int n, const float* a, ...)`，呼叫端不再需要另外傳長度與 stride，也不會把列優先與行優先搞混。同樣地，stencil 的邊界條件（例如 1D 三點平均只在 `[1, n-2]` 上有效）用 `extent(0)` 表達比裸指標加迴圈更不容易寫錯。這種「索引清晰度」的收益在多維、多層迴圈的數值核心中尤其明顯。',
     },
   ],
   pitfalls: [
@@ -183,24 +182,24 @@ using MatrixView = std::mdspan<float, std::dextents<size_t, 2>>;
 using ConstMatrixView = std::mdspan<const float, std::dextents<size_t, 2>>;
 
 void gemm_naive(ConstMatrixView a, ConstMatrixView b, MatrixView c) {
-  const size_t n = a.extent(0);
-  const size_t k_dim = a.extent(1);
-  const size_t m = b.extent(1);
-  for (size_t i = 0; i < n; ++i) {
-    for (size_t k = 0; k < k_dim; ++k) {
-      const float a_ik = a(i, k);
-      for (size_t j = 0; j < m; ++j) c(i, j) += a_ik * b(k, j);
+    const size_t n = a.extent(0);
+    const size_t k_dim = a.extent(1);
+    const size_t m = b.extent(1);
+    for (size_t i = 0; i < n; ++i) {
+        for (size_t k = 0; k < k_dim; ++k) {
+            const float a_ik = a(i, k);
+            for (size_t j = 0; j < m; ++j) c(i, j) += a_ik * b(k, j);
+        }
     }
-  }
 }
 
 int main() {
-  constexpr size_t n = 3;
-  std::vector<float> a(n * n, 1.0f), b(n * n, 2.0f), c(n * n, 0.0f);
-  gemm_naive(ConstMatrixView(a.data(), n, n), ConstMatrixView(b.data(), n, n),
-             MatrixView(c.data(), n, n));
-  std::cout << "c(0, 0) = " << c[0] << " (應為 " << n * 2 << ")\\n";
-  return 0;
+    constexpr size_t n = 3;
+    std::vector<float> a(n * n, 1.0f), b(n * n, 2.0f), c(n * n, 0.0f);
+    gemm_naive(ConstMatrixView(a.data(), n, n), ConstMatrixView(b.data(), n, n),
+               MatrixView(c.data(), n, n));
+    std::cout << "c(0, 0) = " << c[0] << " (應為 " << n * 2 << ")\\n";
+    return 0;
 }`,
   },
   furtherReading: [

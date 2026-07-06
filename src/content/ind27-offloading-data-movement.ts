@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ind27OffloadingDataMovement: ChapterContent = {
   slug: 'ind27-offloading-data-movement',
-  chapterLabel: '第 27 章',
+  chapterLabel: '第 56 章',
   title: 'Offloading 模型與資料搬移成本',
-  group: 'Q · 第九部：異質運算',
+  group: '第 17 部：異質運算',
   description:
     'host/device 執行模型與 kernel launch 開銷、unified/managed memory 的陷阱，以及 stream 重疊與資料搬移瓶頸。',
   concept: {
@@ -43,43 +43,43 @@ const ind27OffloadingDataMovement: ChapterContent = {
 constexpr int kChunks = 4;
 
 void OverlappedPipeline(std::size_t totalElems) {
-  std::size_t chunkElems = totalElems / kChunks;
-  std::size_t chunkBytes = chunkElems * sizeof(float);
+    std::size_t chunkElems = totalElems / kChunks;
+    std::size_t chunkBytes = chunkElems * sizeof(float);
 
-  float* h_pinned = nullptr;
-  // hipHostMalloc(&h_pinned, totalElems * sizeof(float));      // [2] pinned
-  // host 記憶體
-  float* d_buf = nullptr;
-  // hipMalloc(&d_buf, totalElems * sizeof(float));              // device
-  // 記憶體
+    float* h_pinned = nullptr;
+    // hipHostMalloc(&h_pinned, totalElems * sizeof(float));      // [2] pinned
+    // host 記憶體
+    float* d_buf = nullptr;
+    // hipMalloc(&d_buf, totalElems * sizeof(float));              // device
+    // 記憶體
 
-  // hipStream_t streams[kChunks];
-  // for (int i = 0; i < kChunks; ++i) {
-  //     hipStreamCreate(&streams[i]);                           // [3]
-  //     每個區塊一條 stream
-  // }
+    // hipStream_t streams[kChunks];
+    // for (int i = 0; i < kChunks; ++i) {
+    //     hipStreamCreate(&streams[i]);                           // [3]
+    //     每個區塊一條 stream
+    // }
 
-  for (int i = 0; i < kChunks; ++i) {
-    std::size_t offset = static_cast<std::size_t>(i) * chunkElems;
-    // hipMemcpyAsync(d_buf + offset, h_pinned + offset, chunkBytes,
-    //                 hipMemcpyHostToDevice, streams[i]);     // [4] 非同步
-    //                 H2D，區塊 i
-    // hipLaunchKernelGGL(scaleKernel,
-    //                     dim3((chunkElems + 255) / 256), dim3(256),
-    //                     0, streams[i],
-    //                     d_buf + offset, 2.0f,
-    //                     static_cast<int>(chunkElems));      // [5] 區塊 i
-    //                     的計算與區塊 i+1 的傳輸重疊
-    // hipMemcpyAsync(h_pinned + offset, d_buf + offset, chunkBytes,
-    //                 hipMemcpyDeviceToHost, streams[i]);
-  }
+    for (int i = 0; i < kChunks; ++i) {
+        std::size_t offset = static_cast<std::size_t>(i) * chunkElems;
+        // hipMemcpyAsync(d_buf + offset, h_pinned + offset, chunkBytes,
+        //                 hipMemcpyHostToDevice, streams[i]);     // [4] 非同步
+        //                 H2D，區塊 i
+        // hipLaunchKernelGGL(scaleKernel,
+        //                     dim3((chunkElems + 255) / 256), dim3(256),
+        //                     0, streams[i],
+        //                     d_buf + offset, 2.0f,
+        //                     static_cast<int>(chunkElems));      // [5] 區塊 i
+        //                     的計算與區塊 i+1 的傳輸重疊
+        // hipMemcpyAsync(h_pinned + offset, d_buf + offset, chunkBytes,
+        //                 hipMemcpyDeviceToHost, streams[i]);
+    }
 
-  // for (int i = 0; i < kChunks; ++i) {
-  //     hipStreamSynchronize(streams[i]);                       // [6]
-  //     同步點：等所有區塊完成 hipStreamDestroy(streams[i]);
-  // }
-  // hipFree(d_buf);
-  // hipHostFree(h_pinned);
+    // for (int i = 0; i < kChunks; ++i) {
+    //     hipStreamSynchronize(streams[i]);                       // [6]
+    //     同步點：等所有區塊完成 hipStreamDestroy(streams[i]);
+    // }
+    // hipFree(d_buf);
+    // hipHostFree(h_pinned);
 }`,
     callouts: [
       {
@@ -182,27 +182,27 @@ void OverlappedPipeline(std::size_t totalElems) {
 #include <vector>
 
 int main() {
-  constexpr int kChunks = 4;
-  std::vector<std::future<int>> streams;
+    constexpr int kChunks = 4;
+    std::vector<std::future<int>> streams;
 
-  // 類比：每個區塊各自的「非同步傳輸 + 計算」排入獨立佇列。
-  for (int i = 0; i < kChunks; ++i) {
-    streams.push_back(std::async(std::launch::async, [i] {
-      // 模擬非同步 H2D 傳輸延遲
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
-      // 模擬 kernel 計算
-      std::this_thread::sleep_for(std::chrono::milliseconds(20));
-      return i * 100;  // 假裝這是該區塊算出的結果
-    }));
-  }
+    // 類比：每個區塊各自的「非同步傳輸 + 計算」排入獨立佇列。
+    for (int i = 0; i < kChunks; ++i) {
+        streams.push_back(std::async(std::launch::async, [i] {
+            // 模擬非同步 H2D 傳輸延遲
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            // 模擬 kernel 計算
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+            return i * 100;  // 假裝這是該區塊算出的結果
+        }));
+    }
 
-  std::cout << "host 在各區塊 GPU 工作進行時繼續執行...\\n";
+    std::cout << "host 在各區塊 GPU 工作進行時繼續執行...\\n";
 
-  // 同步點集中在最後，讓所有區塊的傳輸與計算得以重疊。
-  for (int i = 0; i < kChunks; ++i) {
-    std::cout << "區塊 " << i << " 結果 = " << streams[i].get() << '\\n';
-  }
-  return 0;
+    // 同步點集中在最後，讓所有區塊的傳輸與計算得以重疊。
+    for (int i = 0; i < kChunks; ++i) {
+        std::cout << "區塊 " << i << " 結果 = " << streams[i].get() << '\\n';
+    }
+    return 0;
 }`,
   },
   furtherReading: [

@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ch14TranslationUnitsII: ChapterContent = {
   slug: 'ch14-translation-units-ii',
-  chapterLabel: 'Ch.14',
+  chapterLabel: '第 14 章',
   title: '轉譯單元 II：Modules',
-  group: 'C · 建置系統與慣例',
+  group: '第 3 部：建置系統與慣例',
   description:
     'C++20 Modules、#include 機制與函式庫的組織：模組如何取代文字式的標頭包含，改善編譯速度與封裝。',
   concept: {
@@ -17,7 +17,7 @@ const ch14TranslationUnitsII: ChapterContent = {
 export module math;  // [1] 宣告模組名稱
 
 export int add(int a, int b) {  // [2] export：對匯入端可見
-  return a + b;
+    return a + b;
 }
 
 int helper() { return 1; }  // [3] 未 export：模組私有
@@ -123,9 +123,9 @@ double area(double r) { return 3.14159265 * r * r; }
 }  // namespace geo
 
 int main() {
-  std::cout << "add(2,3) = " << add(2, 3) << '\\n';
-  std::cout << "area(1.0) = " << geo::area(1.0) << '\\n';
-  return 0;
+    std::cout << "add(2,3) = " << add(2, 3) << '\\n';
+    std::cout << "area(1.0) = " << geo::area(1.0) << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [

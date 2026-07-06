@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ind07ThreadLifecycle: ChapterContent = {
   slug: 'ind07-thread-lifecycle',
-  chapterLabel: '第 7 章',
+  chapterLabel: '第 36 章',
   title: '執行緒生命週期',
-  group: 'J · 第二部：執行緒與同步',
+  group: '第 10 部：執行緒與同步',
   description:
     'std::thread 與 std::jthread（C++20 RAII join）、std::stop_token 協作式取消，以及與 pthread affinity 的對照。',
   concept: {
@@ -41,29 +41,29 @@ using namespace std::chrono_literals;
 
 // 協作式取消：worker 定期檢查 stop_token，收到請求就自行收尾離開。 [1]
 void pollingWorker(std::stop_token token, std::atomic<int>& ticks) {
-  while (!token.stop_requested()) {  // [2]
-    ++ticks;
-    std::this_thread::sleep_for(20ms);
-  }
-  std::println("worker: 收到停止請求，離開迴圈");
+    while (!token.stop_requested()) {  // [2]
+        ++ticks;
+        std::this_thread::sleep_for(20ms);
+    }
+    std::println("worker: 收到停止請求，離開迴圈");
 }
 
 int main() {
-  std::atomic<int> ticks{0};
+    std::atomic<int> ticks{0};
 
-  // jthread 建構子偵測到第一參數接受 stop_token，自動注入。 [3]
-  std::jthread worker(pollingWorker, std::ref(ticks));
+    // jthread 建構子偵測到第一參數接受 stop_token，自動注入。 [3]
+    std::jthread worker(pollingWorker, std::ref(ticks));
 
-  // stop_callback 可在 request_stop() 當下同步執行，適合喚醒阻塞等待。 [4]
-  std::stop_callback on_stop(worker.get_stop_token(),
-                             [] { std::println("main: 停止回呼被觸發"); });
+    // stop_callback 可在 request_stop() 當下同步執行，適合喚醒阻塞等待。 [4]
+    std::stop_callback on_stop(worker.get_stop_token(),
+                               [] { std::println("main: 停止回呼被觸發"); });
 
-  std::this_thread::sleep_for(100ms);
-  worker.request_stop();  // [5] 明確請求取消；也可省略，交給解構子處理
+    std::this_thread::sleep_for(100ms);
+    worker.request_stop();  // [5] 明確請求取消；也可省略，交給解構子處理
 
-  // 未呼叫 join()：jthread 的解構子會自動 request_stop() + join()。 [6]
-  std::println("main: 完成，ticks = {}", ticks.load());
-  return 0;
+    // 未呼叫 join()：jthread 的解構子會自動 request_stop() + join()。 [6]
+    std::println("main: 完成，ticks = {}", ticks.load());
+    return 0;
 }`,
     callouts: [
       { n: 1, text: 'worker 函式第一參數為 std::stop_token，符合 jthread 的自動注入慣例。' },
@@ -156,22 +156,22 @@ int main() {
 using namespace std::chrono_literals;
 
 void countUp(std::stop_token token, std::atomic<int>& counter) {
-  while (!token.stop_requested()) {
-    ++counter;
-    std::this_thread::sleep_for(10ms);
-  }
+    while (!token.stop_requested()) {
+        ++counter;
+        std::this_thread::sleep_for(10ms);
+    }
 }
 
 int main() {
-  std::atomic<int> counter{0};
-  {
-    std::jthread worker(countUp, std::ref(counter));
-    std::this_thread::sleep_for(100ms);
-    // No explicit join()/request_stop(): jthread's destructor
-    // handles both automatically when it goes out of scope.
-  }
-  std::cout << "counter = " << counter.load() << '\\n';
-  return 0;
+    std::atomic<int> counter{0};
+    {
+        std::jthread worker(countUp, std::ref(counter));
+        std::this_thread::sleep_for(100ms);
+        // No explicit join()/request_stop(): jthread's destructor
+        // handles both automatically when it goes out of scope.
+    }
+    std::cout << "counter = " << counter.load() << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [

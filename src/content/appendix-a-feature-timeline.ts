@@ -4,7 +4,7 @@ const appendixAFeatureTimeline: ChapterContent = {
   slug: 'appendix-a-feature-timeline',
   chapterLabel: '附錄 A',
   title: 'C++11→C++26 並行特性年表',
-  group: 'T · 附錄',
+  group: '附錄',
   description:
     'C++11 到 C++26 並行相關語言與函式庫特性的年表，以及各特性在 GCC／Clang／MSVC／nvc++／ROCm 的支援矩陣。',
   concept: {
@@ -69,16 +69,16 @@ constexpr bool kHasExecutionPolicies = false;
 #endif
 
 int main() {
-  WorkerThread worker([] {
-    // 若底層是 std::jthread，離開作用域時會自動請求停止並 join；
-    // 若退回 std::thread，呼叫端必須自行負責 join，否則會 std::terminate。
-  });
+    WorkerThread worker([] {
+        // 若底層是 std::jthread，離開作用域時會自動請求停止並 join；
+        // 若退回 std::thread，呼叫端必須自行負責 join，否則會 std::terminate。
+    });
 
-  if constexpr (!std::is_same_v<WorkerThread, std::jthread>) {
-    worker.join();  // [6] 僅在退回 std::thread 時才需要手動 join
-  }
+    if constexpr (!std::is_same_v<WorkerThread, std::jthread>) {
+        worker.join();  // [6] 僅在退回 std::thread 時才需要手動 join
+    }
 
-  return kHasExecutionPolicies ? 0 : 1;
+    return kHasExecutionPolicies ? 0 : 1;
 }`,
     callouts: [
       {
@@ -191,15 +191,15 @@ using ReadWriteLock = std::mutex;
 #endif
 
 int main() {
-  WorkerThread worker([] {
-    // 空工作項目，僅示範型別選擇邏輯。
-  });
+    WorkerThread worker([] {
+        // 空工作項目，僅示範型別選擇邏輯。
+    });
 
-  if constexpr (!std::is_same_v<WorkerThread, std::jthread>) {
-    worker.join();  // 退回 std::thread 時必須手動 join
-  }
+    if constexpr (!std::is_same_v<WorkerThread, std::jthread>) {
+        worker.join();  // 退回 std::thread 時必須手動 join
+    }
 
-  return 0;
+    return 0;
 }`,
   },
   furtherReading: [

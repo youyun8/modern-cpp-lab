@@ -2,14 +2,14 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ind20MemoryNumaOptimization: ChapterContent = {
   slug: 'ind20-memory-numa-optimization',
-  chapterLabel: '第 20 章',
+  chapterLabel: '第 49 章',
   title: '記憶體與 NUMA 優化',
-  group: 'N · 第六部：效能工程',
+  group: '第 14 部：效能工程',
   description:
     'alignas／padding 消除 false sharing、first-touch 配置、thread affinity，以及記憶體池與 huge pages。',
   concept: {
     standard: 'C++17',
-    body: '第 2 章談過 NUMA 的硬體現實：跨節點記憶體存取延遲可達數倍。本章關心的是「怎麼寫程式碼因應」。Linux 的實體記憶體配置遵循 first-touch 政策——`malloc`／`new` 只保留虛擬位址空間，真正的實體頁面要等第一次被寫入（touch）時才配置，而且是配置在當下執行該次寫入的執行緒所在的 NUMA 節點。這代表「誰先寫」決定了資料實際落在哪裡，而不是「誰配置」。若用單一執行緒初始化一大塊之後才平行運算的資料，所有頁面都會落在同一節點，其餘節點上的執行緒得承受遠端存取的延遲與頻寬懲罰。搭配 `alignas`／padding 消除快取行層級的 false sharing、記憶體池／arena allocator 降低配置開銷、huge pages 減少 TLB miss，是撰寫 NUMA-aware HPC 核心（GEMM、stencil 等）的標準工具箱。',
+    body: '第 31 章談過 NUMA 的硬體現實：跨節點記憶體存取延遲可達數倍。本章關心的是「怎麼寫程式碼因應」。Linux 的實體記憶體配置遵循 first-touch 政策——`malloc`／`new` 只保留虛擬位址空間，真正的實體頁面要等第一次被寫入（touch）時才配置，而且是配置在當下執行該次寫入的執行緒所在的 NUMA 節點。這代表「誰先寫」決定了資料實際落在哪裡，而不是「誰配置」。若用單一執行緒初始化一大塊之後才平行運算的資料，所有頁面都會落在同一節點，其餘節點上的執行緒得承受遠端存取的延遲與頻寬懲罰。搭配 `alignas`／padding 消除快取行層級的 false sharing、記憶體池／arena allocator 降低配置開銷、huge pages 減少 TLB miss，是撰寫 NUMA-aware HPC 核心（GEMM、stencil 等）的標準工具箱。',
   },
   code: {
     lang: 'cpp',
@@ -26,15 +26,15 @@ const ind20MemoryNumaOptimization: ChapterContent = {
 // which is far more expensive than same-socket false sharing because
 // it also triggers cross-node coherence traffic. [1]
 struct alignas(64) PerThreadAccumulator {
-  double sum{0.0};
+    double sum{0.0};
 };
 
 // A large buffer that will be first-touch-initialized in parallel so
 // that each thread's chunk physically lands on the NUMA node the
 // thread itself runs on. [2]
 struct NumaBuffer {
-  explicit NumaBuffer(std::size_t n) : data(n) {}
-  std::vector<double> data;
+    explicit NumaBuffer(std::size_t n) : data(n) {}
+    std::vector<double> data;
 };
 
 // Parallel first-touch initialization: every worker thread writes only
@@ -43,49 +43,48 @@ struct NumaBuffer {
 // Linux kernel places each page on the node of the thread performing
 // the *first write*, not the thread that called operator new. [3]
 void firstTouchInit(NumaBuffer& buf, unsigned num_threads) {
-  const std::size_t n = buf.data.size();
-  const std::size_t chunk = (n + num_threads - 1) / num_threads;
-  std::vector<std::thread> workers;
-  workers.reserve(num_threads);
+    const std::size_t n = buf.data.size();
+    const std::size_t chunk = (n + num_threads - 1) / num_threads;
+    std::vector<std::thread> workers;
+    workers.reserve(num_threads);
 
-  for (unsigned t = 0; t < num_threads; ++t) {
-    const std::size_t begin = t * chunk;
-    const std::size_t end = std::min(n, begin + chunk);
-    workers.emplace_back([&buf, begin, end] {
-      // [4] The write below is the "first touch": the OS backs
-      // these virtual addresses with physical pages on whichever
-      // NUMA node this thread is currently scheduled on.
-      for (std::size_t i = begin; i < end; ++i) buf.data[i] = 0.0;
-    });
-  }
-  for (auto& w : workers) w.join();
+    for (unsigned t = 0; t < num_threads; ++t) {
+        const std::size_t begin = t * chunk;
+        const std::size_t end = std::min(n, begin + chunk);
+        workers.emplace_back([&buf, begin, end] {
+            // [4] The write below is the "first touch": the OS backs
+            // these virtual addresses with physical pages on whichever
+            // NUMA node this thread is currently scheduled on.
+            for (std::size_t i = begin; i < end; ++i) buf.data[i] = 0.0;
+        });
+    }
+    for (auto& w : workers) w.join();
 }
 
 // Compute phase that reuses the *same* chunking as firstTouchInit, so
 // each thread only ever touches memory that was first-touched by
 // itself (or at least by a thread on the same node). [5]
 double parallelSum(NumaBuffer& buf, unsigned num_threads) {
-  const std::size_t n = buf.data.size();
-  const std::size_t chunk = (n + num_threads - 1) / num_threads;
-  std::vector<PerThreadAccumulator> partial(num_threads);
-  std::vector<std::thread> workers;
-  workers.reserve(num_threads);
+    const std::size_t n = buf.data.size();
+    const std::size_t chunk = (n + num_threads - 1) / num_threads;
+    std::vector<PerThreadAccumulator> partial(num_threads);
+    std::vector<std::thread> workers;
+    workers.reserve(num_threads);
 
-  for (unsigned t = 0; t < num_threads; ++t) {
-    const std::size_t begin = t * chunk;
-    const std::size_t end = std::min(n, begin + chunk);
-    workers.emplace_back([&buf, &partial, t, begin, end] {
-      double local = 0.0;
-      for (std::size_t i = begin; i < end; ++i) local += buf.data[i];
-      partial[t].sum =
-          local;  // [6] Padded slot: no cross-core invalidation here.
-    });
-  }
-  for (auto& w : workers) w.join();
+    for (unsigned t = 0; t < num_threads; ++t) {
+        const std::size_t begin = t * chunk;
+        const std::size_t end = std::min(n, begin + chunk);
+        workers.emplace_back([&buf, &partial, t, begin, end] {
+            double local = 0.0;
+            for (std::size_t i = begin; i < end; ++i) local += buf.data[i];
+            partial[t].sum = local;  // [6] Padded slot: no cross-core invalidation here.
+        });
+    }
+    for (auto& w : workers) w.join();
 
-  double total = 0.0;
-  for (auto& p : partial) total += p.sum;
-  return total;
+    double total = 0.0;
+    for (auto& p : partial) total += p.sum;
+    return total;
 }`,
     callouts: [
       {
@@ -117,7 +116,7 @@ double parallelSum(NumaBuffer& buf, unsigned num_threads) {
   deepDive: [
     {
       heading: 'alignas／padding：NUMA 尺度下的 false sharing',
-      body: '第 24 章與第 2 章已介紹過用 `alignas(std::hardware_destructive_interference_size)` 把熱資料隔開到獨立快取行，避免同插槽內多核心互相使快取失效。在多插槽（multi-socket）NUMA 系統上，這個問題會被放大：跨插槽的一致性流量必須經過插槽間互連（例如 Intel UPI 或 AMD Infinity Fabric），延遲遠高於同插槽內的核心對核心通訊。因此，若一個結構被多個位於不同插槽的執行緒同時寫入且未對齊，其效能懲罰不只是「快取失效」，而是「跨插槽匯流排流量 + 遠端一致性協定往返」的疊加。\n\n實務上的作法不變：把每執行緒／每核心的熱資料以 `alignas(64)`（或 `std::hardware_destructive_interference_size`）填充成獨立快取行；差別在於，NUMA 環境下更應該同時檢視「這些填充後的物件，各自落在哪個 NUMA 節點」——填充只解決快取行層級的干擾，若填充後的陣列仍整段配置在單一節點，遠端存取延遲的問題依然存在，必須靠下一節的 first-touch 手法解決。',
+      body: '第 24 章與第 31 章已介紹過用 `alignas(std::hardware_destructive_interference_size)` 把熱資料隔開到獨立快取行，避免同插槽內多核心互相使快取失效。在多插槽（multi-socket）NUMA 系統上，這個問題會被放大：跨插槽的一致性流量必須經過插槽間互連（例如 Intel UPI 或 AMD Infinity Fabric），延遲遠高於同插槽內的核心對核心通訊。因此，若一個結構被多個位於不同插槽的執行緒同時寫入且未對齊，其效能懲罰不只是「快取失效」，而是「跨插槽匯流排流量 + 遠端一致性協定往返」的疊加。\n\n實務上的作法不變：把每執行緒／每核心的熱資料以 `alignas(64)`（或 `std::hardware_destructive_interference_size`）填充成獨立快取行；差別在於，NUMA 環境下更應該同時檢視「這些填充後的物件，各自落在哪個 NUMA 節點」——填充只解決快取行層級的干擾，若填充後的陣列仍整段配置在單一節點，遠端存取延遲的問題依然存在，必須靠下一節的 first-touch 手法解決。',
     },
     {
       heading: 'first-touch 政策與平行初始化',
@@ -211,50 +210,49 @@ double parallelSum(NumaBuffer& buf, unsigned num_threads) {
 // a buffer, followed by a compute phase that reuses the same chunking
 // so each thread stays on memory it (or its node) first-touched.
 struct alignas(64) Partial {
-  double sum{0.0};
+    double sum{0.0};
 };
 
 int main() {
-  constexpr std::size_t kN = 1 << 24;
-  constexpr unsigned kThreads = 4;
-  std::vector<double> data(kN);
+    constexpr std::size_t kN = 1 << 24;
+    constexpr unsigned kThreads = 4;
+    std::vector<double> data(kN);
 
-  auto chunk_of = [&](unsigned t, std::size_t& begin, std::size_t& end) {
-    const std::size_t chunk = (kN + kThreads - 1) / kThreads;
-    begin = t * chunk;
-    end = std::min(kN, begin + chunk);
-  };
+    auto chunk_of = [&](unsigned t, std::size_t& begin, std::size_t& end) {
+        const std::size_t chunk = (kN + kThreads - 1) / kThreads;
+        begin = t * chunk;
+        end = std::min(kN, begin + chunk);
+    };
 
-  // Parallel first-touch: each thread writes only its own slice.
-  std::vector<std::thread> init_workers;
-  for (unsigned t = 0; t < kThreads; ++t) {
-    std::size_t begin, end;
-    chunk_of(t, begin, end);
-    init_workers.emplace_back([&data, begin, end, t] {
-      for (std::size_t i = begin; i < end; ++i)
-        data[i] = static_cast<double>(t);
-    });
-  }
-  for (auto& w : init_workers) w.join();
+    // Parallel first-touch: each thread writes only its own slice.
+    std::vector<std::thread> init_workers;
+    for (unsigned t = 0; t < kThreads; ++t) {
+        std::size_t begin, end;
+        chunk_of(t, begin, end);
+        init_workers.emplace_back([&data, begin, end, t] {
+            for (std::size_t i = begin; i < end; ++i) data[i] = static_cast<double>(t);
+        });
+    }
+    for (auto& w : init_workers) w.join();
 
-  // Compute phase reuses the same chunk boundaries.
-  std::vector<Partial> partial(kThreads);
-  std::vector<std::thread> compute_workers;
-  for (unsigned t = 0; t < kThreads; ++t) {
-    std::size_t begin, end;
-    chunk_of(t, begin, end);
-    compute_workers.emplace_back([&data, &partial, t, begin, end] {
-      double local = 0.0;
-      for (std::size_t i = begin; i < end; ++i) local += data[i];
-      partial[t].sum = local;
-    });
-  }
-  for (auto& w : compute_workers) w.join();
+    // Compute phase reuses the same chunk boundaries.
+    std::vector<Partial> partial(kThreads);
+    std::vector<std::thread> compute_workers;
+    for (unsigned t = 0; t < kThreads; ++t) {
+        std::size_t begin, end;
+        chunk_of(t, begin, end);
+        compute_workers.emplace_back([&data, &partial, t, begin, end] {
+            double local = 0.0;
+            for (std::size_t i = begin; i < end; ++i) local += data[i];
+            partial[t].sum = local;
+        });
+    }
+    for (auto& w : compute_workers) w.join();
 
-  double total = 0.0;
-  for (auto& p : partial) total += p.sum;
-  std::cout << "total: " << total << "\\n";
-  return 0;
+    double total = 0.0;
+    for (auto& p : partial) total += p.sum;
+    std::cout << "total: " << total << "\\n";
+    return 0;
 }`,
   },
   furtherReading: [

@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ch27SoftwareDesignII: ChapterContent = {
   slug: 'ch27-software-design-ii',
-  chapterLabel: 'Ch.27',
+  chapterLabel: '第 27 章',
   title: '軟體設計 II：CRTP 與 PIMPL',
-  group: 'G · 軟體設計與工具',
+  group: '第 7 部：軟體設計與工具',
   description:
     'CRTP、PIMPL 慣用法與常見設計模式：如何以靜態多型消除虛擬開銷，並以指標隔離實作降低編譯相依。',
   concept: {
@@ -18,31 +18,31 @@ const ch27SoftwareDesignII: ChapterContent = {
 // CRTP：基底以衍生型別為樣板參數，達成可內聯的靜態多型。 [1]
 template <typename Derived>
 struct Shape {
-  double area() const {
-    return static_cast<const Derived*>(this)->areaImpl();  // [2]
-  }
+    double area() const {
+        return static_cast<const Derived*>(this)->areaImpl();  // [2]
+    }
 };
 
 struct Circle : Shape<Circle> {
-  double r;
-  explicit Circle(double r) : r(r) {}
-  double areaImpl() const { return 3.14159265 * r * r; }  // [3]
+    double r;
+    explicit Circle(double r) : r(r) {}
+    double areaImpl() const { return 3.14159265 * r * r; }  // [3]
 };
 
 // PIMPL 骨架：標頭只見前置宣告與一個指標。 [4]
 class Widget {
-  struct Impl;   // 前置宣告，實作藏於 .cpp
-  Impl* pimpl_;  // [5] 僅暴露一個指標，隱藏細節與相依
- public:
-  Widget();
-  ~Widget();
-  int value() const;
+    struct Impl;   // 前置宣告，實作藏於 .cpp
+    Impl* pimpl_;  // [5] 僅暴露一個指標，隱藏細節與相依
+   public:
+    Widget();
+    ~Widget();
+    int value() const;
 };
 
 int main() {
-  Circle c{2.0};
-  std::println("area = {:.3f}", c.area());  // 靜態多型，可完全內聯
-  return 0;
+    Circle c{2.0};
+    std::println("area = {:.3f}", c.area());  // 靜態多型，可完全內聯
+    return 0;
 }`,
     callouts: [
       { n: 1, text: 'CRTP 讓 Shape 在編譯期就知道實際衍生型別，呼叫可被內聯，無 vtable 開銷。' },
@@ -133,25 +133,25 @@ int main() {
 
 template <typename Derived>
 struct Shape {
-  double area() const { return static_cast<const Derived*>(this)->areaImpl(); }
+    double area() const { return static_cast<const Derived*>(this)->areaImpl(); }
 };
 struct Circle : Shape<Circle> {
-  double r;
-  Circle(double r) : r(r) {}
-  double areaImpl() const { return 3.14159265 * r * r; }
+    double r;
+    Circle(double r) : r(r) {}
+    double areaImpl() const { return 3.14159265 * r * r; }
 };
 struct Square : Shape<Square> {
-  double s;
-  Square(double s) : s(s) {}
-  double areaImpl() const { return s * s; }
+    double s;
+    Square(double s) : s(s) {}
+    double areaImpl() const { return s * s; }
 };
 
 int main() {
-  Circle c{2.0};
-  Square q{3.0};
-  std::cout << "circle = " << c.area() << '\\n';
-  std::cout << "square = " << q.area() << '\\n';
-  return 0;
+    Circle c{2.0};
+    Square q{3.0};
+    std::cout << "circle = " << c.area() << '\\n';
+    std::cout << "square = " << q.area() << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [

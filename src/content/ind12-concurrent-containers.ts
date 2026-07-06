@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ind12ConcurrentContainers: ChapterContent = {
   slug: 'ind12-concurrent-containers',
-  chapterLabel: '第 12 章',
+  chapterLabel: '第 41 章',
   title: '並行容器實作',
-  group: 'K · 第三部：無鎖與並行資料結構',
+  group: '第 11 部：無鎖與並行資料結構',
   description:
     'SPSC／MPMC 環形佇列、Michael-Scott queue、無鎖堆疊，以及何時該用 TBB／libcds／folly 而非自造。',
   concept: {
@@ -38,35 +38,34 @@ const ind12ConcurrentContainers: ChapterContent = {
 // 固定容量的 SPSC（single-producer-single-consumer）環形佇列。 [1]
 template <typename T, std::size_t Capacity>
 class SpscRingBuffer {
- public:
-  // push 僅由唯一的生產者執行緒呼叫。
-  bool push(T value) {
-    const std::size_t tail = tail_.load(std::memory_order_relaxed);  // [2]
-    const std::size_t next = (tail + 1) % Capacity;
-    if (next == head_.load(std::memory_order_acquire)) {  // [3]
-      return false;                                       // 佇列已滿。
+   public:
+    // push 僅由唯一的生產者執行緒呼叫。
+    bool push(T value) {
+        const std::size_t tail = tail_.load(std::memory_order_relaxed);  // [2]
+        const std::size_t next = (tail + 1) % Capacity;
+        if (next == head_.load(std::memory_order_acquire)) {  // [3]
+            return false;                                     // 佇列已滿。
+        }
+        buffer_[tail] = std::move(value);
+        tail_.store(next, std::memory_order_release);  // [4]
+        return true;
     }
-    buffer_[tail] = std::move(value);
-    tail_.store(next, std::memory_order_release);  // [4]
-    return true;
-  }
 
-  // try_pop 僅由唯一的消費者執行緒呼叫。
-  std::optional<T> try_pop() {
-    const std::size_t head = head_.load(std::memory_order_relaxed);  // [5]
-    if (head == tail_.load(std::memory_order_acquire)) {
-      return std::nullopt;  // 佇列是空的。
+    // try_pop 僅由唯一的消費者執行緒呼叫。
+    std::optional<T> try_pop() {
+        const std::size_t head = head_.load(std::memory_order_relaxed);  // [5]
+        if (head == tail_.load(std::memory_order_acquire)) {
+            return std::nullopt;  // 佇列是空的。
+        }
+        T value = std::move(buffer_[head]);
+        head_.store((head + 1) % Capacity, std::memory_order_release);  // [6]
+        return value;
     }
-    T value = std::move(buffer_[head]);
-    head_.store((head + 1) % Capacity, std::memory_order_release);  // [6]
-    return value;
-  }
 
- private:
-  T buffer_[Capacity]{};
-  alignas(64) std::atomic<std::size_t> head_{0};  // 消費者專屬寫入。
-  alignas(64) std::atomic<std::size_t> tail_{
-      0};  // 生產者專屬寫入，各佔一條快取行。
+   private:
+    T buffer_[Capacity]{};
+    alignas(64) std::atomic<std::size_t> head_{0};  // 消費者專屬寫入。
+    alignas(64) std::atomic<std::size_t> tail_{0};  // 生產者專屬寫入，各佔一條快取行。
 };`,
     callouts: [
       {
@@ -97,7 +96,7 @@ class SpscRingBuffer {
     '忽略 ABA 問題與節點回收：自製 Michael-Scott queue 若直接 delete 被摘除的節點，其他執行緒可能仍持有指向它的指標。',
   ],
   bestPractices: [
-    '把並行讀寫的原子變數（如 SPSC 的 head_／tail_）以 `alignas(64)` 隔開到各自的快取行，避免 false sharing（延續第 2 章快取一致性與第 20 章效能除錯的概念）。',
+    '把並行讀寫的原子變數（如 SPSC 的 head_／tail_）以 `alignas(64)` 隔開到各自的快取行，避免 false sharing（延續第 31 章快取一致性與第 49 章效能除錯的概念）。',
     '只在真正跨執行緒同步的讀寫上使用 acquire／release，其餘讀自己執行緒寫入的狀態一律用 relaxed，並在程式碼註解說明每個順序的理由。',
     '優先選用 TBB `concurrent_hash_map`、libcds 或 folly `ConcurrentHashMap`／`ProducerConsumerQueue` 等經審查的函式庫，自製容器僅在效能剖析證明必要時才考慮。',
     '若必須自製無鎖容器，務必搭配 ThreadSanitizer、壓力測試與（若可行）模型檢查工具驗證正確性，而非僅憑人工推理。',
@@ -175,56 +174,56 @@ class SpscRingBuffer {
 // 簡化版 SPSC 環形佇列，用來示範 relaxed／acquire／release 的最小同步。
 template <typename T, std::size_t Capacity>
 class SpscRingBuffer {
- public:
-  bool push(T value) {
-    const std::size_t tail = tail_.load(std::memory_order_relaxed);
-    const std::size_t next = (tail + 1) % Capacity;
-    if (next == head_.load(std::memory_order_acquire)) return false;
-    buffer_[tail] = value;
-    tail_.store(next, std::memory_order_release);
-    return true;
-  }
+   public:
+    bool push(T value) {
+        const std::size_t tail = tail_.load(std::memory_order_relaxed);
+        const std::size_t next = (tail + 1) % Capacity;
+        if (next == head_.load(std::memory_order_acquire)) return false;
+        buffer_[tail] = value;
+        tail_.store(next, std::memory_order_release);
+        return true;
+    }
 
-  std::optional<T> try_pop() {
-    const std::size_t head = head_.load(std::memory_order_relaxed);
-    if (head == tail_.load(std::memory_order_acquire)) return std::nullopt;
-    T value = buffer_[head];
-    head_.store((head + 1) % Capacity, std::memory_order_release);
-    return value;
-  }
+    std::optional<T> try_pop() {
+        const std::size_t head = head_.load(std::memory_order_relaxed);
+        if (head == tail_.load(std::memory_order_acquire)) return std::nullopt;
+        T value = buffer_[head];
+        head_.store((head + 1) % Capacity, std::memory_order_release);
+        return value;
+    }
 
- private:
-  T buffer_[Capacity]{};
-  std::atomic<std::size_t> head_{0};
-  std::atomic<std::size_t> tail_{0};
+   private:
+    T buffer_[Capacity]{};
+    std::atomic<std::size_t> head_{0};
+    std::atomic<std::size_t> tail_{0};
 };
 
 int main() {
-  SpscRingBuffer<int, 1024> queue;
+    SpscRingBuffer<int, 1024> queue;
 
-  std::thread producer([&queue]() {
-    for (int i = 0; i < 100000; ++i) {
-      while (!queue.push(i)) {
-        // 佇列已滿，忙等重試。
-      }
-    }
-  });
+    std::thread producer([&queue]() {
+        for (int i = 0; i < 100000; ++i) {
+            while (!queue.push(i)) {
+                // 佇列已滿，忙等重試。
+            }
+        }
+    });
 
-  long long sum = 0;
-  std::thread consumer([&queue, &sum]() {
-    for (int i = 0; i < 100000; ++i) {
-      std::optional<int> value;
-      while (!(value = queue.try_pop())) {
-        // 佇列是空的，忙等重試。
-      }
-      sum += *value;
-    }
-  });
+    long long sum = 0;
+    std::thread consumer([&queue, &sum]() {
+        for (int i = 0; i < 100000; ++i) {
+            std::optional<int> value;
+            while (!(value = queue.try_pop())) {
+                // 佇列是空的，忙等重試。
+            }
+            sum += *value;
+        }
+    });
 
-  producer.join();
-  consumer.join();
-  std::cout << "sum = " << sum << " (應為 4999950000)\\n";
-  return 0;
+    producer.join();
+    consumer.join();
+    std::cout << "sum = " << sum << " (應為 4999950000)\\n";
+    return 0;
 }`,
   },
   furtherReading: [

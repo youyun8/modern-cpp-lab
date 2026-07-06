@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ch26SoftwareDesignI: ChapterContent = {
   slug: 'ch26-software-design-i',
-  chapterLabel: 'Ch.26',
+  chapterLabel: '第 26 章',
   title: '軟體設計 I：SOLID 與 GEMM',
-  group: 'G · 軟體設計與工具',
+  group: '第 7 部：軟體設計與工具',
   description:
     'SOLID 原則、BLAS GEMM 案例分析與值/參考語意的取捨：如何在效能敏感的 C++ 中兼顧良好設計。',
   concept: {
@@ -18,26 +18,26 @@ const ch26SoftwareDesignI: ChapterContent = {
 
 // 依賴反轉：高階演算法依賴抽象介面，而非特定實作。 [1]
 struct Kernel {
-  virtual ~Kernel() = default;
-  virtual void gemm(int n, const float* A, const float* B, float* C) const = 0;
+    virtual ~Kernel() = default;
+    virtual void gemm(int n, const float* A, const float* B, float* C) const = 0;
 };
 
 // 單一職責：這個實作只負責一種 GEMM 策略。 [2]
 struct NaiveGemm : Kernel {
-  void gemm(int n, const float* A, const float* B, float* C) const override {
-    for (int i = 0; i < n; ++i)  // [3] 列優先、快取友善的迴圈順序
-      for (int k = 0; k < n; ++k) {
-        float a = A[i * n + k];
-        for (int j = 0; j < n; ++j)
-          C[i * n + j] += a * B[k * n + j];  // [4] 內層連續存取 B 與 C
-      }
-  }
+    void gemm(int n, const float* A, const float* B, float* C) const override {
+        for (int i = 0; i < n; ++i)  // [3] 列優先、快取友善的迴圈順序
+            for (int k = 0; k < n; ++k) {
+                float a = A[i * n + k];
+                for (int j = 0; j < n; ++j)
+                    C[i * n + j] += a * B[k * n + j];  // [4] 內層連續存取 B 與 C
+            }
+    }
 };
 
 // 開放封閉：新增策略只需新增型別，不必修改既有程式。 [5]
-void run(const Kernel& k, int n, const std::vector<float>& A,
-         const std::vector<float>& B, std::vector<float>& C) {
-  k.gemm(n, A.data(), B.data(), C.data());
+void run(const Kernel& k, int n, const std::vector<float>& A, const std::vector<float>& B,
+         std::vector<float>& C) {
+    k.gemm(n, A.data(), B.data(), C.data());
 }`,
     callouts: [
       { n: 1, text: '依賴反轉（DIP）：run 依賴抽象的 Kernel 介面，可替換任何具體實作。' },
@@ -130,19 +130,19 @@ void run(const Kernel& k, int n, const std::vector<float>& A,
 // 簡化的 GEMM：比較 i-j-k 與 i-k-j 的快取友善度差異。
 void gemm_ikj(int n, const std::vector<float>& A, const std::vector<float>& B,
               std::vector<float>& C) {
-  for (int i = 0; i < n; ++i)
-    for (int k = 0; k < n; ++k) {
-      float a = A[i * n + k];
-      for (int j = 0; j < n; ++j) C[i * n + j] += a * B[k * n + j];
-    }
+    for (int i = 0; i < n; ++i)
+        for (int k = 0; k < n; ++k) {
+            float a = A[i * n + k];
+            for (int j = 0; j < n; ++j) C[i * n + j] += a * B[k * n + j];
+        }
 }
 
 int main() {
-  int n = 64;
-  std::vector<float> A(n * n, 1.0f), B(n * n, 1.0f), C(n * n, 0.0f);
-  gemm_ikj(n, A, B, C);
-  std::cout << "C[0] = " << C[0] << " (應為 " << n << ")\\n";
-  return 0;
+    int n = 64;
+    std::vector<float> A(n * n, 1.0f), B(n * n, 1.0f), C(n * n, 0.0f);
+    gemm_ikj(n, A, B, C);
+    std::cout << "C[0] = " << C[0] << " (應為 " << n << ")\\n";
+    return 0;
 }`,
   },
   furtherReading: [

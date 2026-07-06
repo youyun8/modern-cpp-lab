@@ -4,7 +4,7 @@ const appendixBToolCheatsheet: ChapterContent = {
   slug: 'appendix-b-tool-cheatsheet',
   chapterLabel: '附錄 B',
   title: '工具速查',
-  group: 'T · 附錄',
+  group: '附錄',
   description:
     'perf、LIKWID、rocprof、ThreadSanitizer、Google Benchmark、CppMem 等工具的速查與常用指令。',
   concept: {
@@ -139,21 +139,21 @@ TSAN_OPTIONS="halt_on_error=1 second_deadlock_stack=1" ./race  # [5]
   },
   tryIt: {
     code: `#最小可執行的工具鏈範例：先消毒、再剖析、再微基準
-g++ - std = c++ 20 - g - fsanitize =
-                thread race.cpp -
-                o race #1. 先確保沒有資料競爭./
-                    race
+g++ - std =
+    c++ 20 - g - fsanitize =
+        thread race.cpp -
+        o race #1. 先確保沒有資料競爭./
+            race
 
-                        perf stat./
-                    race #2. 健檢整體效能計數器
+                perf stat./
+            race #2. 健檢整體效能計數器
 
 # 3. 針對關鍵函式撰寫 Google Benchmark 微基準（另編為 bench.cpp）
 #BENCHMARK(BM_MyFunction);
 #BENCHMARK_MAIN();
-                        g++ -
-                std = c++ 20 - O2 bench.cpp - lbenchmark - lpthread -
-                      o bench./ bench-- benchmark_min_time =
-                          1s --benchmark_repetitions = 5`,
+                g++ -
+        std = c++ 20 - O2 bench.cpp - lbenchmark - lpthread - o bench./ bench-- benchmark_min_time =
+                  1s --benchmark_repetitions = 5`,
   },
   furtherReading: [
     {

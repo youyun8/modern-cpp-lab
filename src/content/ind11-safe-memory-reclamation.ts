@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ind11SafeMemoryReclamation: ChapterContent = {
   slug: 'ind11-safe-memory-reclamation',
-  chapterLabel: '第 11 章',
+  chapterLabel: '第 40 章',
   title: '安全記憶體回收',
-  group: 'K · 第三部：無鎖與並行資料結構',
+  group: '第 11 部：無鎖與並行資料結構',
   description:
     'Hazard Pointers 與 RCU（C++26 標準化方向）、epoch-based reclamation，以及 shared_ptr 原子操作的真實代價。',
   concept: {
@@ -20,46 +20,45 @@ const ind11SafeMemoryReclamation: ChapterContent = {
 // 極簡 hazard pointer：固定大小的公告陣列，每個執行緒一個槽。 [1]
 template <typename T, int MaxThreads = 64>
 class HazardPointerDomain {
- public:
-  T* protect(std::atomic<T*>& source) {
-    T* ptr;
-    do {
-      ptr = source.load(std::memory_order_acquire);
-      slot(hazard_slot()).store(ptr, std::memory_order_release);  // [2]
-      // 重讀一次，避免公告完成前 source 已被更新又被回收。 [3]
-    } while (ptr != source.load(std::memory_order_acquire));
-    return ptr;
-  }
-
-  void clear() {
-    slot(hazard_slot()).store(nullptr, std::memory_order_release);  // [4]
-  }
-
-  bool is_protected(T* ptr) const {
-    for (auto& h : slots_) {
-      if (h.load(std::memory_order_acquire) == ptr) return true;  // [5]
+   public:
+    T* protect(std::atomic<T*>& source) {
+        T* ptr;
+        do {
+            ptr = source.load(std::memory_order_acquire);
+            slot(hazard_slot()).store(ptr, std::memory_order_release);  // [2]
+            // 重讀一次，避免公告完成前 source 已被更新又被回收。 [3]
+        } while (ptr != source.load(std::memory_order_acquire));
+        return ptr;
     }
-    return false;
-  }
 
- private:
-  static int hazard_slot() {
-    static thread_local int id =
-        next_id_.fetch_add(1, std::memory_order_relaxed);
-    return id;
-  }
+    void clear() {
+        slot(hazard_slot()).store(nullptr, std::memory_order_release);  // [4]
+    }
 
-  std::atomic<T*>& slot(int i) { return slots_[i]; }
+    bool is_protected(T* ptr) const {
+        for (auto& h : slots_) {
+            if (h.load(std::memory_order_acquire) == ptr) return true;  // [5]
+        }
+        return false;
+    }
 
-  std::array<std::atomic<T*>, MaxThreads> slots_{};
-  static inline std::atomic<int> next_id_{0};
+   private:
+    static int hazard_slot() {
+        static thread_local int id = next_id_.fetch_add(1, std::memory_order_relaxed);
+        return id;
+    }
+
+    std::atomic<T*>& slot(int i) { return slots_[i]; }
+
+    std::array<std::atomic<T*>, MaxThreads> slots_{};
+    static inline std::atomic<int> next_id_{0};
 };
 
 // 使用範例：pop 前先「保護」節點，讀完再清除公告。 [6]
 template <typename T>
 struct Node {
-  T value;
-  Node* next;
+    T value;
+    Node* next;
 };`,
     callouts: [
       { n: 1, text: '每個執行緒對應公告陣列中的一個槽，用來宣告「目前我正指向哪個節點」。' },
@@ -171,41 +170,39 @@ constexpr int kMaxThreads = 4;
 std::array<std::atomic<int*>, kMaxThreads> hazard_slots{};
 
 int* protect(std::atomic<int*>& source, int slot) {
-  int* ptr;
-  do {
-    ptr = source.load(std::memory_order_acquire);
-    hazard_slots[slot].store(ptr, std::memory_order_release);
-  } while (ptr != source.load(std::memory_order_acquire));
-  return ptr;
+    int* ptr;
+    do {
+        ptr = source.load(std::memory_order_acquire);
+        hazard_slots[slot].store(ptr, std::memory_order_release);
+    } while (ptr != source.load(std::memory_order_acquire));
+    return ptr;
 }
 
-void clear(int slot) {
-  hazard_slots[slot].store(nullptr, std::memory_order_release);
-}
+void clear(int slot) { hazard_slots[slot].store(nullptr, std::memory_order_release); }
 
 bool is_protected(int* ptr) {
-  for (auto& h : hazard_slots) {
-    if (h.load(std::memory_order_acquire) == ptr) return true;
-  }
-  return false;
+    for (auto& h : hazard_slots) {
+        if (h.load(std::memory_order_acquire) == ptr) return true;
+    }
+    return false;
 }
 
 int main() {
-  std::atomic<int*> shared_node{new int{42}};
+    std::atomic<int*> shared_node{new int{42}};
 
-  std::thread reader([&] {
-    int* p = protect(shared_node, /*slot=*/0);
-    std::cout << "reader sees value = " << *p << "\\n";
-    clear(0);
-  });
-  reader.join();
+    std::thread reader([&] {
+        int* p = protect(shared_node, /*slot=*/0);
+        std::cout << "reader sees value = " << *p << "\\n";
+        clear(0);
+    });
+    reader.join();
 
-  int* node = shared_node.load();
-  if (!is_protected(node)) {
-    delete node;  // 沒有任何執行緒公告該指標，可安全釋放。
-    std::cout << "node safely reclaimed\\n";
-  }
-  return 0;
+    int* node = shared_node.load();
+    if (!is_protected(node)) {
+        delete node;  // 沒有任何執行緒公告該指標，可安全釋放。
+        std::cout << "node safely reclaimed\\n";
+    }
+    return 0;
 }`,
   },
   furtherReading: [

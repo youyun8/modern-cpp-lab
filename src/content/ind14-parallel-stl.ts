@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ind14ParallelStl: ChapterContent = {
   slug: 'ind14-parallel-stl',
-  chapterLabel: '第 14 章',
+  chapterLabel: '第 43 章',
   title: '平行 STL 演算法（C++17）',
-  group: 'L · 第四部：高階平行抽象',
+  group: '第 12 部：高階平行抽象',
   description:
     'execution policy：seq／par／par_unseq／unseq（C++20），可平行化演算法與在 GPU 上執行 std::par 的現況。',
   concept: {
@@ -39,16 +39,15 @@ const ind14ParallelStl: ChapterContent = {
 // Sum of squares via transform_reduce; safe under par_unseq because the
 // lambda touches only its own by-value argument and does pure arithmetic.
 double sumOfSquares(const std::vector<double>& data) {
-  return std::transform_reduce(
-      std::execution::par_unseq,  // [2]
-      data.begin(), data.end(), 0.0, std::plus<>{},
-      [](double x) { return x * x; });  // [3] pure, no shared state, no throw
+    return std::transform_reduce(std::execution::par_unseq,  // [2]
+                                 data.begin(), data.end(), 0.0, std::plus<>{}, [](double x) {
+                                     return x * x;
+                                 });  // [3] pure, no shared state, no throw
 }
 
 void scaleInPlace(std::vector<double>& data, double factor) {
-  std::for_each(
-      std::execution::par_unseq, data.begin(), data.end(),
-      [factor](double& x) { x *= factor; });  // [4] pure elementwise update
+    std::for_each(std::execution::par_unseq, data.begin(), data.end(),
+                  [factor](double& x) { x *= factor; });  // [4] pure elementwise update
 }
 
 // UNSAFE-FOR-par_unseq EXAMPLE (do not do this):
@@ -157,20 +156,18 @@ void scaleInPlace(std::vector<double>& data, double factor) {
 #include <vector>
 
 int main() {
-  std::vector<double> data(1'000'000, 2.0);
+    std::vector<double> data(1'000'000, 2.0);
 
-  // Safe for par_unseq: pure transform, associative/commutative reduce.
-  double sumSquares =
-      std::transform_reduce(std::execution::par_unseq, data.begin(), data.end(),
-                            0.0, std::plus<>{}, [](double x) { return x * x; });
+    // Safe for par_unseq: pure transform, associative/commutative reduce.
+    double sumSquares = std::transform_reduce(std::execution::par_unseq, data.begin(), data.end(),
+                                              0.0, std::plus<>{}, [](double x) { return x * x; });
 
-  // Safe for par: independent in-place update per element.
-  std::for_each(std::execution::par, data.begin(), data.end(),
-                [](double& x) { x *= 0.5; });
+    // Safe for par: independent in-place update per element.
+    std::for_each(std::execution::par, data.begin(), data.end(), [](double& x) { x *= 0.5; });
 
-  std::cout << "sumSquares = " << sumSquares << '\\n';
-  std::cout << "data[0] = " << data.front() << '\\n';
-  return 0;
+    std::cout << "sumSquares = " << sumSquares << '\\n';
+    std::cout << "data[0] = " << data.front() << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [

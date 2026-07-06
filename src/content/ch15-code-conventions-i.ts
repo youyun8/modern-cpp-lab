@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ch15CodeConventionsI: ChapterContent = {
   slug: 'ch15-code-conventions-i',
-  chapterLabel: 'Ch.15',
+  chapterLabel: '第 15 章',
   title: '程式慣例 I：專案結構',
-  group: 'C · 建置系統與慣例',
+  group: '第 3 部：建置系統與慣例',
   description:
     '專案佈局、命名慣例與標頭檔組織原則：如何安排 include／src／tests 目錄並維持一致的命名風格。',
   concept: {
@@ -111,15 +111,15 @@ const ch15CodeConventionsI: ChapterContent = {
 
 // 想像這是 include/myproject/engine.hpp 的內容（自足標頭）
 struct Engine {
-  int rpm = 0;
-  void rev(int by) { rpm += by; }
+    int rpm = 0;
+    void rev(int by) { rpm += by; }
 };
 
 int main() {
-  Engine e;
-  e.rev(1500);
-  std::cout << "rpm = " << e.rpm << '\\n';
-  return 0;
+    Engine e;
+    e.rev(1500);
+    std::cout << "rpm = " << e.rpm << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [

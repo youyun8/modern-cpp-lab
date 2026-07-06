@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import type { DiagramComponentProps } from '@/types/DiagramProps';
 
 /**
- * Interactive Amdahl's Law speedup curve for Ch.25. The slider controls the
+ * Interactive Amdahl's Law speedup curve for the optimization chapters. The slider controls the
  * parallel fraction p; the SVG redraws the speedup(N) curve on every change.
  * Axis labels are in Traditional Chinese.
  *

@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ch07BasicConceptsV: ChapterContent = {
   slug: 'ch07-basic-concepts-v',
-  chapterLabel: 'Ch.07',
+  chapterLabel: '第 7 章',
   title: '基本概念 V：記憶體模型',
-  group: 'A · 基礎概念',
+  group: '第 1 部：基礎概念 Foundations',
   description:
     'heap 與 stack、const/constexpr 以及各種型別轉換：物件的儲存期、常數正確性與四種具名轉換的取捨。',
   concept: {
@@ -17,25 +17,25 @@ const ch07BasicConceptsV: ChapterContent = {
 #include <print>
 
 struct Widget {
-  int id;
+    int id;
 };
 
 constexpr int square(int x) { return x * x; }  // [1] 可於編譯期求值
 
 int main() {
-  int on_stack = 42;  // [2] 自動儲存期，離開即銷毀
-  auto on_heap = std::make_unique<Widget>(Widget{7});  // [3] 動態儲存期
+    int on_stack = 42;                                   // [2] 自動儲存期，離開即銷毀
+    auto on_heap = std::make_unique<Widget>(Widget{7});  // [3] 動態儲存期
 
-  const int limit = 100;           // [4] 常數正確性：不可再修改
-  constexpr int nine = square(3);  // [5] 編譯期常數
-  static_assert(nine == 9);
+    const int limit = 100;           // [4] 常數正確性：不可再修改
+    constexpr int nine = square(3);  // [5] 編譯期常數
+    static_assert(nine == 9);
 
-  double d = 3.9;
-  int truncated = static_cast<int>(d);  // [6] 明確的具名轉換
+    double d = 3.9;
+    int truncated = static_cast<int>(d);  // [6] 明確的具名轉換
 
-  std::println("stack={}, heap id={}, limit={}, nine={}, trunc={}", on_stack,
-               on_heap->id, limit, nine, truncated);
-  return 0;  // on_heap 於此自動釋放
+    std::println("stack={}, heap id={}, limit={}, nine={}, trunc={}", on_stack, on_heap->id, limit,
+                 nine, truncated);
+    return 0;  // on_heap 於此自動釋放
 }`,
     callouts: [
       {
@@ -133,18 +133,18 @@ int main() {
 #include <memory>
 
 struct Widget {
-  int id;
+    int id;
 };
 constexpr int square(int x) { return x * x; }
 
 int main() {
-  auto w = std::make_unique<Widget>(Widget{7});
-  constexpr int nine = square(3);
-  double d = 3.9;
-  std::cout << "heap id = " << w->id << '\\n';
-  std::cout << "nine = " << nine << '\\n';
-  std::cout << "static_cast<int>(3.9) = " << static_cast<int>(d) << '\\n';
-  return 0;
+    auto w = std::make_unique<Widget>(Widget{7});
+    constexpr int nine = square(3);
+    double d = 3.9;
+    std::cout << "heap id = " << w->id << '\\n';
+    std::cout << "nine = " << nine << '\\n';
+    std::cout << "static_cast<int>(3.9) = " << static_cast<int>(d) << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [

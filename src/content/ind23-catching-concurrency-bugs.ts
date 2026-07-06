@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ind23CatchingConcurrencyBugs: ChapterContent = {
   slug: 'ind23-catching-concurrency-bugs',
-  chapterLabel: '第 23 章',
+  chapterLabel: '第 52 章',
   title: '並行 bug 的捕捉',
-  group: 'O · 第七部：正確性、測試與除錯',
+  group: '第 15 部：正確性、測試與除錯',
   description:
     'ThreadSanitizer／AddressSanitizer 的原理與盲點，壓力測試、fuzzing 與確定性重播，以及 std::atomic 的形式化直覺。',
   concept: {
@@ -42,30 +42,30 @@ const ind23CatchingConcurrencyBugs: ChapterContent = {
 int shared_counter = 0;  // [1]
 
 void worker(int iterations) {
-  for (int i = 0; i < iterations; ++i) {
-    ++shared_counter;  // [2]
-  }
+    for (int i = 0; i < iterations; ++i) {
+        ++shared_counter;  // [2]
+    }
 }
 
 int main() {
-  constexpr int kIterations = 100000;
+    constexpr int kIterations = 100000;
 
-  std::jthread t1(worker, kIterations);
-  std::jthread t2(worker, kIterations);
-  // jthread 解構時自動 join，不需要顯式呼叫。 [3]
+    std::jthread t1(worker, kIterations);
+    std::jthread t2(worker, kIterations);
+    // jthread 解構時自動 join，不需要顯式呼叫。 [3]
 
-  // 若以 g++ -std=c++20 -g -fsanitize=thread race.cpp 編譯並執行，
-  // TSan 大致會回報如下形式的訊息（示意，非實際輸出）：
-  //   WARNING: ThreadSanitizer: data race
-  //     Write of size 4 at 0x0001 by thread T2:
-  //       #0 worker(int) race.cpp:8
-  //     Previous write of size 4 at 0x0001 by thread T1:
-  //       #0 worker(int) race.cpp:8
-  // 這份報告只在「這次執行剛好排程出競爭」時出現；
-  // 若排程恰好序列化了兩個執行緒的存取，同一份二進位可能靜默通過。 [4]
-  std::printf("counter = %d (expected %d)\\n", shared_counter,
-              2 * kIterations);  // [5]
-  return 0;
+    // 若以 g++ -std=c++20 -g -fsanitize=thread race.cpp 編譯並執行，
+    // TSan 大致會回報如下形式的訊息（示意，非實際輸出）：
+    //   WARNING: ThreadSanitizer: data race
+    //     Write of size 4 at 0x0001 by thread T2:
+    //       #0 worker(int) race.cpp:8
+    //     Previous write of size 4 at 0x0001 by thread T1:
+    //       #0 worker(int) race.cpp:8
+    // 這份報告只在「這次執行剛好排程出競爭」時出現；
+    // 若排程恰好序列化了兩個執行緒的存取，同一份二進位可能靜默通過。 [4]
+    std::printf("counter = %d (expected %d)\\n", shared_counter,
+                2 * kIterations);  // [5]
+    return 0;
 }
 
 // 修法：改用 std::atomic<int>，以 fetch_add 保證每次遞增都是
@@ -176,22 +176,21 @@ int main() {
 std::atomic<int> shared_counter{0};
 
 void worker(int iterations) {
-  for (int i = 0; i < iterations; ++i) {
-    shared_counter.fetch_add(1, std::memory_order_relaxed);
-  }
+    for (int i = 0; i < iterations; ++i) {
+        shared_counter.fetch_add(1, std::memory_order_relaxed);
+    }
 }
 
 int main() {
-  constexpr int kIterations = 100000;
+    constexpr int kIterations = 100000;
 
-  std::jthread t1(worker, kIterations);
-  std::jthread t2(worker, kIterations);
+    std::jthread t1(worker, kIterations);
+    std::jthread t2(worker, kIterations);
 
-  // jthread 解構時自動 join；用 fetch_add 取代裸 ++ 之後，
-  // 這裡總是精確等於 2 * kIterations，且 TSan 不會回報任何競爭。
-  std::printf("counter = %d (expected %d)\\n", shared_counter.load(),
-              2 * kIterations);
-  return 0;
+    // jthread 解構時自動 join；用 fetch_add 取代裸 ++ 之後，
+    // 這裡總是精確等於 2 * kIterations，且 TSan 不會回報任何競爭。
+    std::printf("counter = %d (expected %d)\\n", shared_counter.load(), 2 * kIterations);
+    return 0;
 }`,
   },
   furtherReading: [

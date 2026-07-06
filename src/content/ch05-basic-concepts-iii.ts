@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ch05BasicConceptsIII: ChapterContent = {
   slug: 'ch05-basic-concepts-iii',
-  chapterLabel: 'Ch.05',
+  chapterLabel: '第 5 章',
   title: '基本概念 III：浮點數',
-  group: 'A · 基礎概念',
+  group: '第 1 部：基礎概念 Foundations',
   description:
     'IEEE 754 浮點數表示、ULP 與 NaN 等特殊值的行為，以及為何浮點相等比較幾乎總是錯誤的。',
   concept: {
@@ -20,20 +20,20 @@ const ch05BasicConceptsIII: ChapterContent = {
 
 // 以相對＋絕對誤差比較浮點數，遠比 == 可靠。 [1]
 bool nearlyEqual(double a, double b, double eps = 1e-9) {
-  double diff = std::fabs(a - b);
-  double scale = std::fmax(std::fabs(a), std::fabs(b));
-  return diff <= eps * std::fmax(1.0, scale);  // [2]
+    double diff = std::fabs(a - b);
+    double scale = std::fmax(std::fabs(a), std::fabs(b));
+    return diff <= eps * std::fmax(1.0, scale);  // [2]
 }
 
 int main() {
-  double x = 0.1 + 0.2;
-  std::println("0.1+0.2 == 0.3 ? {}", x == 0.3);  // [3] 幾乎必為 false
-  std::println("nearlyEqual ? {}", nearlyEqual(x, 0.3));
+    double x = 0.1 + 0.2;
+    std::println("0.1+0.2 == 0.3 ? {}", x == 0.3);  // [3] 幾乎必為 false
+    std::println("nearlyEqual ? {}", nearlyEqual(x, 0.3));
 
-  double nan = std::numeric_limits<double>::quiet_NaN();
-  std::println("nan == nan ? {}", nan == nan);  // [4] 永遠 false
-  std::println("isnan ? {}", std::isnan(nan));  // [5] 正確偵測
-  return 0;
+    double nan = std::numeric_limits<double>::quiet_NaN();
+    std::println("nan == nan ? {}", nan == nan);  // [4] 永遠 false
+    std::println("isnan ? {}", std::isnan(nan));  // [5] 正確偵測
+    return 0;
 }`,
     callouts: [
       { n: 1, text: '直接用 == 比較浮點數幾乎總是錯的；應以誤差門檻判斷「足夠接近」。' },
@@ -125,14 +125,14 @@ int main() {
 #include <limits>
 
 int main() {
-  double x = 0.1 + 0.2;
-  std::cout.precision(17);
-  std::cout << "0.1 + 0.2 = " << x << '\\n';
-  std::cout << "(== 0.3) ? " << (x == 0.3) << '\\n';
-  double nan = std::numeric_limits<double>::quiet_NaN();
-  std::cout << "nan == nan ? " << (nan == nan) << '\\n';
-  std::cout << "isnan ? " << std::isnan(nan) << '\\n';
-  return 0;
+    double x = 0.1 + 0.2;
+    std::cout.precision(17);
+    std::cout << "0.1 + 0.2 = " << x << '\\n';
+    std::cout << "(== 0.3) ? " << (x == 0.3) << '\\n';
+    double nan = std::numeric_limits<double>::quiet_NaN();
+    std::cout << "nan == nan ? " << (nan == nan) << '\\n';
+    std::cout << "isnan ? " << std::isnan(nan) << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [

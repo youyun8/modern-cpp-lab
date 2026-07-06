@@ -4,7 +4,7 @@ import { useState } from 'react';
 import type { DiagramComponentProps } from '@/types/DiagramProps';
 
 /**
- * Cache-line visualiser for Ch.24. Toggles between two layouts of a struct
+ * Cache-line visualiser for the optimization chapters. Toggles between two layouts of a struct
  * shared by two cores:
  *   - false sharing : both counters land in the SAME 64-byte line
  *   - padded        : each counter sits on its OWN line

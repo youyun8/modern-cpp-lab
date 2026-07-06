@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ind10LockFreeBasics: ChapterContent = {
   slug: 'ind10-lock-free-basics',
-  chapterLabel: '第 10 章',
+  chapterLabel: '第 39 章',
   title: '無鎖程式設計基礎',
-  group: 'K · 第三部：無鎖與並行資料結構',
+  group: '第 11 部：無鎖與並行資料結構',
   description:
     'wait-free／lock-free／obstruction-free 三種 progress guarantee 的精確定義，無鎖為何在高競爭下不必然更快，以及記憶體回收難題的初步鋪陳。',
   concept: {
@@ -18,7 +18,7 @@ const ind10LockFreeBasics: ChapterContent = {
     },
     {
       heading: '為何無鎖不等於更快',
-      body: '無鎖結構的直覺賣點是「不用鎖，所以沒有鎖競爭、沒有優先反轉、沒有死鎖」。但這個直覺忽略了 CAS 迴圈本身的成本結構：每次 CAS 失敗代表一次「白做工」——執行緒讀了一份舊資料、做了計算、嘗試寫回，結果因為別人搶先而整套作廢，必須重讀重算。在低競爭下這個成本可忽略；但在高競爭（例如數十個執行緒同時對同一個 `std::atomic` 做 CAS）下，會出現 CAS retry storm：大量執行緒同時重試，彼此持續使對方的 CAS 失效。\n\n更根本的問題是快取一致性流量（cache-coherence traffic，銜接第 2 章 MESI 協定）。每一次 CAS 嘗試，無論成功與否，都需要以獨佔（Exclusive/Modified）狀態取得該快取線的所有權。當多個核心競爭同一條快取線時，這條線會在核心間反覆彈跳（cache-line ping-pong），每次彈跳都是一次跨核心、甚至跨 NUMA node 的匯流排交易，延遲遠高於一次本地快取存取。相較之下，一把設計良好的互斥鎖在競爭時會讓失敗的執行緒直接睡眠（透過 futex），不會產生這種持續的匯流排流量。因此，在高競爭、低臨界區工作量的場景，無鎖 CAS 迴圈的總線流量可能反而超過鎖的開銷，實測效能更差。這也是為何業界建議「先量測、再決定」，而不是預設無鎖優於有鎖。',
+      body: '無鎖結構的直覺賣點是「不用鎖，所以沒有鎖競爭、沒有優先反轉、沒有死鎖」。但這個直覺忽略了 CAS 迴圈本身的成本結構：每次 CAS 失敗代表一次「白做工」——執行緒讀了一份舊資料、做了計算、嘗試寫回，結果因為別人搶先而整套作廢，必須重讀重算。在低競爭下這個成本可忽略；但在高競爭（例如數十個執行緒同時對同一個 `std::atomic` 做 CAS）下，會出現 CAS retry storm：大量執行緒同時重試，彼此持續使對方的 CAS 失效。\n\n更根本的問題是快取一致性流量（cache-coherence traffic，銜接第 31 章 MESI 協定）。每一次 CAS 嘗試，無論成功與否，都需要以獨佔（Exclusive/Modified）狀態取得該快取線的所有權。當多個核心競爭同一條快取線時，這條線會在核心間反覆彈跳（cache-line ping-pong），每次彈跳都是一次跨核心、甚至跨 NUMA node 的匯流排交易，延遲遠高於一次本地快取存取。相較之下，一把設計良好的互斥鎖在競爭時會讓失敗的執行緒直接睡眠（透過 futex），不會產生這種持續的匯流排流量。因此，在高競爭、低臨界區工作量的場景，無鎖 CAS 迴圈的總線流量可能反而超過鎖的開銷，實測效能更差。這也是為何業界建議「先量測、再決定」，而不是預設無鎖優於有鎖。',
     },
     {
       heading: '記憶體回收難題：下一章的伏筆',
@@ -39,46 +39,41 @@ const ind10LockFreeBasics: ChapterContent = {
 
 // 觀察 CAS 重試風暴：多執行緒對同一個 atomic 計數器做高頻率 CAS。 [1]
 std::atomic<long long> shared_counter{0};
-std::atomic<long long> retry_count{
-    0};  // [2] 統計 CAS 失敗（重試）次數，僅供教學觀察。
+std::atomic<long long> retry_count{0};  // [2] 統計 CAS 失敗（重試）次數，僅供教學觀察。
 
 void hammer(int iterations) {
-  for (int i = 0; i < iterations; ++i) {
-    long long expected = shared_counter.load(std::memory_order_relaxed);  // [3]
-    // compare_exchange_weak 失敗時會把 expected 更新為目前值，
-    // 迴圈因此可以直接重試而不必手動重讀。 [4]
-    while (!shared_counter.compare_exchange_weak(expected, expected + 1,
-                                                 std::memory_order_relaxed,
-                                                 std::memory_order_relaxed)) {
-      retry_count.fetch_add(
-          1, std::memory_order_relaxed);  // [5] 每次失敗代表一次白做工。
+    for (int i = 0; i < iterations; ++i) {
+        long long expected = shared_counter.load(std::memory_order_relaxed);  // [3]
+        // compare_exchange_weak 失敗時會把 expected 更新為目前值，
+        // 迴圈因此可以直接重試而不必手動重讀。 [4]
+        while (!shared_counter.compare_exchange_weak(
+            expected, expected + 1, std::memory_order_relaxed, std::memory_order_relaxed)) {
+            retry_count.fetch_add(1, std::memory_order_relaxed);  // [5] 每次失敗代表一次白做工。
+        }
     }
-  }
 }
 
 int main() {
-  constexpr int kThreads = 8;
-  constexpr int kItersPerThread = 200000;
+    constexpr int kThreads = 8;
+    constexpr int kItersPerThread = 200000;
 
-  std::vector<std::thread> workers;
-  auto start = std::chrono::steady_clock::now();
-  for (int t = 0; t < kThreads; ++t) {
-    workers.emplace_back(hammer, kItersPerThread);
-  }
-  for (auto& w : workers) {
-    w.join();
-  }
-  auto elapsed = std::chrono::steady_clock::now() - start;
+    std::vector<std::thread> workers;
+    auto start = std::chrono::steady_clock::now();
+    for (int t = 0; t < kThreads; ++t) {
+        workers.emplace_back(hammer, kItersPerThread);
+    }
+    for (auto& w : workers) {
+        w.join();
+    }
+    auto elapsed = std::chrono::steady_clock::now() - start;
 
-  // [6] 競爭越高（執行緒數越多、臨界區越小），retry_count 相對於總操作數的
-  // 比例通常會顯著上升——這就是 CAS retry storm 的量化證據。
-  std::cout << "counter = " << shared_counter.load() << "\\n";
-  std::cout << "retries = " << retry_count.load() << "\\n";
-  std::cout
-      << "elapsed(ms) = "
-      << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count()
-      << "\\n";
-  return 0;
+    // [6] 競爭越高（執行緒數越多、臨界區越小），retry_count 相對於總操作數的
+    // 比例通常會顯著上升——這就是 CAS retry storm 的量化證據。
+    std::cout << "counter = " << shared_counter.load() << "\\n";
+    std::cout << "retries = " << retry_count.load() << "\\n";
+    std::cout << "elapsed(ms) = "
+              << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << "\\n";
+    return 0;
 }`,
     callouts: [
       {
@@ -190,24 +185,23 @@ std::atomic<long long> counter{0};
 std::atomic<long long> retries{0};
 
 void worker(int iters) {
-  for (int i = 0; i < iters; ++i) {
-    long long cur = counter.load(std::memory_order_relaxed);
-    while (!counter.compare_exchange_weak(cur, cur + 1,
-                                          std::memory_order_relaxed)) {
-      retries.fetch_add(1, std::memory_order_relaxed);
+    for (int i = 0; i < iters; ++i) {
+        long long cur = counter.load(std::memory_order_relaxed);
+        while (!counter.compare_exchange_weak(cur, cur + 1, std::memory_order_relaxed)) {
+            retries.fetch_add(1, std::memory_order_relaxed);
+        }
     }
-  }
 }
 
 int main() {
-  constexpr int kThreads = 4;
-  std::vector<std::thread> ts;
-  for (int t = 0; t < kThreads; ++t) ts.emplace_back(worker, 50000);
-  for (auto& t : ts) t.join();
+    constexpr int kThreads = 4;
+    std::vector<std::thread> ts;
+    for (int t = 0; t < kThreads; ++t) ts.emplace_back(worker, 50000);
+    for (auto& t : ts) t.join();
 
-  std::cout << "counter = " << counter.load() << "\\n";
-  std::cout << "retries = " << retries.load() << "\\n";
-  return 0;
+    std::cout << "counter = " << counter.load() << "\\n";
+    std::cout << "retries = " << retries.load() << "\\n";
+    return 0;
 }`,
   },
   furtherReading: [

@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ind17StdSimd: ChapterContent = {
   slug: 'ind17-std-simd',
-  chapterLabel: '第 17 章',
+  chapterLabel: '第 46 章',
   title: 'std::simd（C++26, P1928）',
-  group: 'M · 第五部：資料平行與向量化',
+  group: '第 13 部：資料平行與向量化',
   description: '資料平行型別、垂直運算與 mask，SoA vs AoS 資料佈局對向量化的決定性影響。',
   concept: {
     standard: 'C++26',
@@ -40,41 +40,39 @@ namespace stdx = std::experimental;
 // 5 點 stencil：out[i] = (in[i-1] + in[i] + in[i+1]) / 3，SoA
 // 佈局（連續陣列）。
 void stencilSimd(const std::vector<float>& in, std::vector<float>& out) {
-  using Vec = stdx::native_simd<float>;
-  constexpr std::size_t width = Vec::size();  // [1] 硬體決定的向量寬度
-  const std::size_t n = in.size();
+    using Vec = stdx::native_simd<float>;
+    constexpr std::size_t width = Vec::size();  // [1] 硬體決定的向量寬度
+    const std::size_t n = in.size();
 
-  std::size_t i = 1;
-  // 主迴圈：一次處理 width 個元素，全部走連續 load/store。 [2]
-  for (; i + width < n; i += width) {
-    Vec left, mid, right;
-    left.copy_from(&in[i - 1],
-                   stdx::element_aligned);  // [3] 未強制對齊，安全但可能較慢
-    mid.copy_from(&in[i], stdx::element_aligned);
-    right.copy_from(&in[i + 1], stdx::element_aligned);
+    std::size_t i = 1;
+    // 主迴圈：一次處理 width 個元素，全部走連續 load/store。 [2]
+    for (; i + width < n; i += width) {
+        Vec left, mid, right;
+        left.copy_from(&in[i - 1],
+                       stdx::element_aligned);  // [3] 未強制對齊，安全但可能較慢
+        mid.copy_from(&in[i], stdx::element_aligned);
+        right.copy_from(&in[i + 1], stdx::element_aligned);
 
-    Vec result =
-        (left + mid + right) / Vec(3.0f);  // [4] 垂直運算，同時算 width 個 lane
-    result.copy_to(&out[i], stdx::element_aligned);
-  }
+        Vec result = (left + mid + right) / Vec(3.0f);  // [4] 垂直運算，同時算 width 個 lane
+        result.copy_to(&out[i], stdx::element_aligned);
+    }
 
-  // 尾端 remainder：剩下不足一個向量寬度的元素，退回純量迴圈補齊。 [5]
-  for (; i + 1 < n; ++i) {
-    out[i] = (in[i - 1] + in[i] + in[i + 1]) / 3.0f;
-  }
+    // 尾端 remainder：剩下不足一個向量寬度的元素，退回純量迴圈補齊。 [5]
+    for (; i + 1 < n; ++i) {
+        out[i] = (in[i - 1] + in[i] + in[i + 1]) / 3.0f;
+    }
 }
 
 int main() {
-  constexpr std::size_t n =
-      4099;  // 刻意選不是向量寬度倍數的大小，強制觸發尾端迴圈 [6]
-  std::vector<float> in(n), out(n, 0.0f);
-  for (std::size_t i = 0; i < n; ++i) {
-    in[i] = static_cast<float>(i % 7);
-  }
+    constexpr std::size_t n = 4099;  // 刻意選不是向量寬度倍數的大小，強制觸發尾端迴圈 [6]
+    std::vector<float> in(n), out(n, 0.0f);
+    for (std::size_t i = 0; i < n; ++i) {
+        in[i] = static_cast<float>(i % 7);
+    }
 
-  stencilSimd(in, out);
-  std::println("out[1] = {}, out[n-2] = {}", out[1], out[n - 2]);
-  return 0;
+    stencilSimd(in, out);
+    std::println("out[1] = {}, out[n-2] = {}", out[1], out[n - 2]);
+    return 0;
 }`,
     callouts: [
       {
@@ -179,38 +177,37 @@ int main() {
 
 namespace stdx = std::experimental;
 
-void addVectors(const std::vector<float>& a, const std::vector<float>& b,
-                std::vector<float>& out) {
-  using Vec = stdx::native_simd<float>;
-  const std::size_t width = Vec::size();
-  const std::size_t n = a.size();
+void addVectors(const std::vector<float>& a, const std::vector<float>& b, std::vector<float>& out) {
+    using Vec = stdx::native_simd<float>;
+    const std::size_t width = Vec::size();
+    const std::size_t n = a.size();
 
-  std::size_t i = 0;
-  for (; i + width <= n; i += width) {
-    Vec va, vb;
-    va.copy_from(&a[i], stdx::element_aligned);
-    vb.copy_from(&b[i], stdx::element_aligned);
-    Vec vr = va + vb;
-    vr.copy_to(&out[i], stdx::element_aligned);
-  }
+    std::size_t i = 0;
+    for (; i + width <= n; i += width) {
+        Vec va, vb;
+        va.copy_from(&a[i], stdx::element_aligned);
+        vb.copy_from(&b[i], stdx::element_aligned);
+        Vec vr = va + vb;
+        vr.copy_to(&out[i], stdx::element_aligned);
+    }
 
-  // 純量 remainder：補齊不足一個向量寬度的尾端元素。
-  for (; i < n; ++i) {
-    out[i] = a[i] + b[i];
-  }
+    // 純量 remainder：補齊不足一個向量寬度的尾端元素。
+    for (; i < n; ++i) {
+        out[i] = a[i] + b[i];
+    }
 }
 
 int main() {
-  std::vector<float> a{1, 2, 3, 4, 5, 6, 7};
-  std::vector<float> b{10, 20, 30, 40, 50, 60, 70};
-  std::vector<float> out(a.size());
+    std::vector<float> a{1, 2, 3, 4, 5, 6, 7};
+    std::vector<float> b{10, 20, 30, 40, 50, 60, 70};
+    std::vector<float> out(a.size());
 
-  addVectors(a, b, out);
-  for (float v : out) {
-    std::cout << v << ' ';
-  }
-  std::cout << '\\n';
-  return 0;
+    addVectors(a, b, out);
+    for (float v : out) {
+        std::cout << v << ' ';
+    }
+    std::cout << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [

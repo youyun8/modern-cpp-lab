@@ -4,13 +4,13 @@ import { kNavGroups } from '@/nav';
 const kFeatured = [
   {
     href: '/ch22-advanced-ii',
-    label: 'Ch.22',
+    label: '第 22 章',
     title: '並行程式設計',
     desc: 'std::thread、mutex、atomic 與 memory_order，配合動畫時間軸理解互斥。',
   },
   {
     href: '/ch23-optimization-i',
-    label: 'Ch.23',
+    label: '第 23 章',
     title: '架構與記憶體階層',
     desc: 'Amdahl／Gustafson 定律、SIMD、快取一致性與記憶體延遲階梯。',
   },
@@ -37,10 +37,9 @@ export default function HomePage() {
           現代 C++ 平行程式設計學習網站
         </h1>
         <p className="max-w-2xl text-[15px] leading-7 text-content-muted">
-          本網站以 Federico Busato 的「Modern C++ Programming」課程為藍本， 完整保留 29
-          章的原始編號，並以<strong className="text-content">平行化、並行與效能最佳化</strong>
-          為編輯重心。每一章皆包含概念卡片、標註程式碼、互動測驗、視覺圖表、
-          可複製的「試試看」面板，以及延伸閱讀。
+          本網站以 Federico Busato 的「Modern C++ Programming」課程為藍本，整理成連續的 60
+          章手冊，並以<strong className="text-content">平行化、並行與效能最佳化</strong>
+          為編輯重心。每一章皆包含概念卡片、標註程式碼、互動測驗、視覺圖表、可複製的「試試看」面板，以及延伸閱讀。
         </p>
         <div className="flex flex-wrap gap-3">
           <Link
@@ -85,7 +84,7 @@ export default function HomePage() {
 
       <section aria-labelledby="toc-heading" className="space-y-4">
         <h2 id="toc-heading" className="text-xl font-semibold text-content">
-          課程地圖
+          手冊地圖
         </h2>
         <div className="grid gap-6 sm:grid-cols-2">
           {kNavGroups.map((group) => (

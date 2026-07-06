@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ind24ExceptionSafetyResourceMgmt: ChapterContent = {
   slug: 'ind24-exception-safety-resource-mgmt',
-  chapterLabel: '第 24 章',
+  chapterLabel: '第 53 章',
   title: '例外安全與資源管理',
-  group: 'O · 第七部：正確性、測試與除錯',
+  group: '第 15 部：正確性、測試與除錯',
   description:
     '並行下的 RAII 與取消時的清理、std::expected（C++23）在錯誤傳遞中的角色，以及部分失敗的處理策略。',
   concept: {
@@ -22,7 +22,7 @@ const ind24ExceptionSafetyResourceMgmt: ChapterContent = {
     },
     {
       heading: '部分失敗的聚合策略：別讓第一個例外吞掉其他失敗',
-      body: '當一個平行演算法把工作拆成 N 個任務（無論是 `std::async`、執行緒池，還是 `std::for_each` 加執行策略）分頭執行，每個任務都可能獨立失敗。天真的做法是讓任何一個任務丟出例外就直接讓整個呼叫失敗（例如透過第一個 `future::get()` 拋出的例外），但這樣其餘 N-1 個任務中「也失敗了、且失敗原因可能完全不同」的資訊就永遠遺失了——除錯時只看到一則錯誤訊息，卻不知道背後其實有三個任務因為不同原因同時失敗。\n\n更好的策略是讓每個任務回傳 `std::expected<T, std::string>`（或攜帶更豐富資訊的錯誤型別，如 `std::exception_ptr` 搭配任務索引），統一收集進一個結果容器後再一次性分析：全部成功、部分成功、還是全部失敗，並把所有失敗原因彙整進一個聚合報告或聚合例外（許多語言稱之為 aggregate exception／multi-error）。這也呼應第 7 章討論過的「例外無法跨執行緒自動傳播」問題：`std::exception_ptr` 是安全攜帶例外跨執行緒邊界的機制，但把它跟 `std::expected` 這種顯式錯誤值兩者結合，能同時保留「延後拋出以維持原例外型別」與「不因單一失敗而中斷聚合流程」兩個優點。',
+      body: '當一個平行演算法把工作拆成 N 個任務（無論是 `std::async`、執行緒池，還是 `std::for_each` 加執行策略）分頭執行，每個任務都可能獨立失敗。天真的做法是讓任何一個任務丟出例外就直接讓整個呼叫失敗（例如透過第一個 `future::get()` 拋出的例外），但這樣其餘 N-1 個任務中「也失敗了、且失敗原因可能完全不同」的資訊就永遠遺失了——除錯時只看到一則錯誤訊息，卻不知道背後其實有三個任務因為不同原因同時失敗。\n\n更好的策略是讓每個任務回傳 `std::expected<T, std::string>`（或攜帶更豐富資訊的錯誤型別，如 `std::exception_ptr` 搭配任務索引），統一收集進一個結果容器後再一次性分析：全部成功、部分成功、還是全部失敗，並把所有失敗原因彙整進一個聚合報告或聚合例外（許多語言稱之為 aggregate exception／multi-error）。這也呼應第 36 章討論過的「例外無法跨執行緒自動傳播」問題：`std::exception_ptr` 是安全攜帶例外跨執行緒邊界的機制，但把它跟 `std::expected` 這種顯式錯誤值兩者結合，能同時保留「延後拋出以維持原例外型別」與「不因單一失敗而中斷聚合流程」兩個優點。',
     },
     {
       heading: '決策框架：例外、std::expected、錯誤碼三選一',
@@ -39,52 +39,47 @@ const ind24ExceptionSafetyResourceMgmt: ChapterContent = {
 
 // 平行任務：可能成功回傳 int，也可能失敗並攜帶說明字串。 [1]
 std::expected<int, std::string> riskyTask(int id) {
-  if (id % 3 == 0) {
-    return std::unexpected("task " + std::to_string(id) +
-                           ": simulated failure");
-  }
-  return id * id;
+    if (id % 3 == 0) {
+        return std::unexpected("task " + std::to_string(id) + ": simulated failure");
+    }
+    return id * id;
 }
 
 struct AggregateReport {
-  std::vector<int> succeeded;
-  std::vector<std::string>
-      failures;  // [2] 收集「全部」失敗原因，而非只留第一個
+    std::vector<int> succeeded;
+    std::vector<std::string> failures;  // [2] 收集「全部」失敗原因，而非只留第一個
 };
 
 // 啟動 N 個任務並聚合每一個 std::expected 結果。 [3]
 AggregateReport runAllAndAggregate(int taskCount) {
-  std::vector<std::future<std::expected<int, std::string>>> futures;
-  futures.reserve(static_cast<std::size_t>(taskCount));
+    std::vector<std::future<std::expected<int, std::string>>> futures;
+    futures.reserve(static_cast<std::size_t>(taskCount));
 
-  for (int i = 0; i < taskCount; ++i) {
-    futures.push_back(
-        std::async(std::launch::async, riskyTask, i));  // [4] 每個任務獨立執行
-  }
-
-  AggregateReport report;
-  for (auto& fut : futures) {
-    std::expected<int, std::string> result =
-        fut.get();  // [5] get() 只會拋出 async 本身的失敗
-    if (result.has_value()) {
-      report.succeeded.push_back(*result);
-    } else {
-      report.failures.push_back(
-          result.error());  // [6] 失敗不中斷迴圈，繼續收集其餘結果
+    for (int i = 0; i < taskCount; ++i) {
+        futures.push_back(std::async(std::launch::async, riskyTask, i));  // [4] 每個任務獨立執行
     }
-  }
-  return report;
+
+    AggregateReport report;
+    for (auto& fut : futures) {
+        std::expected<int, std::string> result = fut.get();  // [5] get() 只會拋出 async 本身的失敗
+        if (result.has_value()) {
+            report.succeeded.push_back(*result);
+        } else {
+            report.failures.push_back(result.error());  // [6] 失敗不中斷迴圈，繼續收集其餘結果
+        }
+    }
+    return report;
 }
 
 int main() {
-  AggregateReport report = runAllAndAggregate(9);
+    AggregateReport report = runAllAndAggregate(9);
 
-  std::println("成功任務數: {}", report.succeeded.size());
-  std::println("失敗任務數: {}", report.failures.size());
-  for (const std::string& msg : report.failures) {
-    std::println("  - {}", msg);
-  }
-  return 0;
+    std::println("成功任務數: {}", report.succeeded.size());
+    std::println("失敗任務數: {}", report.failures.size());
+    for (const std::string& msg : report.failures) {
+        std::println("  - {}", msg);
+    }
+    return 0;
 }`,
     callouts: [
       {
@@ -182,32 +177,31 @@ int main() {
 #include <vector>
 
 std::expected<int, std::string> riskyTask(int id) {
-  if (id % 3 == 0) {
-    return std::unexpected("task " + std::to_string(id) + " failed");
-  }
-  return id * id;
+    if (id % 3 == 0) {
+        return std::unexpected("task " + std::to_string(id) + " failed");
+    }
+    return id * id;
 }
 
 int main() {
-  std::vector<std::future<std::expected<int, std::string>>> futures;
-  for (int i = 0; i < 6; ++i) {
-    futures.push_back(std::async(std::launch::async, riskyTask, i));
-  }
-
-  int successCount = 0;
-  std::vector<std::string> failures;
-  for (auto& fut : futures) {
-    auto result = fut.get();
-    if (result.has_value()) {
-      ++successCount;
-    } else {
-      failures.push_back(result.error());
+    std::vector<std::future<std::expected<int, std::string>>> futures;
+    for (int i = 0; i < 6; ++i) {
+        futures.push_back(std::async(std::launch::async, riskyTask, i));
     }
-  }
 
-  std::cout << "success = " << successCount
-            << ", failures = " << failures.size() << '\\n';
-  return 0;
+    int successCount = 0;
+    std::vector<std::string> failures;
+    for (auto& fut : futures) {
+        auto result = fut.get();
+        if (result.has_value()) {
+            ++successCount;
+        } else {
+            failures.push_back(result.error());
+        }
+    }
+
+    std::cout << "success = " << successCount << ", failures = " << failures.size() << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [

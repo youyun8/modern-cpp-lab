@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ch25OptimizationIII: ChapterContent = {
   slug: 'ch25-optimization-iii',
-  chapterLabel: 'Ch.25',
+  chapterLabel: '第 25 章',
   title: '最佳化 III：編譯器旗標與剖析',
-  group: 'F · 效能最佳化',
+  group: '第 6 部：效能最佳化',
   description:
     '編譯器旗標（-O3 / -march / PGO / LTO）、profiling 工具與平行擴充性、benchmarking 方法論：如何以量測驅動最佳化。',
   concept: {
@@ -122,17 +122,16 @@ perf record -g ./app && perf report                    # [5]`,
 
 // 簡易 benchmark 骨架：多次迭代取平均，並防止結果被最佳化掉。
 int main() {
-  constexpr int kIter = 5'000'000;
-  volatile double sink = 0.0;  // volatile 防止整段被刪除
-  auto t0 = std::chrono::steady_clock::now();
-  double acc = 0.0;
-  for (int i = 1; i <= kIter; ++i) acc += std::sqrt((double)i);
-  sink = acc;
-  auto t1 = std::chrono::steady_clock::now();
-  std::cout << "elapsed = "
-            << std::chrono::duration<double, std::milli>(t1 - t0).count()
-            << " ms, sink = " << sink << '\\n';
-  return 0;
+    constexpr int kIter = 5'000'000;
+    volatile double sink = 0.0;  // volatile 防止整段被刪除
+    auto t0 = std::chrono::steady_clock::now();
+    double acc = 0.0;
+    for (int i = 1; i <= kIter; ++i) acc += std::sqrt((double)i);
+    sink = acc;
+    auto t1 = std::chrono::steady_clock::now();
+    std::cout << "elapsed = " << std::chrono::duration<double, std::milli>(t1 - t0).count()
+              << " ms, sink = " << sink << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [

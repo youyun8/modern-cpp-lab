@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ind02HardwareReality: ChapterContent = {
   slug: 'ind02-hardware-reality',
-  chapterLabel: '第 2 章',
+  chapterLabel: '第 31 章',
   title: '硬體現實：NUMA、快取一致性與弱記憶體',
-  group: 'H · 第零部：先修與心智模型',
+  group: '第 8 部：先修與心智模型',
   description:
     '多核與 NUMA 拓樸、快取階層、MESI/MOESI 一致性協定，以及 x86 TSO 與 ARM/Power 弱序模型對可攜 kernel 的實際衝擊。',
   concept: {
@@ -24,8 +24,8 @@ const ind02HardwareReality: ChapterContent = {
 // generating coherence traffic even though there is no logical data
 // dependency between the counters. [1]
 struct FalseSharingCounters {
-  std::atomic<long> a{0};
-  std::atomic<long> b{0};  // [2]
+    std::atomic<long> a{0};
+    std::atomic<long> b{0};  // [2]
 };
 
 // Padding each counter out to its own cache line removes the false
@@ -33,25 +33,25 @@ struct FalseSharingCounters {
 // block, so increments from different cores never invalidate each
 // other's line. [3]
 struct PaddedCounters {
-  alignas(64) std::atomic<long> a{0};  // [4]
-  alignas(64) std::atomic<long> b{0};
+    alignas(64) std::atomic<long> a{0};  // [4]
+    alignas(64) std::atomic<long> b{0};
 };
 
 template <typename Counters>
 double benchmarkIncrements(Counters& counters, std::size_t iterations) {
-  auto start = std::chrono::steady_clock::now();
-  std::thread t1([&] {
-    for (std::size_t i = 0; i < iterations; ++i)
-      counters.a.fetch_add(1, std::memory_order_relaxed);  // [5]
-  });
-  std::thread t2([&] {
-    for (std::size_t i = 0; i < iterations; ++i)
-      counters.b.fetch_add(1, std::memory_order_relaxed);
-  });
-  t1.join();
-  t2.join();
-  auto end = std::chrono::steady_clock::now();
-  return std::chrono::duration<double, std::milli>(end - start).count();  // [6]
+    auto start = std::chrono::steady_clock::now();
+    std::thread t1([&] {
+        for (std::size_t i = 0; i < iterations; ++i)
+            counters.a.fetch_add(1, std::memory_order_relaxed);  // [5]
+    });
+    std::thread t2([&] {
+        for (std::size_t i = 0; i < iterations; ++i)
+            counters.b.fetch_add(1, std::memory_order_relaxed);
+    });
+    t1.join();
+    t2.join();
+    auto end = std::chrono::steady_clock::now();
+    return std::chrono::duration<double, std::milli>(end - start).count();  // [6]
 }`,
     callouts: [
       { n: 1, text: '兩個邏輯上無關的計數器若落在同一條快取行，仍會因硬體一致性協定而互相干擾。' },
@@ -162,42 +162,37 @@ double benchmarkIncrements(Counters& counters, std::size_t iterations) {
 // increment workload once with two atomics packed together, once with
 // them padded onto separate cache lines, and compare wall-clock time.
 struct Packed {
-  std::atomic<long> a{0};
-  std::atomic<long> b{0};
+    std::atomic<long> a{0};
+    std::atomic<long> b{0};
 };
 
 struct Padded {
-  alignas(64) std::atomic<long> a{0};
-  alignas(64) std::atomic<long> b{0};
+    alignas(64) std::atomic<long> a{0};
+    alignas(64) std::atomic<long> b{0};
 };
 
 template <typename T>
 double run(T& counters, long iterations) {
-  auto start = std::chrono::steady_clock::now();
-  std::thread t1([&] {
-    for (long i = 0; i < iterations; ++i)
-      counters.a.fetch_add(1, std::memory_order_relaxed);
-  });
-  std::thread t2([&] {
-    for (long i = 0; i < iterations; ++i)
-      counters.b.fetch_add(1, std::memory_order_relaxed);
-  });
-  t1.join();
-  t2.join();
-  return std::chrono::duration<double, std::milli>(
-             std::chrono::steady_clock::now() - start)
-      .count();
+    auto start = std::chrono::steady_clock::now();
+    std::thread t1([&] {
+        for (long i = 0; i < iterations; ++i) counters.a.fetch_add(1, std::memory_order_relaxed);
+    });
+    std::thread t2([&] {
+        for (long i = 0; i < iterations; ++i) counters.b.fetch_add(1, std::memory_order_relaxed);
+    });
+    t1.join();
+    t2.join();
+    return std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start)
+        .count();
 }
 
 int main() {
-  constexpr long kIterations = 20'000'000;
-  Packed packed;
-  Padded padded;
-  std::cout << "packed (false sharing): " << run(packed, kIterations)
-            << " ms\\n";
-  std::cout << "padded (separate lines): " << run(padded, kIterations)
-            << " ms\\n";
-  return 0;
+    constexpr long kIterations = 20'000'000;
+    Packed packed;
+    Padded padded;
+    std::cout << "packed (false sharing): " << run(packed, kIterations) << " ms\\n";
+    std::cout << "padded (separate lines): " << run(padded, kIterations) << " ms\\n";
+    return 0;
 }`,
   },
   furtherReading: [

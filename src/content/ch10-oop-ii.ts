@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ch10OopII: ChapterContent = {
   slug: 'ch10-oop-ii',
-  chapterLabel: 'Ch.10',
+  chapterLabel: '第 10 章',
   title: 'OOP II：多型與運算子重載',
-  group: 'B · 物件導向與泛型程式設計',
+  group: '第 2 部：物件導向與泛型程式設計',
   description:
     '虛擬函式、動態多型與運算子重載：vtable 的運作、override／final 的正確用法，以及何時該避免虛擬函式。',
   concept: {
@@ -18,31 +18,30 @@ const ch10OopII: ChapterContent = {
 #include <vector>
 
 struct Shape {
-  virtual ~Shape() = default;  // [1] 多型基底必須有 virtual 解構子
-  virtual double area() const = 0;  // [2] 純虛擬函式：抽象介面
+    virtual ~Shape() = default;       // [1] 多型基底必須有 virtual 解構子
+    virtual double area() const = 0;  // [2] 純虛擬函式：抽象介面
 };
 
 struct Circle : Shape {
-  double r;
-  explicit Circle(double r) : r(r) {}
-  double area() const override {  // [3] override 讓編譯器檢查簽章
-    return 3.141592653589793 * r * r;
-  }
+    double r;
+    explicit Circle(double r) : r(r) {}
+    double area() const override {  // [3] override 讓編譯器檢查簽章
+        return 3.141592653589793 * r * r;
+    }
 };
 
 struct Square final : Shape {  // [4] final：不可再被繼承
-  double s;
-  explicit Square(double s) : s(s) {}
-  double area() const override { return s * s; }
+    double s;
+    explicit Square(double s) : s(s) {}
+    double area() const override { return s * s; }
 };
 
 int main() {
-  std::vector<std::unique_ptr<Shape>> shapes;  // [5] 以基底指標統一管理
-  shapes.push_back(std::make_unique<Circle>(1.0));
-  shapes.push_back(std::make_unique<Square>(2.0));
-  for (const auto& s : shapes)
-    std::println("area = {:.3f}", s->area());  // 執行期分派
-  return 0;
+    std::vector<std::unique_ptr<Shape>> shapes;  // [5] 以基底指標統一管理
+    shapes.push_back(std::make_unique<Circle>(1.0));
+    shapes.push_back(std::make_unique<Square>(2.0));
+    for (const auto& s : shapes) std::println("area = {:.3f}", s->area());  // 執行期分派
+    return 0;
 }`,
     callouts: [
       {
@@ -134,26 +133,26 @@ int main() {
 #include <vector>
 
 struct Shape {
-  virtual ~Shape() = default;
-  virtual double area() const = 0;
+    virtual ~Shape() = default;
+    virtual double area() const = 0;
 };
 struct Circle : Shape {
-  double r;
-  Circle(double r) : r(r) {}
-  double area() const override { return 3.14159265 * r * r; }
+    double r;
+    Circle(double r) : r(r) {}
+    double area() const override { return 3.14159265 * r * r; }
 };
 struct Square : Shape {
-  double s;
-  Square(double s) : s(s) {}
-  double area() const override { return s * s; }
+    double s;
+    Square(double s) : s(s) {}
+    double area() const override { return s * s; }
 };
 
 int main() {
-  std::vector<std::unique_ptr<Shape>> shapes;
-  shapes.push_back(std::make_unique<Circle>(1.0));
-  shapes.push_back(std::make_unique<Square>(2.0));
-  for (const auto& s : shapes) std::cout << "area = " << s->area() << '\\n';
-  return 0;
+    std::vector<std::unique_ptr<Shape>> shapes;
+    shapes.push_back(std::make_unique<Circle>(1.0));
+    shapes.push_back(std::make_unique<Square>(2.0));
+    for (const auto& s : shapes) std::cout << "area = " << s->area() << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [

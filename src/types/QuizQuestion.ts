@@ -12,7 +12,7 @@ export interface QuizQuestion {
   correctOptionId: string;
   /**
    * One-sentence Traditional Chinese explanation shown after a wrong answer.
-   * Should reference the relevant Busato slide, e.g. "參見 Ch.22 PDF 第 42 頁".
+   * May reference the original Busato slide source, e.g. "參見原課程 Ch.22 PDF 第 42 頁".
    */
   explanation: string;
 }

@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ind18VectorizationFriendlyCode: ChapterContent = {
   slug: 'ind18-vectorization-friendly-code',
-  chapterLabel: '第 18 章',
+  chapterLabel: '第 47 章',
   title: '對編譯器與 CPU 友善的程式碼',
-  group: 'M · 第五部：資料平行與向量化',
+  group: '第 13 部：資料平行與向量化',
   description:
     '向量化障礙：別名、分支、非連續存取，restrict 語意、對齊、prefetch，以及判讀編譯器向量化報告。',
   concept: {
@@ -40,15 +40,14 @@ const ind18VectorizationFriendlyCode: ChapterContent = {
 // 未加 __restrict：編譯器必須假設 y 與 x 可能重疊，
 // 因而無法安全地向量化這個迴圈（除非插入執行期別名檢查）。
 void axpy_unsafe(float* y, const float* x, float a, int n) {
-  for (int i = 0; i < n; ++i) y[i] = a * x[i] + y[i];
+    for (int i = 0; i < n; ++i) y[i] = a * x[i] + y[i];
 }
 
 // 加上 __restrict：向編譯器承諾 y 與 x 指向不重疊的記憶體，
 // 讓自動向量化器可以放心地一次處理多個元素。 [1]
 void axpy(float* __restrict y, const float* __restrict x, float a, int n) {
-  // [2] const 修飾唯讀指標，進一步協助別名分析。
-  for (int i = 0; i < n; ++i)
-    y[i] = a * x[i] + y[i];  // [3] 無分支、連續存取，SIMD 友善
+    // [2] const 修飾唯讀指標，進一步協助別名分析。
+    for (int i = 0; i < n; ++i) y[i] = a * x[i] + y[i];  // [3] 無分支、連續存取，SIMD 友善
 }
 
 // alignas 讓緩衝區對齊到常見 SIMD 寬度（32 位元組 = AVX2）， [4]
@@ -59,13 +58,13 @@ alignas(32) float buffer_y[1024];
 // 分塊（tiling）示例：以固定大小的區塊走訪，讓每個區塊 [5]
 // 的資料在被逐出快取前被重複使用，改善記憶體受限核心的效能。
 void scale_tiled(float* __restrict data, std::size_t n, float factor) {
-  constexpr std::size_t kTile = 256;  // 依實際快取大小調整
-  for (std::size_t base = 0; base < n; base += kTile) {
-    const std::size_t end = base + kTile < n ? base + kTile : n;
-    // [6] 預取下一個區塊的起點，隱藏記憶體延遲
-    __builtin_prefetch(&data[end], 0, 1);
-    for (std::size_t i = base; i < end; ++i) data[i] *= factor;
-  }
+    constexpr std::size_t kTile = 256;  // 依實際快取大小調整
+    for (std::size_t base = 0; base < n; base += kTile) {
+        const std::size_t end = base + kTile < n ? base + kTile : n;
+        // [6] 預取下一個區塊的起點，隱藏記憶體延遲
+        __builtin_prefetch(&data[end], 0, 1);
+        for (std::size_t i = base; i < end; ++i) data[i] *= factor;
+    }
 }`,
     callouts: [
       {
@@ -165,32 +164,29 @@ void scale_tiled(float* __restrict data, std::size_t n, float factor) {
 
 // 對照 __restrict 是否存在時，編譯器能否有效向量化 AXPY。
 void axpy_unsafe(float* y, const float* x, float a, int n) {
-  for (int i = 0; i < n; ++i) y[i] = a * x[i] + y[i];
+    for (int i = 0; i < n; ++i) y[i] = a * x[i] + y[i];
 }
 
-void axpy_restrict(float* __restrict y, const float* __restrict x, float a,
-                   int n) {
-  for (int i = 0; i < n; ++i) y[i] = a * x[i] + y[i];
+void axpy_restrict(float* __restrict y, const float* __restrict x, float a, int n) {
+    for (int i = 0; i < n; ++i) y[i] = a * x[i] + y[i];
 }
 
 int main() {
-  constexpr int kN = 1 << 20;
-  std::vector<float> x(kN, 1.5f), y1(kN, 2.0f), y2(kN, 2.0f);
+    constexpr int kN = 1 << 20;
+    std::vector<float> x(kN, 1.5f), y1(kN, 2.0f), y2(kN, 2.0f);
 
-  auto t0 = std::chrono::steady_clock::now();
-  axpy_unsafe(y1.data(), x.data(), 2.0f, kN);
-  auto t1 = std::chrono::steady_clock::now();
-  axpy_restrict(y2.data(), x.data(), 2.0f, kN);
-  auto t2 = std::chrono::steady_clock::now();
+    auto t0 = std::chrono::steady_clock::now();
+    axpy_unsafe(y1.data(), x.data(), 2.0f, kN);
+    auto t1 = std::chrono::steady_clock::now();
+    axpy_restrict(y2.data(), x.data(), 2.0f, kN);
+    auto t2 = std::chrono::steady_clock::now();
 
-  std::cout << "unsafe:    "
-            << std::chrono::duration<double, std::milli>(t1 - t0).count()
-            << " ms\\n";
-  std::cout << "restrict:  "
-            << std::chrono::duration<double, std::milli>(t2 - t1).count()
-            << " ms\\n";
-  std::cout << "y2[0] = " << y2[0] << "\\n";
-  return 0;
+    std::cout << "unsafe:    " << std::chrono::duration<double, std::milli>(t1 - t0).count()
+              << " ms\\n";
+    std::cout << "restrict:  " << std::chrono::duration<double, std::milli>(t2 - t1).count()
+              << " ms\\n";
+    std::cout << "y2[0] = " << y2[0] << "\\n";
+    return 0;
 }`,
   },
   furtherReading: [

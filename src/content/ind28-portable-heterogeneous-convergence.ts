@@ -2,9 +2,9 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const ind28PortableHeterogeneousConvergence: ChapterContent = {
   slug: 'ind28-portable-heterogeneous-convergence',
-  chapterLabel: '第 28 章',
+  chapterLabel: '第 57 章',
   title: '可攜異質程式設計的收斂趨勢',
-  group: 'Q · 第九部：異質運算',
+  group: '第 17 部：異質運算',
   description:
     'SYCL、HIP、CUDA 的模型對照，std::par on GPU 與 std::execution bulk 的收斂，以及何時仍需廠商手調 kernel。',
   concept: {
@@ -18,7 +18,7 @@ const ind28PortableHeterogeneousConvergence: ChapterContent = {
     },
     {
       heading: 'std::par on GPU 與 std::execution 的收斂：兩條通往同一終點的路',
-      body: '仔細觀察會發現，`std::par` 的 GPU offload（第 14 章介紹的 nvc++ `-stdpar=gpu`、AMD 的 roc-stdpar）與 `std::execution` 的 scheduler／bulk 抽象（第 16 章）其實是同一個目標的兩種表現形式：讓使用者以標準 C++ 描述「做什麼」，把「在哪個硬體上做」的決定權下放給編譯器或執行期。\n\n`std::par` 這條路線的做法是「編譯器魔法」：使用者完全不需要改寫演算法呼叫，只需要在編譯選項上打開 GPU offload，編譯器分析標準演算法的呼叫模式，在滿足記憶體與函式限制的前提下自動產生裝置端 kernel。這條路線的優點是遷移成本最低（既有的 `std::transform_reduce`、`std::for_each` 呼叫幾乎原封不動），缺點是使用者對「什麼會被 offload、offload 效果如何」的掌控力較弱，且高度仰賴特定編譯器（nvc++、未來的 roc-stdpar 對應工具鏈）的實作品質。\n\n`std::execution` 這條路線則是「顯式但可攜的抽象」：使用者明確選擇一個 `scheduler`（可能代表 CPU 執行緒池，也可能代表 GPU stream），再用 `bulk` 等演算法把資料平行工作排入該 scheduler，演算法邏輯本身完全不知道底層硬體是什麼。這條路線的優點是控制力與可組合性更高（可以用 `then`／`when_all` 串接跨硬體的複雜工作流，例如「CPU 前處理 → GPU bulk 運算 → CPU 後處理」），缺點是需要顯式改寫程式碼以採用 sender／receiver 模型，且截至目前仍高度仰賴 stdexec 這類參考實作，各硬體廠商提供符合概念的 scheduler 的完整度也還在演進中。\n\n把兩者放在一起看，會發現業界正朝著「使用者只描述演算法結構，硬體派送交給工具鏈或執行期」這個共同方向前進，只是 `std::par` 選擇隱藏派送機制、`std::execution` 選擇把派送機制（scheduler）做成顯式但泛用的第一級抽象。理解這個收斂脈絡，比背誦兩者的 API 細節更重要：它說明了為什麼學會 `std::execution` 的 scheduler 概念，對未來讀懂任何一種「標準 C++ 派送到異質硬體」的機制都有幫助。',
+      body: '仔細觀察會發現，`std::par` 的 GPU offload（第 43 章介紹的 nvc++ `-stdpar=gpu`、AMD 的 roc-stdpar）與 `std::execution` 的 scheduler／bulk 抽象（第 45 章）其實是同一個目標的兩種表現形式：讓使用者以標準 C++ 描述「做什麼」，把「在哪個硬體上做」的決定權下放給編譯器或執行期。\n\n`std::par` 這條路線的做法是「編譯器魔法」：使用者完全不需要改寫演算法呼叫，只需要在編譯選項上打開 GPU offload，編譯器分析標準演算法的呼叫模式，在滿足記憶體與函式限制的前提下自動產生裝置端 kernel。這條路線的優點是遷移成本最低（既有的 `std::transform_reduce`、`std::for_each` 呼叫幾乎原封不動），缺點是使用者對「什麼會被 offload、offload 效果如何」的掌控力較弱，且高度仰賴特定編譯器（nvc++、未來的 roc-stdpar 對應工具鏈）的實作品質。\n\n`std::execution` 這條路線則是「顯式但可攜的抽象」：使用者明確選擇一個 `scheduler`（可能代表 CPU 執行緒池，也可能代表 GPU stream），再用 `bulk` 等演算法把資料平行工作排入該 scheduler，演算法邏輯本身完全不知道底層硬體是什麼。這條路線的優點是控制力與可組合性更高（可以用 `then`／`when_all` 串接跨硬體的複雜工作流，例如「CPU 前處理 → GPU bulk 運算 → CPU 後處理」），缺點是需要顯式改寫程式碼以採用 sender／receiver 模型，且截至目前仍高度仰賴 stdexec 這類參考實作，各硬體廠商提供符合概念的 scheduler 的完整度也還在演進中。\n\n把兩者放在一起看，會發現業界正朝著「使用者只描述演算法結構，硬體派送交給工具鏈或執行期」這個共同方向前進，只是 `std::par` 選擇隱藏派送機制、`std::execution` 選擇把派送機制（scheduler）做成顯式但泛用的第一級抽象。理解這個收斂脈絡，比背誦兩者的 API 細節更重要：它說明了為什麼學會 `std::execution` 的 scheduler 概念，對未來讀懂任何一種「標準 C++ 派送到異質硬體」的機制都有幫助。',
     },
     {
       heading: '何時用標準 C++、何時仍需廠商手調 kernel：誠實面對 GEMM 的現實',
@@ -44,15 +44,14 @@ const ind28PortableHeterogeneousConvergence: ChapterContent = {
 // The point of this chapter's convergence story is that none of those
 // three require a different *algorithmic* description -- only a different
 // dispatch mechanism underneath.
-void vectorAdd(const std::vector<float>& a, const std::vector<float>& b,
-               std::vector<float>& out) {
-  // [4] std::execution::par_unseq: portable request for data-parallel
-  // dispatch. Whether this actually lands on a GPU depends entirely on
-  // the compiler/toolchain (e.g. nvc++ -stdpar=gpu, roc-stdpar) and on
-  // the memory backing a/b/out being GPU-accessible.
-  std::transform(std::execution::par_unseq,  // [5]
-                 a.begin(), a.end(), b.begin(), out.begin(),
-                 [](float x, float y) { return x + y; });  // [6]
+void vectorAdd(const std::vector<float>& a, const std::vector<float>& b, std::vector<float>& out) {
+    // [4] std::execution::par_unseq: portable request for data-parallel
+    // dispatch. Whether this actually lands on a GPU depends entirely on
+    // the compiler/toolchain (e.g. nvc++ -stdpar=gpu, roc-stdpar) and on
+    // the memory backing a/b/out being GPU-accessible.
+    std::transform(std::execution::par_unseq,  // [5]
+                   a.begin(), a.end(), b.begin(), out.begin(),
+                   [](float x, float y) { return x + y; });  // [6]
 }
 
 // Equivalent structure using std::execution (P2300 / stdexec) instead of
@@ -164,19 +163,19 @@ void vectorAdd(const std::vector<float>& a, const std::vector<float>& b,
 #include <vector>
 
 int main() {
-  const std::size_t n = 1'000'000;
-  std::vector<float> a(n, 1.0f), b(n, 2.0f), out(n, 0.0f);
+    const std::size_t n = 1'000'000;
+    std::vector<float> a(n, 1.0f), b(n, 2.0f), out(n, 0.0f);
 
-  // Portable, standard-C++ description of elementwise add. Whether this
-  // dispatches to multiple CPU cores, SIMD lanes, or (with the right
-  // compiler and memory setup) a GPU is an implementation detail hidden
-  // behind the execution policy.
-  std::transform(std::execution::par_unseq, a.begin(), a.end(), b.begin(),
-                 out.begin(), [](float x, float y) { return x + y; });
+    // Portable, standard-C++ description of elementwise add. Whether this
+    // dispatches to multiple CPU cores, SIMD lanes, or (with the right
+    // compiler and memory setup) a GPU is an implementation detail hidden
+    // behind the execution policy.
+    std::transform(std::execution::par_unseq, a.begin(), a.end(), b.begin(), out.begin(),
+                   [](float x, float y) { return x + y; });
 
-  std::cout << "out[0] = " << out[0] << "\\n";
-  std::cout << "out[n-1] = " << out[n - 1] << "\\n";
-  return 0;
+    std::cout << "out[0] = " << out[0] << "\\n";
+    std::cout << "out[n-1] = " << out[n - 1] << "\\n";
+    return 0;
 }`,
   },
   furtherReading: [

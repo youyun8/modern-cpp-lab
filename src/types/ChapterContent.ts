@@ -46,7 +46,7 @@ export interface DeepDiveSection {
 export interface ChapterContent {
   /** ASCII kebab-case slug used in the URL path. */
   slug: string;
-  /** Original Busato chapter label, e.g. "Ch.22". Omitted for lab pages. */
+  /** Handbook chapter label, e.g. "第 22 章". Omitted for lab pages. */
   chapterLabel?: string;
   /** Traditional Chinese page title. */
   title: string;

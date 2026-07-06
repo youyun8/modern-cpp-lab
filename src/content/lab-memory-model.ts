@@ -2,8 +2,8 @@ import type { ChapterContent } from '@/types/ChapterContent';
 
 const labMemoryModel: ChapterContent = {
   slug: 'lab-memory-model',
-  title: '平行化實驗室：C++ 記憶體模型',
-  group: '平行化實驗室',
+  title: '實驗室：C++ 記憶體模型',
+  group: '實驗室',
   description:
     'C++ 記憶體模型深入解析：happens-before 關係、acquire／release 與 seq_cst 語意、訊息傳遞與 store-buffer 範例，以及 memory_order 列舉對照表。',
   concept: {
@@ -20,22 +20,22 @@ std::atomic<bool> ready{false};  // [1]
 int payload = 0;                 // plain, non-atomic data
 
 void producer() {
-  payload = 42;                                  // [2]
-  ready.store(true, std::memory_order_release);  // [3]
+    payload = 42;                                  // [2]
+    ready.store(true, std::memory_order_release);  // [3]
 }
 
 void consumer() {
-  while (!ready.load(std::memory_order_acquire))  // [4]
-    ;                                             // spin until published
-  assert(payload == 42);                          // [5] guaranteed to hold
+    while (!ready.load(std::memory_order_acquire))  // [4]
+        ;                                           // spin until published
+    assert(payload == 42);                          // [5] guaranteed to hold
 }
 
 int main() {
-  std::thread t1{producer};
-  std::thread t2{consumer};
-  t1.join();
-  t2.join();
-  return 0;
+    std::thread t1{producer};
+    std::thread t2{consumer};
+    t1.join();
+    t2.join();
+    return 0;
 }`,
     callouts: [
       { n: 1, text: 'ready 是原子旗標，作為資料是否「已發佈」的同步點。' },
@@ -131,19 +131,19 @@ std::atomic<bool> ready{false};
 int payload = 0;
 
 int main() {
-  std::thread producer([]() {
-    payload = 42;
-    ready.store(true, std::memory_order_release);
-  });
-  std::thread consumer([]() {
-    while (!ready.load(std::memory_order_acquire)) {
-      // spin
-    }
-    assert(payload == 42);
-  });
-  producer.join();
-  consumer.join();
-  return 0;
+    std::thread producer([]() {
+        payload = 42;
+        ready.store(true, std::memory_order_release);
+    });
+    std::thread consumer([]() {
+        while (!ready.load(std::memory_order_acquire)) {
+            // spin
+        }
+        assert(payload == 42);
+    });
+    producer.join();
+    consumer.join();
+    return 0;
 }`,
   },
   furtherReading: [

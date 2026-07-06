@@ -4,7 +4,7 @@ import { useState } from 'react';
 import type { DiagramComponentProps } from '@/types/DiagramProps';
 
 /**
- * Memory-hierarchy latency ladder for Ch.23. Bar length is proportional to
+ * Memory-hierarchy latency ladder for the architecture chapters. Bar length is proportional to
  * log10(latency) so the DRAM/Disk gap stays readable. Hover/focus reveals a
  * Traditional Chinese tooltip.
  */

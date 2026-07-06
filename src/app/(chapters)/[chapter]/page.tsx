@@ -7,7 +7,7 @@ import { buildMetadata } from '@/utils/pageMeta';
 
 export const dynamicParams = false;
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
   return kChapterSlugs.map((chapter) => ({ chapter }));
 }
 
