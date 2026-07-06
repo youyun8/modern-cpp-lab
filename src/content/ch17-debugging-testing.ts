@@ -118,10 +118,10 @@ int add(int a, int b) { return a + b; }
 
 // 迷你單元測試：以 assert 驗證行為。以 -fsanitize=undefined 編譯更佳。
 int main() {
-  assert(add(2, 3) == 5);
-  assert(add(-1, 1) == 0);
-  std::cout << "all tests passed\\n";
-  return 0;
+    assert(add(2, 3) == 5);
+    assert(add(-1, 1) == 0);
+    std::cout << "all tests passed\\n";
+    return 0;
 }`,
   },
   furtherReading: [

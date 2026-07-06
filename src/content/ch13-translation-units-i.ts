@@ -16,20 +16,20 @@ const ch13TranslationUnitsI: ChapterContent = {
     lang: 'cpp',
     code: `// ---- math.hpp（標頭：只放宣告與 inline 定義）----
 #pragma once
-int add(int a, int b);                 // [1] 宣告：無函式本體
-inline int square(int x) {             // [2] inline 允許出現在多個單元
-  return x * x;
+int add(int a, int b);      // [1] 宣告：無函式本體
+inline int square(int x) {  // [2] inline 允許出現在多個單元
+    return x * x;
 }
-constexpr double kPi = 3.141592653589793; // [3] constexpr 隱含 inline
+constexpr double kPi = 3.141592653589793;  // [3] constexpr 隱含 inline
 
 // ---- math.cpp（唯一定義處）----
 // #include "math.hpp"
-int add(int a, int b) { return a + b; } // [4] 定義只出現一次
+int add(int a, int b) { return a + b; }  // [4] 定義只出現一次
 
 // ---- util.cpp（本檔專用符號）----
-namespace {                            // [5] 匿名 namespace：internal linkage
-  int secret() { return 42; }
-}`,
+namespace {  // [5] 匿名 namespace：internal linkage
+int secret() { return 42; }
+}  // namespace`,
     callouts: [
       { n: 1, text: '宣告只描述符號存在與其型別／簽章，可在多個標頭與單元中重複出現。' },
       { n: 2, text: 'inline 函式可在多個轉譯單元各有一份相同定義，連結器會合併，不違反 ODR。' },
@@ -117,18 +117,18 @@ namespace {                            // [5] 匿名 namespace：internal linkag
   tryIt: {
     code: `#include <iostream>
 
-inline int square(int x) { return x * x; } // inline 可安全共用
+inline int square(int x) { return x * x; }  // inline 可安全共用
 constexpr double kPi = 3.14159265358979;
 
 namespace {
-  int secret() { return 42; } // internal linkage
-}
+int secret() { return 42; }  // internal linkage
+}  // namespace
 
 int main() {
-  std::cout << "square(5) = " << square(5) << '\\n';
-  std::cout << "kPi = " << kPi << '\\n';
-  std::cout << "secret = " << secret() << '\\n';
-  return 0;
+    std::cout << "square(5) = " << square(5) << '\\n';
+    std::cout << "kPi = " << kPi << '\\n';
+    std::cout << "secret = " << secret() << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [

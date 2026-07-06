@@ -21,25 +21,25 @@ const ch08BasicConceptsVI: ChapterContent = {
 
 // 大型物件以 const& 傳遞避免複製；小型以值傳遞即可。 [1]
 int countLongerThan(const std::vector<std::string>& words, std::size_t n) {
-  int threshold = static_cast<int>(n);
-  return static_cast<int>(std::count_if(       // [2] 演算法 + lambda
-      words.begin(), words.end(),
-      [threshold](const std::string& w) {      // [3] 以值捕獲 threshold
-        return static_cast<int>(w.size()) > threshold;
-      }));
+    int threshold = static_cast<int>(n);
+    return static_cast<int>(std::count_if(  // [2] 演算法 + lambda
+        words.begin(), words.end(),
+        [threshold](const std::string& w) {  // [3] 以值捕獲 threshold
+            return static_cast<int>(w.size()) > threshold;
+        }));
 }
 
-auto makeAdder(int base) {                      // [4] 回傳捕獲狀態的閉包
-  return [base](int x) { return base + x; };
+auto makeAdder(int base) {  // [4] 回傳捕獲狀態的閉包
+    return [base](int x) { return base + x; };
 }
 
 int main() {
-  std::vector<std::string> words{"a", "bee", "programming", "cpp"};
-  std::println("長度 > 2 的字數：{}", countLongerThan(words, 2));
+    std::vector<std::string> words{"a", "bee", "programming", "cpp"};
+    std::println("長度 > 2 的字數：{}", countLongerThan(words, 2));
 
-  auto add10 = makeAdder(10);
-  std::println("add10(5) = {}", add10(5));      // [5]
-  return 0;
+    auto add10 = makeAdder(10);
+    std::println("add10(5) = {}", add10(5));  // [5]
+    return 0;
 }`,
     callouts: [
       { n: 1, text: '傳遞語意的黃金法則：大型或不可複製物件用 const&，小型可複製型別用值傳遞。' },
@@ -132,17 +132,15 @@ int main() {
 #include <vector>
 
 int main() {
-  std::vector<std::string> words{"a", "bee", "programming", "cpp"};
-  int n = 2;
-  auto count = std::count_if(words.begin(), words.end(),
-      [n](const std::string& w) { return (int)w.size() > n; });
-  std::cout << "longer than " << n << ": " << count << '\\n';
+    std::vector<std::string> words{"a", "bee", "programming", "cpp"};
+    int n = 2;
+    auto count = std::count_if(words.begin(), words.end(),
+                               [n](const std::string& w) { return (int)w.size() > n; });
+    std::cout << "longer than " << n << ": " << count << '\\n';
 
-  auto makeAdder = [](int base) {
-    return [base](int x) { return base + x; };
-  };
-  std::cout << "add10(5) = " << makeAdder(10)(5) << '\\n';
-  return 0;
+    auto makeAdder = [](int base) { return [base](int x) { return base + x; }; };
+    std::cout << "add10(5) = " << makeAdder(10)(5) << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [

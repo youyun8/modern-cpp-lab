@@ -50,8 +50,8 @@ export function createStub(params: StubParams): ChapterContent {
 
 // TODO: Replace with an annotated example for "${params.topic}".
 int main() {
-  std::cout << "TODO: ${params.slug}\\n";
-  return 0;
+    std::cout << "TODO: ${params.slug}\\n";
+    return 0;
 }`,
       callouts: [{ n: 1, text: '佔位程式碼：待補充與本章主題相關的標註範例。' }],
     },
@@ -73,8 +73,8 @@ int main() {
 
 // TODO: Provide a runnable snippet for "${params.topic}".
 int main() {
-  std::cout << "Modern C++: ${params.title}\\n";
-  return 0;
+    std::cout << "Modern C++: ${params.title}\\n";
+    return 0;
 }`,
     },
     furtherReading: [

@@ -120,14 +120,14 @@ clang-tidy src/main.cpp -- -std=c++23`,
 /// \\param n 非負整數
 /// \\return n!
 unsigned long long factorial(int n) {
-  unsigned long long r = 1;
-  for (int i = 2; i <= n; ++i) r *= i;
-  return r;
+    unsigned long long r = 1;
+    for (int i = 2; i <= n; ++i) r *= i;
+    return r;
 }
 
 int main() {
-  std::cout << "10! = " << factorial(10) << '\\n';
-  return 0;
+    std::cout << "10! = " << factorial(10) << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [

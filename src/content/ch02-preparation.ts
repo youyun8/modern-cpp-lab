@@ -117,8 +117,8 @@ g++ hello.o -o hello                                   # [4]
 
 // 最小可編譯範例。以 g++ -std=c++23 -Wall try.cpp -o try 編譯。
 int main() {
-  std::cout << "工具鏈已就緒！\\n";
-  return 0;
+    std::cout << "工具鏈已就緒！\\n";
+    return 0;
 }`,
   },
   furtherReading: [

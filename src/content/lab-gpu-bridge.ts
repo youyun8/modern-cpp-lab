@@ -20,19 +20,19 @@ const labGpuBridge: ChapterContent = {
 // __global__ void scale(float* d, float k, int n); // GPU 核心宣告
 
 void pipeline(float* h_in, float* d_buf, int n /*, cudaStream_t s */) {
-  // cudaMemcpyAsync(d_buf, h_in, n*sizeof(float),
-  //                 cudaMemcpyHostToDevice, s);        // [2] 非同步 H2D
-  // scale<<<(n+255)/256, 256, 0, s>>>(d_buf, 2.0f, n); // [3] 發射即返回
-  // cudaMemcpyAsync(h_in, d_buf, n*sizeof(float),
-  //                 cudaMemcpyDeviceToHost, s);        // [4] 非同步 D2H
-  // host 此時可繼續做別的事；稍後再同步。               [5]
+    // cudaMemcpyAsync(d_buf, h_in, n*sizeof(float),
+    //                 cudaMemcpyHostToDevice, s);        // [2] 非同步 H2D
+    // scale<<<(n+255)/256, 256, 0, s>>>(d_buf, 2.0f, n); // [3] 發射即返回
+    // cudaMemcpyAsync(h_in, d_buf, n*sizeof(float),
+    //                 cudaMemcpyDeviceToHost, s);        // [4] 非同步 D2H
+    // host 此時可繼續做別的事；稍後再同步。               [5]
 }
 
 // 心智模型：cudaStream 之於 GPU，類似 std::future 之於 CPU 非同步工作。
 #include <future>
 int cpuAnalog() {
-  std::future<int> f = std::async(std::launch::async, [] { return 42; });
-  return f.get(); // 對應 cudaStreamSynchronize：等待非同步工作完成
+    std::future<int> f = std::async(std::launch::async, [] { return 42; });
+    return f.get();  // 對應 cudaStreamSynchronize：等待非同步工作完成
 }`,
     callouts: [
       { n: 1, text: '真正的 GPU 程式需以 nvcc／hipcc 編譯；此處以註解示意非同步 stream 的資料流。' },
@@ -127,16 +127,16 @@ int cpuAnalog() {
 #include <thread>
 
 int main() {
-  // 類比：把「核心」排入非同步佇列，host 立即返回。
-  auto stream = std::async(std::launch::async, [] {
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    return 21 * 2; // 假裝這是 GPU 算出的結果
-  });
+    // 類比：把「核心」排入非同步佇列，host 立即返回。
+    auto stream = std::async(std::launch::async, [] {
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        return 21 * 2;  // 假裝這是 GPU 算出的結果
+    });
 
-  std::cout << "host 在 GPU 工作時繼續做別的事...\\n";
-  int result = stream.get(); // 對應 cudaStreamSynchronize
-  std::cout << "GPU 結果 = " << result << '\\n';
-  return 0;
+    std::cout << "host 在 GPU 工作時繼續做別的事...\\n";
+    int result = stream.get();  // 對應 cudaStreamSynchronize
+    std::cout << "GPU 結果 = " << result << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [

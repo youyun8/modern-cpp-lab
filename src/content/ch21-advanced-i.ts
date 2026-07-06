@@ -22,21 +22,21 @@ const ch21AdvancedI: ChapterContent = {
 // 轉發參考 + std::forward：完美轉發保留左值／右值類別。 [1]
 template <typename T>
 void addTo(std::vector<std::string>& out, T&& value) {
-  out.push_back(std::forward<T>(value));   // [2]
+    out.push_back(std::forward<T>(value));  // [2]
 }
 
-std::string makeName() { return std::string(1000, 'x'); } // 大字串
+std::string makeName() { return std::string(1000, 'x'); }  // 大字串
 
 int main() {
-  std::vector<std::string> names;
-  std::string lv = "left";
-  addTo(names, lv);            // [3] T 推導為 std::string&（左值 → 複製）
-  addTo(names, makeName());    // [4] T 推導為 std::string（右值 → 移動）
+    std::vector<std::string> names;
+    std::string lv = "left";
+    addTo(names, lv);          // [3] T 推導為 std::string&（左值 → 複製）
+    addTo(names, makeName());  // [4] T 推導為 std::string（右值 → 移動）
 
-  std::string a = "hello";
-  std::string b = std::move(a); // [5] a 進入有效但未指定狀態
-  std::println("b={}, count={}", b, names.size());
-  return 0;
+    std::string a = "hello";
+    std::string b = std::move(a);  // [5] a 進入有效但未指定狀態
+    std::println("b={}, count={}", b, names.size());
+    return 0;
 }`,
     callouts: [
       { n: 1, text: '在樣板中，T&& 是轉發參考：依實際引數推導為左值或右值參考（參考塌陷）。' },
@@ -128,12 +128,11 @@ int main() {
 #include <utility>
 
 int main() {
-  std::string a = "hello world";
-  std::string b = std::move(a); // 移動而非複製
-  std::cout << "b = " << b << '\\n';
-  std::cout << "a.size() after move = " << a.size()
-            << " (有效但未指定)\\n";
-  return 0;
+    std::string a = "hello world";
+    std::string b = std::move(a);  // 移動而非複製
+    std::cout << "b = " << b << '\\n';
+    std::cout << "a.size() after move = " << a.size() << " (有效但未指定)\\n";
+    return 0;
 }`,
   },
   furtherReading: [

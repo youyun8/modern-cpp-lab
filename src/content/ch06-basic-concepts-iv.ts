@@ -17,28 +17,31 @@ const ch06BasicConceptsIV: ChapterContent = {
     code: `#include <print>
 #include <string_view>
 
-namespace geometry::shapes {          // [1] 巢狀命名空間簡寫
-  enum class Kind { Circle, Square, Triangle }; // [2] 強型別列舉
+namespace geometry::shapes {                   // [1] 巢狀命名空間簡寫
+enum class Kind { Circle, Square, Triangle };  // [2] 強型別列舉
 
-  std::string_view name(Kind k) {
-    switch (k) {                      // [3] switch 對列舉逐一處理
-      case Kind::Circle:   return "圓形";
-      case Kind::Square:   return "正方形";
-      case Kind::Triangle: return "三角形";
+std::string_view name(Kind k) {
+    switch (k) {  // [3] switch 對列舉逐一處理
+        case Kind::Circle:
+            return "圓形";
+        case Kind::Square:
+            return "正方形";
+        case Kind::Triangle:
+            return "三角形";
     }
     return "未知";
-  }
 }
+}  // namespace geometry::shapes
 
 int main() {
-  namespace gs = geometry::shapes;    // [4] 命名空間別名
+    namespace gs = geometry::shapes;  // [4] 命名空間別名
 
-  for (auto k : {gs::Kind::Circle, gs::Kind::Square}) // [5] range-based for
-    std::println("{}", gs::name(k));
+    for (auto k : {gs::Kind::Circle, gs::Kind::Square})  // [5] range-based for
+        std::println("{}", gs::name(k));
 
-  if (int n = 2 + 3; n > 4)           // [6] 帶初始化的 if
-    std::println("n={} 大於 4", n);
-  return 0;
+    if (int n = 2 + 3; n > 4)  // [6] 帶初始化的 if
+        std::println("n={} 大於 4", n);
+    return 0;
 }`,
     callouts: [
       { n: 1, text: 'namespace a::b 簡寫（C++17）取代多層巢狀括號，讓命名空間宣告更精簡。' },
@@ -132,18 +135,20 @@ int main() {
 enum class Kind { Circle, Square, Triangle };
 
 std::string_view name(Kind k) {
-  switch (k) {
-    case Kind::Circle:   return "circle";
-    case Kind::Square:   return "square";
-    case Kind::Triangle: return "triangle";
-  }
-  return "unknown";
+    switch (k) {
+        case Kind::Circle:
+            return "circle";
+        case Kind::Square:
+            return "square";
+        case Kind::Triangle:
+            return "triangle";
+    }
+    return "unknown";
 }
 
 int main() {
-  for (auto k : {Kind::Circle, Kind::Square, Kind::Triangle})
-    std::cout << name(k) << '\\n';
-  return 0;
+    for (auto k : {Kind::Circle, Kind::Square, Kind::Triangle}) std::cout << name(k) << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [

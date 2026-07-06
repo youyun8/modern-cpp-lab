@@ -20,34 +20,31 @@ const ch22AdvancedII: ChapterContent = {
 #include <thread>
 #include <vector>
 
-std::mutex g_mutex;                       // [1]
+std::mutex g_mutex;  // [1]
 long long shared_sum = 0;
-std::atomic<long long> atomic_sum{0};     // [2]
+std::atomic<long long> atomic_sum{0};  // [2]
 
 void addWithLock(long long value) {
-  std::lock_guard<std::mutex> guard{g_mutex}; // [3]
-  shared_sum += value;
+    std::lock_guard<std::mutex> guard{g_mutex};  // [3]
+    shared_sum += value;
 }
 
-long long computePartial(int begin, int end) { // [4]
-  long long local = 0;
-  for (int i = begin; i < end; ++i)
-    local += i;
-  return local;
+long long computePartial(int begin, int end) {  // [4]
+    long long local = 0;
+    for (int i = begin; i < end; ++i) local += i;
+    return local;
 }
 
 int main() {
-  std::vector<std::thread> workers;
-  for (int t = 0; t < 4; ++t)
-    workers.emplace_back([t]() { addWithLock(t); }); // [5]
-  for (auto& w : workers)
-    w.join();
+    std::vector<std::thread> workers;
+    for (int t = 0; t < 4; ++t) workers.emplace_back([t]() { addWithLock(t); });  // [5]
+    for (auto& w : workers) w.join();
 
-  auto future = std::async(std::launch::async,        // [6]
-                           computePartial, 0, 1'000'000);
-  atomic_sum.fetch_add(future.get(),                  // [7]
-                       std::memory_order_relaxed);
-  return 0;
+    auto future = std::async(std::launch::async,  // [6]
+                             computePartial, 0, 1'000'000);
+    atomic_sum.fetch_add(future.get(),  // [7]
+                         std::memory_order_relaxed);
+    return 0;
 }`,
     callouts: [
       { n: 1, text: 'std::mutex 保護跨執行緒共享的可變狀態，是最基本的互斥原語。' },
@@ -143,26 +140,24 @@ int main() {
 std::atomic<long long> total{0};
 
 void worker(int begin, int end) {
-  long long local = 0;
-  for (int i = begin; i < end; ++i)
-    local += i;
-  // Combine once per thread to minimise atomic contention.
-  total.fetch_add(local, std::memory_order_relaxed);
+    long long local = 0;
+    for (int i = begin; i < end; ++i) local += i;
+    // Combine once per thread to minimise atomic contention.
+    total.fetch_add(local, std::memory_order_relaxed);
 }
 
 int main() {
-  constexpr int kThreads = 4;
-  constexpr int kN = 1'000'000;
-  std::vector<std::thread> pool;
-  for (int t = 0; t < kThreads; ++t) {
-    int begin = t * (kN / kThreads);
-    int end = (t + 1) * (kN / kThreads);
-    pool.emplace_back([begin, end]() { worker(begin, end); });
-  }
-  for (auto& th : pool)
-    th.join();
-  std::cout << "sum = " << total.load() << '\\n';
-  return 0;
+    constexpr int kThreads = 4;
+    constexpr int kN = 1'000'000;
+    std::vector<std::thread> pool;
+    for (int t = 0; t < kThreads; ++t) {
+        int begin = t * (kN / kThreads);
+        int end = (t + 1) * (kN / kThreads);
+        pool.emplace_back([begin, end]() { worker(begin, end); });
+    }
+    for (auto& th : pool) th.join();
+    std::cout << "sum = " << total.load() << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [

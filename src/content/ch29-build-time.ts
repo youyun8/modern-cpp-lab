@@ -114,16 +114,18 @@ clang++ -std=c++23 -ftime-trace -c heavy.cpp              # [5]`,
     code: `#include <iostream>
 
 // 前置宣告可切斷不必要的 #include 相依，加快編譯。
-struct HeavyType;            // 只宣告，不需完整定義
-void process(const HeavyType& h); // 介面只需前置宣告
+struct HeavyType;                  // 只宣告，不需完整定義
+void process(const HeavyType& h);  // 介面只需前置宣告
 
-struct HeavyType { int data = 7; };
+struct HeavyType {
+    int data = 7;
+};
 void process(const HeavyType& h) { std::cout << h.data << '\\n'; }
 
 int main() {
-  HeavyType h;
-  process(h);
-  return 0;
+    HeavyType h;
+    process(h);
+    return 0;
 }`,
   },
   furtherReading: [

@@ -20,29 +20,33 @@ const ch12TemplatesII: ChapterContent = {
 // 可變參數樣板 + C++17 折疊運算式：加總任意數量引數。 [1]
 template <typename... Args>
 auto sumAll(Args... args) {
-  return (args + ...);                 // [2] 一元右折疊
+    return (args + ...);  // [2] 一元右折疊
 }
 
 // 完全特化：為 bool 提供不同行為。 [3]
 template <typename T>
-const char* kind() { return "一般型別"; }
+const char* kind() {
+    return "一般型別";
+}
 template <>
-const char* kind<bool>() { return "布林型別"; }
+const char* kind<bool>() {
+    return "布林型別";
+}
 
 // 以 if constexpr 取代部分 SFINAE，於編譯期選擇分支。 [4]
 template <typename T>
 auto describe(T v) {
-  if constexpr (std::is_integral_v<T>)
-    return v * 2;                      // [5] 只有整數會編譯此分支
-  else
-    return v;
+    if constexpr (std::is_integral_v<T>)
+        return v * 2;  // [5] 只有整數會編譯此分支
+    else
+        return v;
 }
 
 int main() {
-  std::println("sum = {}", sumAll(1, 2, 3, 4, 5));
-  std::println("{} / {}", kind<int>(), kind<bool>());
-  std::println("describe(21) = {}", describe(21));
-  return 0;
+    std::println("sum = {}", sumAll(1, 2, 3, 4, 5));
+    std::println("{} / {}", kind<int>(), kind<bool>());
+    std::println("describe(21) = {}", describe(21));
+    return 0;
 }`,
     callouts: [
       { n: 1, text: 'typename... Args 宣告參數包，可接受任意數量、任意型別的引數。' },
@@ -133,18 +137,22 @@ int main() {
 #include <type_traits>
 
 template <typename... Args>
-auto sumAll(Args... args) { return (args + ...); }
+auto sumAll(Args... args) {
+    return (args + ...);
+}
 
 template <typename T>
 auto describe(T v) {
-  if constexpr (std::is_integral_v<T>) return v * 2;
-  else return v;
+    if constexpr (std::is_integral_v<T>)
+        return v * 2;
+    else
+        return v;
 }
 
 int main() {
-  std::cout << "sum = " << sumAll(1, 2, 3, 4, 5) << '\\n';
-  std::cout << "describe(21) = " << describe(21) << '\\n';
-  return 0;
+    std::cout << "sum = " << sumAll(1, 2, 3, 4, 5) << '\\n';
+    std::cout << "describe(21) = " << describe(21) << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [

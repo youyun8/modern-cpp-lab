@@ -113,15 +113,15 @@ const ch15CodeConventionsI: ChapterContent = {
 
 // 想像這是 include/myproject/engine.hpp 的內容（自足標頭）
 struct Engine {
-  int rpm = 0;
-  void rev(int by) { rpm += by; }
+    int rpm = 0;
+    void rev(int by) { rpm += by; }
 };
 
 int main() {
-  Engine e;
-  e.rev(1500);
-  std::cout << "rpm = " << e.rpm << '\\n';
-  return 0;
+    Engine e;
+    e.rev(1500);
+    std::cout << "rpm = " << e.rpm << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [

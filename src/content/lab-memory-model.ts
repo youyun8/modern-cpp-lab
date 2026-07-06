@@ -17,26 +17,26 @@ const labMemoryModel: ChapterContent = {
 #include <cassert>
 #include <thread>
 
-std::atomic<bool> ready{false};   // [1]
-int payload = 0;                  // plain, non-atomic data
+std::atomic<bool> ready{false};  // [1]
+int payload = 0;                 // plain, non-atomic data
 
 void producer() {
-  payload = 42;                                   // [2]
-  ready.store(true, std::memory_order_release);   // [3]
+    payload = 42;                                  // [2]
+    ready.store(true, std::memory_order_release);  // [3]
 }
 
 void consumer() {
-  while (!ready.load(std::memory_order_acquire))  // [4]
-    ;                                             // spin until published
-  assert(payload == 42);                          // [5] guaranteed to hold
+    while (!ready.load(std::memory_order_acquire))  // [4]
+        ;                                           // spin until published
+    assert(payload == 42);                          // [5] guaranteed to hold
 }
 
 int main() {
-  std::thread t1{producer};
-  std::thread t2{consumer};
-  t1.join();
-  t2.join();
-  return 0;
+    std::thread t1{producer};
+    std::thread t2{consumer};
+    t1.join();
+    t2.join();
+    return 0;
 }`,
     callouts: [
       { n: 1, text: 'ready 是原子旗標，作為資料是否「已發佈」的同步點。' },
@@ -132,19 +132,19 @@ std::atomic<bool> ready{false};
 int payload = 0;
 
 int main() {
-  std::thread producer([]() {
-    payload = 42;
-    ready.store(true, std::memory_order_release);
-  });
-  std::thread consumer([]() {
-    while (!ready.load(std::memory_order_acquire)) {
-      // spin
-    }
-    assert(payload == 42);
-  });
-  producer.join();
-  consumer.join();
-  return 0;
+    std::thread producer([]() {
+        payload = 42;
+        ready.store(true, std::memory_order_release);
+    });
+    std::thread consumer([]() {
+        while (!ready.load(std::memory_order_acquire)) {
+            // spin
+        }
+        assert(payload == 42);
+    });
+    producer.join();
+    consumer.join();
+    return 0;
 }`,
   },
   furtherReading: [

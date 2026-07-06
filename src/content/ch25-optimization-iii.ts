@@ -117,17 +117,16 @@ perf record -g ./app && perf report                    # [5]`,
 
 // 簡易 benchmark 骨架：多次迭代取平均，並防止結果被最佳化掉。
 int main() {
-  constexpr int kIter = 5'000'000;
-  volatile double sink = 0.0; // volatile 防止整段被刪除
-  auto t0 = std::chrono::steady_clock::now();
-  double acc = 0.0;
-  for (int i = 1; i <= kIter; ++i) acc += std::sqrt((double)i);
-  sink = acc;
-  auto t1 = std::chrono::steady_clock::now();
-  std::cout << "elapsed = "
-            << std::chrono::duration<double, std::milli>(t1 - t0).count()
-            << " ms, sink = " << sink << '\\n';
-  return 0;
+    constexpr int kIter = 5'000'000;
+    volatile double sink = 0.0;  // volatile 防止整段被刪除
+    auto t0 = std::chrono::steady_clock::now();
+    double acc = 0.0;
+    for (int i = 1; i <= kIter; ++i) acc += std::sqrt((double)i);
+    sink = acc;
+    auto t1 = std::chrono::steady_clock::now();
+    std::cout << "elapsed = " << std::chrono::duration<double, std::milli>(t1 - t0).count()
+              << " ms, sink = " << sink << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [

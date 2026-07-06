@@ -19,31 +19,31 @@ const ch09OopI: ChapterContent = {
 
 // 示範 rule of five：手動管理一段原始緩衝區。 [1]
 class Buffer {
-  int* data_;
-  std::size_t size_;
+    int* data_;
+    std::size_t size_;
+
 public:
-  explicit Buffer(std::size_t n)                 // [2] 建構子取得資源
-      : data_(new int[n]{}), size_(n) {}
-  ~Buffer() { delete[] data_; }                  // [3] 解構子釋放資源
+    explicit Buffer(std::size_t n)  // [2] 建構子取得資源
+        : data_(new int[n]{}), size_(n) {}
+    ~Buffer() { delete[] data_; }  // [3] 解構子釋放資源
 
-  Buffer(const Buffer& other)                    // [4] 複製建構（深複製）
-      : data_(new int[other.size_]), size_(other.size_) {
-    std::copy(other.data_, other.data_ + size_, data_);
-  }
-  Buffer& operator=(const Buffer&) = delete;      // 簡化：禁用複製指定
+    Buffer(const Buffer& other)  // [4] 複製建構（深複製）
+        : data_(new int[other.size_]), size_(other.size_) {
+        std::copy(other.data_, other.data_ + size_, data_);
+    }
+    Buffer& operator=(const Buffer&) = delete;  // 簡化：禁用複製指定
 
-  Buffer(Buffer&& other) noexcept                 // [5] 移動建構：接管指標
-      : data_(std::exchange(other.data_, nullptr)),
-        size_(std::exchange(other.size_, 0)) {}
+    Buffer(Buffer&& other) noexcept  // [5] 移動建構：接管指標
+        : data_(std::exchange(other.data_, nullptr)), size_(std::exchange(other.size_, 0)) {}
 
-  std::size_t size() const { return size_; }
+    std::size_t size() const { return size_; }
 };
 
 int main() {
-  Buffer a(4);
-  Buffer b = std::move(a);   // 呼叫移動建構，a 被清空
-  std::println("b.size = {}", b.size());
-  return 0; // b 的解構子自動釋放記憶體
+    Buffer a(4);
+    Buffer b = std::move(a);  // 呼叫移動建構，a 被清空
+    std::println("b.size = {}", b.size());
+    return 0;  // b 的解構子自動釋放記憶體
 }`,
     callouts: [
       { n: 1, text: '此類別直接持有 new[] 出來的原始資源，因此必須遵守 rule of five；實務上應改用 std::vector。' },
@@ -136,17 +136,18 @@ int main() {
 
 // rule of zero 版本：用 std::vector 管理資源，無需手寫特殊成員。
 class Buffer {
-  std::vector<int> data_;
+    std::vector<int> data_;
+
 public:
-  explicit Buffer(std::size_t n) : data_(n, 0) {}
-  std::size_t size() const { return data_.size(); }
+    explicit Buffer(std::size_t n) : data_(n, 0) {}
+    std::size_t size() const { return data_.size(); }
 };
 
 int main() {
-  Buffer a(4);
-  Buffer b = std::move(a); // 自動生成的移動建構
-  std::cout << "b.size = " << b.size() << '\\n';
-  return 0;
+    Buffer a(4);
+    Buffer b = std::move(a);  // 自動生成的移動建構
+    std::cout << "b.size = " << b.size() << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [

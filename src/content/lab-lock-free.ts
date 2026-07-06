@@ -18,18 +18,22 @@ const labLockFree: ChapterContent = {
 // 無鎖堆疊的 push：以 CAS 迴圈把新節點接到頭部。 [1]
 template <typename T>
 class LockFreeStack {
-  struct Node { T value; Node* next; };
-  std::atomic<Node*> head_{nullptr};
+    struct Node {
+        T value;
+        Node* next;
+    };
+    std::atomic<Node*> head_{nullptr};
+
 public:
-  void push(T value) {
-    Node* node = new Node{value, head_.load(std::memory_order_relaxed)}; // [2]
-    while (!head_.compare_exchange_weak(                                  // [3]
-               node->next, node,
-               std::memory_order_release,        // [4] 成功：release 發佈
-               std::memory_order_relaxed)) {      // 失敗：relaxed 重讀
-      // node->next 已被更新為最新 head_，直接重試即可。 [5]
+    void push(T value) {
+        Node* node = new Node{value, head_.load(std::memory_order_relaxed)};  // [2]
+        while (!head_.compare_exchange_weak(                                  // [3]
+            node->next, node,
+            std::memory_order_release,     // [4] 成功：release 發佈
+            std::memory_order_relaxed)) {  // 失敗：relaxed 重讀
+            // node->next 已被更新為最新 head_，直接重試即可。 [5]
+        }
     }
-  }
 };`,
     callouts: [
       { n: 1, text: 'push 不用鎖，而是反覆嘗試以 CAS 把新節點的 next 指向目前頭部並更新頭部。' },
@@ -125,21 +129,20 @@ public:
 std::atomic<long long> counter{0};
 
 void worker(int iters) {
-  for (int i = 0; i < iters; ++i) {
-    long long cur = counter.load(std::memory_order_relaxed);
-    while (!counter.compare_exchange_weak(cur, cur + 1,
-                                          std::memory_order_relaxed)) {
-      // cur 已更新為最新值，重試
+    for (int i = 0; i < iters; ++i) {
+        long long cur = counter.load(std::memory_order_relaxed);
+        while (!counter.compare_exchange_weak(cur, cur + 1, std::memory_order_relaxed)) {
+            // cur 已更新為最新值，重試
+        }
     }
-  }
 }
 
 int main() {
-  std::vector<std::thread> ts;
-  for (int t = 0; t < 4; ++t) ts.emplace_back(worker, 100000);
-  for (auto& t : ts) t.join();
-  std::cout << "counter = " << counter.load() << " (應為 400000)\\n";
-  return 0;
+    std::vector<std::thread> ts;
+    for (int t = 0; t < 4; ++t) ts.emplace_back(worker, 100000);
+    for (auto& t : ts) t.join();
+    std::cout << "counter = " << counter.load() << " (應為 400000)\\n";
+    return 0;
 }`,
   },
   furtherReading: [

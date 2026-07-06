@@ -15,17 +15,17 @@ const ch14TranslationUnitsII: ChapterContent = {
   code: {
     lang: 'cpp',
     code: `// ---- math.ixx / math.cppm（模組介面單元）----
-export module math;                    // [1] 宣告模組名稱
+export module math;  // [1] 宣告模組名稱
 
-export int add(int a, int b) {         // [2] export：對匯入端可見
-  return a + b;
+export int add(int a, int b) {  // [2] export：對匯入端可見
+    return a + b;
 }
 
-int helper() { return 1; }             // [3] 未 export：模組私有
+int helper() { return 1; }  // [3] 未 export：模組私有
 
-export namespace geo {                  // [4] 可 export 整個 namespace
-  double area(double r) { return 3.14159265 * r * r; }
-}
+export namespace geo {  // [4] 可 export 整個 namespace
+double area(double r) { return 3.14159265 * r * r; }
+}  // namespace geo
 
 // ---- main.cpp（使用端）----
 // import math;                          [5] 匯入編譯後的模組介面
@@ -119,12 +119,14 @@ export namespace geo {                  // [4] 可 export 整個 namespace
 #include <iostream>
 
 int add(int a, int b) { return a + b; }
-namespace geo { double area(double r) { return 3.14159265 * r * r; } }
+namespace geo {
+double area(double r) { return 3.14159265 * r * r; }
+}  // namespace geo
 
 int main() {
-  std::cout << "add(2,3) = " << add(2, 3) << '\\n';
-  std::cout << "area(1.0) = " << geo::area(1.0) << '\\n';
-  return 0;
+    std::cout << "add(2,3) = " << add(2, 3) << '\\n';
+    std::cout << "area(1.0) = " << geo::area(1.0) << '\\n';
+    return 0;
 }`,
   },
   furtherReading: [
