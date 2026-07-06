@@ -4,7 +4,9 @@ import type { HighlightedCode } from '@/utils/highlighter';
 import { getAdjacentNavItems } from '@/nav';
 import ActiveChapterSync from '@/components/ActiveChapterSync';
 import ConceptCard from '@/components/ui/ConceptCard';
+import DeepDive from '@/components/ui/DeepDive';
 import CodeBlock from '@/components/ui/CodeBlock';
+import PracticeNotes from '@/components/ui/PracticeNotes';
 import QuizPanel from '@/components/ui/QuizPanel';
 import DiagramFrame from '@/components/ui/DiagramFrame';
 import TryItPanel from '@/components/ui/TryItPanel';
@@ -54,7 +56,16 @@ export default function ChapterPage({
 
       <ConceptCard concept={content.concept} />
 
+      {content.deepDive && content.deepDive.length > 0 && (
+        <DeepDive sections={content.deepDive} />
+      )}
+
       <CodeBlock html={codeHtml} callouts={content.code.callouts} />
+
+      <PracticeNotes
+        pitfalls={content.pitfalls}
+        bestPractices={content.bestPractices}
+      />
 
       <QuizPanel chapterSlug={content.slug} questions={content.quiz} />
 

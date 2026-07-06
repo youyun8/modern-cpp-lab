@@ -51,6 +51,35 @@ constexpr double amdahlSpeedup(double p, double n) {
       { n: 5, text: 'amdahlSpeedup 以 constexpr 在編譯期即可計算理論加速上限。' },
     ],
   },
+  deepDive: [
+    {
+      heading: 'Roofline 模型與瓶頸判定',
+      body:
+        '最佳化前先判斷是計算受限（compute-bound）還是記憶體受限（memory-bound）。算術強度（arithmetic intensity，每位元組資料的浮點運算數）決定你落在 roofline 圖的哪一區：低強度受記憶體頻寬限制，高強度才受峰值算力限制。\n\n記憶體受限的核心，增加 FLOPs 或換更快的 ALU 無濟於事——應改善資料重用與存取模式；反之則往向量化與指令層級平行著手。',
+    },
+    {
+      heading: 'SIMD 與自動向量化',
+      body:
+        '編譯器自動向量化要求：連續存取、無資料相依循環、無指標別名疑慮。以 `__restrict` 承諾指標不重疊、確保對齊、避免迴圈中的函式呼叫，都能幫助向量化。可用 `-fopt-info-vec` 檢視是否成功。\n\n需要手動控制時使用 intrinsics 或未來的 `std::simd`；資料佈局改為 SoA（structure of arrays）通常比 AoS 更利於向量化。',
+    },
+    {
+      heading: '快取一致性、NUMA 與 TLB',
+      body:
+        '多核以 MESI 類協定維持快取一致性，跨核心寫入同一快取行會產生一致性流量（偽共享的根源）。在 NUMA 系統上，記憶體有「近／遠」之分，遵循 first-touch 原則由使用該資料的執行緒初始化，可提升區域性。\n\n大型工作集還會受 TLB 未命中影響，huge pages 可緩解。這些硬體效應往往比指令數更決定實際效能。',
+    },
+  ],
+  pitfalls: [
+    '在記憶體受限的核心上一味增加算力或 FLOPs，效能毫無改善。',
+    '指標別名（aliasing）阻止編譯器向量化，卻未使用 `__restrict`。',
+    '忽略 NUMA 佈局，資料被配置在遠端節點造成頻寬瓶頸。',
+    '跨步（strided）或隨機存取破壞空間區域性，快取命中率低落。',
+  ],
+  bestPractices: [
+    '先用 roofline／perf 判定計算或記憶體受限，再對症下藥。',
+    '促成向量化：連續且對齊的存取、`__restrict`、SoA 佈局。',
+    '在 NUMA 系統遵循 first-touch，讓資料靠近使用它的執行緒。',
+    '以分塊（blocking）與資料重用改善快取區域性。',
+  ],
   quiz: [
     {
       id: 'q1',

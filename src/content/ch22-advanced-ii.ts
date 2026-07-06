@@ -59,6 +59,35 @@ int main() {
       { n: 7, text: 'fetch_add 搭配 memory_order_relaxed：僅需原子性、不需跨變數排序時效能最佳。' },
     ],
   },
+  deepDive: [
+    {
+      heading: '記憶體順序：從 seq_cst 到 relaxed',
+      body:
+        'atomic 操作預設為 `memory_order_seq_cst`，提供單一全域總次序、最直觀但成本最高。`release`／`acquire` 配對只保證配對點前後的排序，適合「發佈-取用」模式；`relaxed` 僅保證原子性，適合純計數器或旗標。\n\n誤用較弱的順序會造成極難重現的 bug。除非以剖析證明瓶頸並確實理解語意，否則從 `seq_cst` 起步，再逐步放寬。',
+    },
+    {
+      heading: '鎖、死鎖與條件變數',
+      body:
+        '需同時鎖多個 mutex 時用 `std::scoped_lock` 一次上鎖以避免死鎖，或全域約定固定的上鎖順序。`std::condition_variable::wait` 必須帶述詞（predicate）以應對偽喚醒（spurious wakeup）與遺失喚醒。\n\n臨界區應盡量短小；鎖的粒度過粗會扼殺並行度、過細則增加開銷與死鎖風險，需以量測平衡。',
+    },
+    {
+      heading: '任務導向並行與 jthread',
+      body:
+        'C++20 的 `std::jthread` 會在解構時自動 join，並內建 `stop_token` 支援協作式取消，優於裸 `std::thread`。注意 `std::async` 回傳的 `std::future` 若未持有，其解構子可能阻塞直到任務完成。\n\n高吞吐場景多用執行緒池分攤建立成本，並以每執行緒本地累加、最後合併的方式降低原子競爭與偽共享。',
+    },
+  ],
+  pitfalls: [
+    '未同步地存取共享可變狀態——資料競爭是未定義行為。',
+    '`condition_variable::wait` 未帶述詞，遭遇偽喚醒或遺失喚醒而出錯。',
+    '以不一致的順序取得多個鎖，造成死鎖。',
+    '`std::async` 的 future 未被持有，其解構子意外阻塞主流程。',
+  ],
+  bestPractices: [
+    '優先使用高階抽象（`std::async`、`std::jthread`）而非裸執行緒。',
+    '同時鎖多個 mutex 用 `std::scoped_lock`；`wait` 一律帶述詞。',
+    '保持臨界區短小；僅在有量測依據時放寬記憶體順序。',
+    '高吞吐用執行緒池，並以本地累加 + 合併降低原子競爭與偽共享。',
+  ],
   quiz: [
     {
       id: 'q1',

@@ -46,6 +46,35 @@ int main() {
       { n: 5, text: '由於 release／acquire 建立 happens-before，consumer 讀到 payload 必為 42。' },
     ],
   },
+  deepDive: [
+    {
+      heading: 'happens-before 是如何被建立的',
+      body:
+        '單一執行緒內以 sequenced-before 排序；跨執行緒則靠一個 `release` 寫入與讀到該值的 `acquire` 讀取形成 synchronizes-with，兩者再經遞移性組成 happens-before。若 A happens-before B，A 的所有寫入對 B 可見。\n\n沒有這條鏈，非原子資料的讀寫就是資料競爭（UB）。因此無鎖程式的正確性，本質是「用 atomic 建立足夠的 happens-before 邊」。',
+    },
+    {
+      heading: '記憶體順序光譜',
+      body:
+        '`seq_cst` 提供單一全域總次序，最直觀；`release`／`acquire` 只約束配對點前後；`relaxed` 僅保證原子性與修改順序（modification order），適合純計數。`std::atomic_thread_fence` 可在不綁定特定變數下建立柵欄。\n\n典型範式：以 `release` 發佈資料指標、以 `acquire` 讀取後安全解參考（message passing）。`consume` 語意難以正確實作，實務上已不建議使用。',
+    },
+    {
+      heading: '硬體模型與驗證',
+      body:
+        'x86 屬強順序（TSO），許多缺少同步的程式碼「碰巧」正確；ARM／POWER 為弱順序，同樣程式碼會出錯。因此「在我的 x86 上沒問題」不代表可攜正確。\n\n應以 ThreadSanitizer 驗證，並盡量在弱順序硬體上測試。`std::atomic_ref`（C++20）可對非原子物件施加原子操作，方便對既有資料結構加上同步。',
+    },
+  ],
+  pitfalls: [
+    '以直覺推理 `relaxed`，卻忽略缺乏 happens-before 導致的可見性問題。',
+    '假設全平台都是 x86 的強順序，程式在 ARM／POWER 上出錯。',
+    '混用非原子讀寫與原子操作於同一資料，構成資料競爭（UB）。',
+    '使用已不建議的 `memory_order_consume`，難以正確實作。',
+  ],
+  bestPractices: [
+    '從 `seq_cst` 起步，僅在有量測依據時放寬順序。',
+    '以 `release`／`acquire` 正確配對建立 happens-before。',
+    '以 TSan 驗證，並盡量在弱順序硬體上測試。',
+    '為同步意圖撰寫註解，說明每個記憶體順序的理由。',
+  ],
   quiz: [
     {
       id: 'q1',

@@ -37,6 +37,18 @@ export interface ConceptCard {
   body: string;
 }
 
+/**
+ * An in-depth section giving industrial-grade detail (mechanics, performance,
+ * ABI, threading, standard-version nuances, etc.). Body supports lightweight
+ * inline `code` spans delimited by backticks.
+ */
+export interface DeepDiveSection {
+  /** Traditional Chinese section heading. */
+  heading: string;
+  /** Traditional Chinese body; may contain `inline code` in backticks and blank-line-separated paragraphs. */
+  body: string;
+}
+
 export interface ChapterContent {
   /** ASCII kebab-case slug used in the URL path. */
   slug: string;
@@ -49,7 +61,13 @@ export interface ChapterContent {
   /** Traditional Chinese meta description for SEO. */
   description: string;
   concept: ConceptCard;
+  /** Optional in-depth sections for industrial-grade coverage. */
+  deepDive?: DeepDiveSection[];
   code: AnnotatedCode;
+  /** Real-world pitfalls / gotchas (Traditional Chinese, may use `inline code`). */
+  pitfalls?: string[];
+  /** Best-practice recommendations (Traditional Chinese, may use `inline code`). */
+  bestPractices?: string[];
   quiz: QuizQuestion[];
   diagram: DiagramSpec;
   tryIt: {
