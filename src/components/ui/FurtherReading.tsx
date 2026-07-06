@@ -1,10 +1,6 @@
 import type { FurtherReadingLink } from '@/types/ChapterContent';
 
-export default function FurtherReading({
-  links,
-}: {
-  links: FurtherReadingLink[];
-}) {
+export default function FurtherReading({ links }: { links: FurtherReadingLink[] }) {
   if (links.length === 0) return null;
 
   return (
@@ -14,10 +10,7 @@ export default function FurtherReading({
       </h2>
       <ul className="space-y-3">
         {links.map((link) => (
-          <li
-            key={link.href}
-            className="rounded-lg border border-border bg-surface-raised p-3"
-          >
+          <li key={link.href} className="rounded-lg border border-border bg-surface-raised p-3">
             <a
               href={link.href}
               target="_blank"

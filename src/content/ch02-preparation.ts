@@ -9,8 +9,7 @@ const ch02Preparation: ChapterContent = {
     '工具鏈、編譯器選擇與第一支 Hello World 程式的建置流程：從原始碼經前置處理、編譯、組譯到連結成可執行檔。',
   concept: {
     standard: 'C++23',
-    body:
-      '把 .cpp 變成可執行檔會經過四個階段：前置處理（展開 #include 與巨集）、編譯（產生組合語言）、組譯（產生目的檔 .o）、連結（把多個目的檔與函式庫合併成執行檔）。主流編譯器有 GCC（g++）、Clang（clang++）與 MSVC，三者大致遵循同一套標準但各有擴充與診斷風格。務必以 -std=c++23 明確指定標準版本，並開啟 -Wall -Wextra 取得完整警告。實務上多以 CMake 等建置系統驅動編譯器，而非手動下指令；線上工具如 Compiler Explorer（Godbolt）則便於快速實驗與觀察生成的組合語言。',
+    body: '把 .cpp 變成可執行檔會經過四個階段：前置處理（展開 #include 與巨集）、編譯（產生組合語言）、組譯（產生目的檔 .o）、連結（把多個目的檔與函式庫合併成執行檔）。主流編譯器有 GCC（g++）、Clang（clang++）與 MSVC，三者大致遵循同一套標準但各有擴充與診斷風格。務必以 -std=c++23 明確指定標準版本，並開啟 -Wall -Wextra 取得完整警告。實務上多以 CMake 等建置系統驅動編譯器，而非手動下指令；線上工具如 Compiler Explorer（Godbolt）則便於快速實驗與觀察生成的組合語言。',
   },
   code: {
     lang: 'bash',
@@ -39,18 +38,15 @@ g++ hello.o -o hello                                   # [4]
   deepDive: [
     {
       heading: '看穿四個編譯階段的產物',
-      body:
-        '除錯建置問題時，能單獨檢視每個階段的產物非常有用：`-E` 產生前置處理後的原始碼（診斷巨集與標頭展開）、`-S` 產生組合語言（觀察最佳化與 ABI）、`-c` 產生目的檔、最後才連結。\n\n連結錯誤（undefined reference、multiple definition）幾乎都源自 ODR 或符號可見性，而非語法；理解「編譯期錯誤 vs 連結期錯誤」的界線能大幅縮短排錯時間。`nm`、`objdump`、`c++filt` 可檢視符號與還原 name mangling。',
+      body: '除錯建置問題時，能單獨檢視每個階段的產物非常有用：`-E` 產生前置處理後的原始碼（診斷巨集與標頭展開）、`-S` 產生組合語言（觀察最佳化與 ABI）、`-c` 產生目的檔、最後才連結。\n\n連結錯誤（undefined reference、multiple definition）幾乎都源自 ODR 或符號可見性，而非語法；理解「編譯期錯誤 vs 連結期錯誤」的界線能大幅縮短排錯時間。`nm`、`objdump`、`c++filt` 可檢視符號與還原 name mangling。',
     },
     {
       heading: '警告與診斷：-Wall 並非「全部」',
-      body:
-        '`-Wall` 只是常用警告集，並非字面上的全部。工業專案通常再加 `-Wextra -Wshadow -Wconversion -Wpedantic`，並以 `-Werror` 讓警告成為建置失敗條件。\n\n不同編譯器診斷互補：以 GCC 與 Clang 雙編譯能揪出更多問題。搭配 `-fsanitize=address,undefined` 於測試建置可在執行期捕捉記憶體與 UB 錯誤。注意 `-Ofast`／`-ffast-math` 會放寬浮點語意，不應無意識開啟。',
+      body: '`-Wall` 只是常用警告集，並非字面上的全部。工業專案通常再加 `-Wextra -Wshadow -Wconversion -Wpedantic`，並以 `-Werror` 讓警告成為建置失敗條件。\n\n不同編譯器診斷互補：以 GCC 與 Clang 雙編譯能揪出更多問題。搭配 `-fsanitize=address,undefined` 於測試建置可在執行期捕捉記憶體與 UB 錯誤。注意 `-Ofast`／`-ffast-math` 會放寬浮點語意，不應無意識開啟。',
     },
     {
       heading: '建置系統與可重現性',
-      body:
-        '手動下 `g++` 只適合玩具程式；真實專案以 CMake（搭配 presets）描述目標與相依，採 out-of-source 建置分離產物。`ccache` 快取編譯結果、Ninja 提供快速平行建置。\n\n可重現性關鍵在於固定工具鏈版本（容器化）、區分 Debug（`-O0 -g`）與 Release（`-O2/-O3 -DNDEBUG`）組態，並避免建置相依於本機環境。Debug 與 Release 的 ABI 與 `assert` 行為不同，混用會導致難解的問題。',
+      body: '手動下 `g++` 只適合玩具程式；真實專案以 CMake（搭配 presets）描述目標與相依，採 out-of-source 建置分離產物。`ccache` 快取編譯結果、Ninja 提供快速平行建置。\n\n可重現性關鍵在於固定工具鏈版本（容器化）、區分 Debug（`-O0 -g`）與 Release（`-O2/-O3 -DNDEBUG`）組態，並避免建置相依於本機環境。Debug 與 Release 的 ABI 與 `assert` 行為不同，混用會導致難解的問題。',
     },
   ],
   pitfalls: [
@@ -117,8 +113,8 @@ g++ hello.o -o hello                                   # [4]
 
 // 最小可編譯範例。以 g++ -std=c++23 -Wall try.cpp -o try 編譯。
 int main() {
-    std::cout << "工具鏈已就緒！\\n";
-    return 0;
+  std::cout << "工具鏈已就緒！\\n";
+  return 0;
 }`,
   },
   furtherReading: [

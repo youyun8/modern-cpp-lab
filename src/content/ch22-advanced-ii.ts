@@ -9,8 +9,7 @@ const ch22AdvancedII: ChapterContent = {
     '深入 C++ 並行程式設計：std::thread、mutex、condition_variable、atomic 與 memory_order，以及以任務為基礎的 async／future／promise 模型。',
   concept: {
     standard: 'C++20',
-    body:
-      '並行程式設計讓多個執行緒同時推進工作。C++ 標準函式庫提供 std::thread 建立執行緒、std::mutex 與 std::lock_guard 保護共享狀態、std::condition_variable 進行等待與通知、std::atomic 搭配 std::memory_order 做無鎖同步。以任務為導向時，可用 std::async／std::future／std::promise 與 std::packaged_task 把結果與例外自動傳遞回呼叫端。核心原則：讓臨界區越短越好，優先選用高階任務抽象，避免資料競爭與死鎖。',
+    body: '並行程式設計讓多個執行緒同時推進工作。C++ 標準函式庫提供 std::thread 建立執行緒、std::mutex 與 std::lock_guard 保護共享狀態、std::condition_variable 進行等待與通知、std::atomic 搭配 std::memory_order 做無鎖同步。以任務為導向時，可用 std::async／std::future／std::promise 與 std::packaged_task 把結果與例外自動傳遞回呼叫端。核心原則：讓臨界區越短越好，優先選用高階任務抽象，避免資料競爭與死鎖。',
   },
   code: {
     lang: 'cpp',
@@ -25,26 +24,27 @@ long long shared_sum = 0;
 std::atomic<long long> atomic_sum{0};  // [2]
 
 void addWithLock(long long value) {
-    std::lock_guard<std::mutex> guard{g_mutex};  // [3]
-    shared_sum += value;
+  std::lock_guard<std::mutex> guard{g_mutex};  // [3]
+  shared_sum += value;
 }
 
 long long computePartial(int begin, int end) {  // [4]
-    long long local = 0;
-    for (int i = begin; i < end; ++i) local += i;
-    return local;
+  long long local = 0;
+  for (int i = begin; i < end; ++i) local += i;
+  return local;
 }
 
 int main() {
-    std::vector<std::thread> workers;
-    for (int t = 0; t < 4; ++t) workers.emplace_back([t]() { addWithLock(t); });  // [5]
-    for (auto& w : workers) w.join();
+  std::vector<std::thread> workers;
+  for (int t = 0; t < 4; ++t)
+    workers.emplace_back([t]() { addWithLock(t); });  // [5]
+  for (auto& w : workers) w.join();
 
-    auto future = std::async(std::launch::async,  // [6]
-                             computePartial, 0, 1'000'000);
-    atomic_sum.fetch_add(future.get(),  // [7]
-                         std::memory_order_relaxed);
-    return 0;
+  auto future = std::async(std::launch::async,  // [6]
+                           computePartial, 0, 1'000'000);
+  atomic_sum.fetch_add(future.get(),  // [7]
+                       std::memory_order_relaxed);
+  return 0;
 }`,
     callouts: [
       { n: 1, text: 'std::mutex 保護跨執行緒共享的可變狀態，是最基本的互斥原語。' },
@@ -59,18 +59,15 @@ int main() {
   deepDive: [
     {
       heading: '記憶體順序：從 seq_cst 到 relaxed',
-      body:
-        'atomic 操作預設為 `memory_order_seq_cst`，提供單一全域總次序、最直觀但成本最高。`release`／`acquire` 配對只保證配對點前後的排序，適合「發佈-取用」模式；`relaxed` 僅保證原子性，適合純計數器或旗標。\n\n誤用較弱的順序會造成極難重現的 bug。除非以剖析證明瓶頸並確實理解語意，否則從 `seq_cst` 起步，再逐步放寬。',
+      body: 'atomic 操作預設為 `memory_order_seq_cst`，提供單一全域總次序、最直觀但成本最高。`release`／`acquire` 配對只保證配對點前後的排序，適合「發佈-取用」模式；`relaxed` 僅保證原子性，適合純計數器或旗標。\n\n誤用較弱的順序會造成極難重現的 bug。除非以剖析證明瓶頸並確實理解語意，否則從 `seq_cst` 起步，再逐步放寬。',
     },
     {
       heading: '鎖、死鎖與條件變數',
-      body:
-        '需同時鎖多個 mutex 時用 `std::scoped_lock` 一次上鎖以避免死鎖，或全域約定固定的上鎖順序。`std::condition_variable::wait` 必須帶述詞（predicate）以應對偽喚醒（spurious wakeup）與遺失喚醒。\n\n臨界區應盡量短小；鎖的粒度過粗會扼殺並行度、過細則增加開銷與死鎖風險，需以量測平衡。',
+      body: '需同時鎖多個 mutex 時用 `std::scoped_lock` 一次上鎖以避免死鎖，或全域約定固定的上鎖順序。`std::condition_variable::wait` 必須帶述詞（predicate）以應對偽喚醒（spurious wakeup）與遺失喚醒。\n\n臨界區應盡量短小；鎖的粒度過粗會扼殺並行度、過細則增加開銷與死鎖風險，需以量測平衡。',
     },
     {
       heading: '任務導向並行與 jthread',
-      body:
-        'C++20 的 `std::jthread` 會在解構時自動 join，並內建 `stop_token` 支援協作式取消，優於裸 `std::thread`。注意 `std::async` 回傳的 `std::future` 若未持有，其解構子可能阻塞直到任務完成。\n\n高吞吐場景多用執行緒池分攤建立成本，並以每執行緒本地累加、最後合併的方式降低原子競爭與偽共享。',
+      body: 'C++20 的 `std::jthread` 會在解構時自動 join，並內建 `stop_token` 支援協作式取消，優於裸 `std::thread`。注意 `std::async` 回傳的 `std::future` 若未持有，其解構子可能阻塞直到任務完成。\n\n高吞吐場景多用執行緒池分攤建立成本，並以每執行緒本地累加、最後合併的方式降低原子競爭與偽共享。',
     },
   ],
   pitfalls: [
@@ -128,8 +125,7 @@ int main() {
   ],
   diagram: {
     key: 'thread-timeline',
-    caption:
-      '動畫時間軸：紅色播放頭掃過時，同一時間僅有一個執行緒持有 mutex，示範臨界區的互斥。',
+    caption: '動畫時間軸：紅色播放頭掃過時，同一時間僅有一個執行緒持有 mutex，示範臨界區的互斥。',
   },
   tryIt: {
     code: `#include <atomic>
@@ -140,24 +136,24 @@ int main() {
 std::atomic<long long> total{0};
 
 void worker(int begin, int end) {
-    long long local = 0;
-    for (int i = begin; i < end; ++i) local += i;
-    // Combine once per thread to minimise atomic contention.
-    total.fetch_add(local, std::memory_order_relaxed);
+  long long local = 0;
+  for (int i = begin; i < end; ++i) local += i;
+  // Combine once per thread to minimise atomic contention.
+  total.fetch_add(local, std::memory_order_relaxed);
 }
 
 int main() {
-    constexpr int kThreads = 4;
-    constexpr int kN = 1'000'000;
-    std::vector<std::thread> pool;
-    for (int t = 0; t < kThreads; ++t) {
-        int begin = t * (kN / kThreads);
-        int end = (t + 1) * (kN / kThreads);
-        pool.emplace_back([begin, end]() { worker(begin, end); });
-    }
-    for (auto& th : pool) th.join();
-    std::cout << "sum = " << total.load() << '\\n';
-    return 0;
+  constexpr int kThreads = 4;
+  constexpr int kN = 1'000'000;
+  std::vector<std::thread> pool;
+  for (int t = 0; t < kThreads; ++t) {
+    int begin = t * (kN / kThreads);
+    int end = (t + 1) * (kN / kThreads);
+    pool.emplace_back([begin, end]() { worker(begin, end); });
+  }
+  for (auto& th : pool) th.join();
+  std::cout << "sum = " << total.load() << '\\n';
+  return 0;
 }`,
   },
   furtherReading: [

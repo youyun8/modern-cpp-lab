@@ -9,8 +9,7 @@ const ch06BasicConceptsIV: ChapterContent = {
     '實體、列舉、控制流程結構與 namespace 的使用：if／switch、迴圈、enum class 與命名空間如何組織程式邏輯與符號。',
   concept: {
     standard: 'C++23',
-    body:
-      'C++ 的控制流程包含條件（if、if constexpr、switch）與迴圈（for、range-based for、while、do-while）。C++17 起 if 與 switch 可帶初始化子句，把變數範圍限縮在條件內。強型別列舉 enum class 不會隱式轉為整數、不污染外層命名空間，應取代舊式 enum。namespace 用來分組符號、避免名稱衝突；巢狀命名空間可用 namespace a::b::c 簡寫，並可用別名縮短長名稱。善用這些工具能讓程式的作用域清晰、意圖明確，並降低意外的名稱污染與 fall-through 錯誤。',
+    body: 'C++ 的控制流程包含條件（if、if constexpr、switch）與迴圈（for、range-based for、while、do-while）。C++17 起 if 與 switch 可帶初始化子句，把變數範圍限縮在條件內。強型別列舉 enum class 不會隱式轉為整數、不污染外層命名空間，應取代舊式 enum。namespace 用來分組符號、避免名稱衝突；巢狀命名空間可用 namespace a::b::c 簡寫，並可用別名縮短長名稱。善用這些工具能讓程式的作用域清晰、意圖明確，並降低意外的名稱污染與 fall-through 錯誤。',
   },
   code: {
     lang: 'cpp',
@@ -21,27 +20,27 @@ namespace geometry::shapes {                   // [1] 巢狀命名空間簡寫
 enum class Kind { Circle, Square, Triangle };  // [2] 強型別列舉
 
 std::string_view name(Kind k) {
-    switch (k) {  // [3] switch 對列舉逐一處理
-        case Kind::Circle:
-            return "圓形";
-        case Kind::Square:
-            return "正方形";
-        case Kind::Triangle:
-            return "三角形";
-    }
-    return "未知";
+  switch (k) {  // [3] switch 對列舉逐一處理
+    case Kind::Circle:
+      return "圓形";
+    case Kind::Square:
+      return "正方形";
+    case Kind::Triangle:
+      return "三角形";
+  }
+  return "未知";
 }
 }  // namespace geometry::shapes
 
 int main() {
-    namespace gs = geometry::shapes;  // [4] 命名空間別名
+  namespace gs = geometry::shapes;  // [4] 命名空間別名
 
-    for (auto k : {gs::Kind::Circle, gs::Kind::Square})  // [5] range-based for
-        std::println("{}", gs::name(k));
+  for (auto k : {gs::Kind::Circle, gs::Kind::Square})  // [5] range-based for
+    std::println("{}", gs::name(k));
 
-    if (int n = 2 + 3; n > 4)  // [6] 帶初始化的 if
-        std::println("n={} 大於 4", n);
-    return 0;
+  if (int n = 2 + 3; n > 4)  // [6] 帶初始化的 if
+    std::println("n={} 大於 4", n);
+  return 0;
 }`,
     callouts: [
       { n: 1, text: 'namespace a::b 簡寫（C++17）取代多層巢狀括號，讓命名空間宣告更精簡。' },
@@ -55,18 +54,15 @@ int main() {
   deepDive: [
     {
       heading: 'switch 的窮盡性、fallthrough 與分支提示',
-      body:
-        '對 `enum class` 使用 `switch` 且涵蓋所有列舉值時，`-Wswitch` 能在新增列舉值後提醒你補上處理，這是維護大型狀態機的利器；因此對窮盡的列舉常刻意不寫 `default`。\n\n刻意的貫穿（fallthrough）應以 `[[fallthrough]]` 標註以消除警告並表達意圖。C++20 的 `[[likely]]`／`[[unlikely]]` 可對熱路徑分支給編譯器提示，但應以剖析佐證而非臆測。',
+      body: '對 `enum class` 使用 `switch` 且涵蓋所有列舉值時，`-Wswitch` 能在新增列舉值後提醒你補上處理，這是維護大型狀態機的利器；因此對窮盡的列舉常刻意不寫 `default`。\n\n刻意的貫穿（fallthrough）應以 `[[fallthrough]]` 標註以消除警告並表達意圖。C++20 的 `[[likely]]`／`[[unlikely]]` 可對熱路徑分支給編譯器提示，但應以剖析佐證而非臆測。',
     },
     {
       heading: 'enum class 的底層型別與旗標',
-      body:
-        '`enum class` 可指定底層型別（如 `: std::uint8_t`）以控制大小與 ABI。它不隱式轉整數，位元旗標場景需顯式轉換或以 `std::to_underlying`（C++23）取值。\n\n作為位元旗標時，可為其定義 `operator|`／`operator&`，兼得型別安全與旗標運算；許多程式庫提供這類旗標包裝樣板。',
+      body: '`enum class` 可指定底層型別（如 `: std::uint8_t`）以控制大小與 ABI。它不隱式轉整數，位元旗標場景需顯式轉換或以 `std::to_underlying`（C++23）取值。\n\n作為位元旗標時，可為其定義 `operator|`／`operator&`，兼得型別安全與旗標運算；許多程式庫提供這類旗標包裝樣板。',
     },
     {
       heading: 'namespace、ADL 與版本化',
-      body:
-        '引數相依查找（ADL）讓 `swap(a, b)`、`begin(c)` 等能找到型別所屬命名空間的多載，是泛型程式的重要機制，但也可能引入意外的候選。\n\n匿名命名空間賦予內部連結（優於檔案範圍 `static`）；inline namespace 可用於符號版本化與 ABI 演進。切記勿在標頭使用 `using namespace`，以免污染所有引用者。',
+      body: '引數相依查找（ADL）讓 `swap(a, b)`、`begin(c)` 等能找到型別所屬命名空間的多載，是泛型程式的重要機制，但也可能引入意外的候選。\n\n匿名命名空間賦予內部連結（優於檔案範圍 `static`）；inline namespace 可用於符號版本化與 ABI 演進。切記勿在標頭使用 `using namespace`，以免污染所有引用者。',
     },
   ],
   pitfalls: [
@@ -135,20 +131,21 @@ int main() {
 enum class Kind { Circle, Square, Triangle };
 
 std::string_view name(Kind k) {
-    switch (k) {
-        case Kind::Circle:
-            return "circle";
-        case Kind::Square:
-            return "square";
-        case Kind::Triangle:
-            return "triangle";
-    }
-    return "unknown";
+  switch (k) {
+    case Kind::Circle:
+      return "circle";
+    case Kind::Square:
+      return "square";
+    case Kind::Triangle:
+      return "triangle";
+  }
+  return "unknown";
 }
 
 int main() {
-    for (auto k : {Kind::Circle, Kind::Square, Kind::Triangle}) std::cout << name(k) << '\\n';
-    return 0;
+  for (auto k : {Kind::Circle, Kind::Square, Kind::Triangle})
+    std::cout << name(k) << '\\n';
+  return 0;
 }`,
   },
   furtherReading: [

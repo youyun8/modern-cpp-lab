@@ -54,8 +54,7 @@ export const createUiSlice: StateCreator<UiSlice, [], [], UiSlice> = (set) => ({
   settingsOpen: false,
   activeChapterSlug: null,
 
-  toggleSidebar: () =>
-    set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
+  toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
 
   setMobileMenuOpen: (open) => set({ mobileMenuOpen: open }),
 

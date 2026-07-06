@@ -9,8 +9,7 @@ const ch13TranslationUnitsI: ChapterContent = {
     '轉譯單元、連結性（linkage）與單一定義原則（ODR）：宣告與定義的差異、internal／external linkage，以及如何避免多重定義。',
   concept: {
     standard: 'C++23',
-    body:
-      '一個轉譯單元（translation unit）是一個 .cpp 及其展開後的所有標頭。宣告（declaration）告訴編譯器某符號存在，定義（definition）提供其實體；同一符號可多次宣告，但受單一定義原則（ODR）約束：在整個程式中，非 inline 的函式與變數只能有唯一定義。連結性決定符號的可見範圍：external linkage 可跨轉譯單元存取（一般全域函式與變數），internal linkage 僅限本單元（以 static 或匿名 namespace 標記）。在標頭中定義非 inline 的函式或全域變數會在多個單元產生重複定義而連結失敗；解法是宣告放標頭、定義放單一 .cpp，或使用 inline／constexpr。',
+    body: '一個轉譯單元（translation unit）是一個 .cpp 及其展開後的所有標頭。宣告（declaration）告訴編譯器某符號存在，定義（definition）提供其實體；同一符號可多次宣告，但受單一定義原則（ODR）約束：在整個程式中，非 inline 的函式與變數只能有唯一定義。連結性決定符號的可見範圍：external linkage 可跨轉譯單元存取（一般全域函式與變數），internal linkage 僅限本單元（以 static 或匿名 namespace 標記）。在標頭中定義非 inline 的函式或全域變數會在多個單元產生重複定義而連結失敗；解法是宣告放標頭、定義放單一 .cpp，或使用 inline／constexpr。',
   },
   code: {
     lang: 'cpp',
@@ -18,7 +17,7 @@ const ch13TranslationUnitsI: ChapterContent = {
 #pragma once
 int add(int a, int b);      // [1] 宣告：無函式本體
 inline int square(int x) {  // [2] inline 允許出現在多個單元
-    return x * x;
+  return x * x;
 }
 constexpr double kPi = 3.141592653589793;  // [3] constexpr 隱含 inline
 
@@ -35,24 +34,24 @@ int secret() { return 42; }
       { n: 2, text: 'inline 函式可在多個轉譯單元各有一份相同定義，連結器會合併，不違反 ODR。' },
       { n: 3, text: 'constexpr 變數具有隱含的 inline 語意，可安全定義於標頭並跨單元共用。' },
       { n: 4, text: '非 inline 函式的定義在整個程式中只能出現一次，通常放在對應的單一 .cpp。' },
-      { n: 5, text: '匿名 namespace 賦予其內符號 internal linkage，僅本轉譯單元可見，避免名稱衝突。' },
+      {
+        n: 5,
+        text: '匿名 namespace 賦予其內符號 internal linkage，僅本轉譯單元可見，避免名稱衝突。',
+      },
     ],
   },
   deepDive: [
     {
       heading: 'inline 的真正語意與 inline 變數',
-      body:
-        '`inline` 的現代意義並非「請內聯」，而是「此定義可出現在多個轉譯單元，連結器應合併為一」。這正是 header-only 函式庫的基礎。C++17 的 inline 變數讓標頭中的全域變數／類別靜態成員也能安全單一化。\n\n因此標頭中要放函式或變數定義時，應標 `inline`（`constexpr` 已隱含 inline），否則多個單元包含即違反 ODR。',
+      body: '`inline` 的現代意義並非「請內聯」，而是「此定義可出現在多個轉譯單元，連結器應合併為一」。這正是 header-only 函式庫的基礎。C++17 的 inline 變數讓標頭中的全域變數／類別靜態成員也能安全單一化。\n\n因此標頭中要放函式或變數定義時，應標 `inline`（`constexpr` 已隱含 inline），否則多個單元包含即違反 ODR。',
     },
     {
       heading: '連結性的三個類別',
-      body:
-        '符號有外部連結（跨單元可見）、內部連結（僅本單元）與無連結（區域）。命名空間範圍的 `const` 變數預設為內部連結（與 C 不同）；需要跨單元共享要加 `extern`。\n\n匿名命名空間賦予內部連結，且比檔案範圍 `static` 更通用（可用於型別）。理解連結性是設計乾淨函式庫介面、避免符號衝突的基礎。',
+      body: '符號有外部連結（跨單元可見）、內部連結（僅本單元）與無連結（區域）。命名空間範圍的 `const` 變數預設為內部連結（與 C 不同）；需要跨單元共享要加 `extern`。\n\n匿名命名空間賦予內部連結，且比檔案範圍 `static` 更通用（可用於型別）。理解連結性是設計乾淨函式庫介面、避免符號衝突的基礎。',
     },
     {
       heading: 'ODR 違反的沉默後果',
-      body:
-        'ODR 違反（同一實體有兩個不同定義、或以不同編譯旗標／型別佈局編譯後連結在一起）是未定義行為，且常常沉默——連結成功卻在執行期詭異崩潰。\n\n混用不同 `-D` 巨集、不同標準版本或不同結構體佈局的目的檔是典型來源。LTO 與部分連結器提供 ODR 檢查，可在建置期揪出部分違反。',
+      body: 'ODR 違反（同一實體有兩個不同定義、或以不同編譯旗標／型別佈局編譯後連結在一起）是未定義行為，且常常沉默——連結成功卻在執行期詭異崩潰。\n\n混用不同 `-D` 巨集、不同標準版本或不同結構體佈局的目的檔是典型來源。LTO 與部分連結器提供 ODR 檢查，可在建置期揪出部分違反。',
     },
   ],
   pitfalls: [
@@ -125,10 +124,10 @@ int secret() { return 42; }  // internal linkage
 }  // namespace
 
 int main() {
-    std::cout << "square(5) = " << square(5) << '\\n';
-    std::cout << "kPi = " << kPi << '\\n';
-    std::cout << "secret = " << secret() << '\\n';
-    return 0;
+  std::cout << "square(5) = " << square(5) << '\\n';
+  std::cout << "kPi = " << kPi << '\\n';
+  std::cout << "secret = " << secret() << '\\n';
+  return 0;
 }`,
   },
   furtherReading: [

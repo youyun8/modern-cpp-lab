@@ -9,8 +9,7 @@ const ch10OopII: ChapterContent = {
     '虛擬函式、動態多型與運算子重載：vtable 的運作、override／final 的正確用法，以及何時該避免虛擬函式。',
   concept: {
     standard: 'C++23',
-    body:
-      '動態多型透過虛擬函式達成：基底類別以 virtual 宣告介面，衍生類別以 override 覆寫。呼叫時經由 vtable（虛擬函式表）在執行期分派到實際型別的實作。基底類別若要被多型使用，其解構子必須為 virtual，否則透過基底指標刪除衍生物件會導致未定義行為。override 讓編譯器檢查你確實覆寫了某函式，final 則禁止再被覆寫或繼承。虛擬呼叫有間接跳轉成本且阻礙內聯，效能敏感處可改用樣板或 CRTP 的靜態多型。運算子重載讓自訂型別支援 +、==、<=> 等語法；C++20 的三向比較運算子 <=> 可一次生成全部關係運算子。',
+    body: '動態多型透過虛擬函式達成：基底類別以 virtual 宣告介面，衍生類別以 override 覆寫。呼叫時經由 vtable（虛擬函式表）在執行期分派到實際型別的實作。基底類別若要被多型使用，其解構子必須為 virtual，否則透過基底指標刪除衍生物件會導致未定義行為。override 讓編譯器檢查你確實覆寫了某函式，final 則禁止再被覆寫或繼承。虛擬呼叫有間接跳轉成本且阻礙內聯，效能敏感處可改用樣板或 CRTP 的靜態多型。運算子重載讓自訂型別支援 +、==、<=> 等語法；C++20 的三向比較運算子 <=> 可一次生成全部關係運算子。',
   },
   code: {
     lang: 'cpp',
@@ -19,33 +18,37 @@ const ch10OopII: ChapterContent = {
 #include <vector>
 
 struct Shape {
-    virtual ~Shape() = default;       // [1] 多型基底必須有 virtual 解構子
-    virtual double area() const = 0;  // [2] 純虛擬函式：抽象介面
+  virtual ~Shape() = default;  // [1] 多型基底必須有 virtual 解構子
+  virtual double area() const = 0;  // [2] 純虛擬函式：抽象介面
 };
 
 struct Circle : Shape {
-    double r;
-    explicit Circle(double r) : r(r) {}
-    double area() const override {  // [3] override 讓編譯器檢查簽章
-        return 3.141592653589793 * r * r;
-    }
+  double r;
+  explicit Circle(double r) : r(r) {}
+  double area() const override {  // [3] override 讓編譯器檢查簽章
+    return 3.141592653589793 * r * r;
+  }
 };
 
 struct Square final : Shape {  // [4] final：不可再被繼承
-    double s;
-    explicit Square(double s) : s(s) {}
-    double area() const override { return s * s; }
+  double s;
+  explicit Square(double s) : s(s) {}
+  double area() const override { return s * s; }
 };
 
 int main() {
-    std::vector<std::unique_ptr<Shape>> shapes;  // [5] 以基底指標統一管理
-    shapes.push_back(std::make_unique<Circle>(1.0));
-    shapes.push_back(std::make_unique<Square>(2.0));
-    for (const auto& s : shapes) std::println("area = {:.3f}", s->area());  // 執行期分派
-    return 0;
+  std::vector<std::unique_ptr<Shape>> shapes;  // [5] 以基底指標統一管理
+  shapes.push_back(std::make_unique<Circle>(1.0));
+  shapes.push_back(std::make_unique<Square>(2.0));
+  for (const auto& s : shapes)
+    std::println("area = {:.3f}", s->area());  // 執行期分派
+  return 0;
 }`,
     callouts: [
-      { n: 1, text: '若基底類別會被多型刪除，解構子必須為 virtual，否則 delete 基底指標是未定義行為。' },
+      {
+        n: 1,
+        text: '若基底類別會被多型刪除，解構子必須為 virtual，否則 delete 基底指標是未定義行為。',
+      },
       { n: 2, text: '= 0 宣告純虛擬函式，使 Shape 成為抽象類別，強制衍生類別提供實作。' },
       { n: 3, text: 'override 明確表達覆寫意圖；若簽章不符（漏掉 const 等）編譯器會報錯。' },
       { n: 4, text: 'final 禁止 Square 再被繼承，可讓編譯器去虛擬化（devirtualize）以最佳化。' },
@@ -55,18 +58,15 @@ int main() {
   deepDive: [
     {
       heading: '物件佈局、vtable 與去虛擬化',
-      body:
-        '具虛擬函式的物件內含一個指向 vtable 的 vptr；虛擬呼叫是一次間接跳轉，難以內聯且對分支預測不友善。當編譯器能證明實際型別（例如經 `final` 標記或區域物件）時，可去虛擬化（devirtualization）以恢復內聯。\n\n熱路徑上大量的小型虛擬呼叫會成為瓶頸；此時應考慮以樣板／CRTP 的靜態多型，或以資料導向設計批次處理同型別物件。',
+      body: '具虛擬函式的物件內含一個指向 vtable 的 vptr；虛擬呼叫是一次間接跳轉，難以內聯且對分支預測不友善。當編譯器能證明實際型別（例如經 `final` 標記或區域物件）時，可去虛擬化（devirtualization）以恢復內聯。\n\n熱路徑上大量的小型虛擬呼叫會成為瓶頸；此時應考慮以樣板／CRTP 的靜態多型，或以資料導向設計批次處理同型別物件。',
     },
     {
       heading: '虛擬解構子與物件切片',
-      body:
-        '多型基底必須有虛擬解構子，否則經基底指標 `delete` 衍生物件是 UB。以值（而非參考／指標）複製多型物件會發生物件切片（slicing），只複製基底部分並遺失衍生狀態與 vtable。\n\n需要多型複製時採 clone 慣用法（虛擬的 `clone()` 回傳 `unique_ptr<Base>`）。以容器保存多型物件時一律用智慧指標而非值。',
+      body: '多型基底必須有虛擬解構子，否則經基底指標 `delete` 衍生物件是 UB。以值（而非參考／指標）複製多型物件會發生物件切片（slicing），只複製基底部分並遺失衍生狀態與 vtable。\n\n需要多型複製時採 clone 慣用法（虛擬的 `clone()` 回傳 `unique_ptr<Base>`）。以容器保存多型物件時一律用智慧指標而非值。',
     },
     {
       heading: '三向比較與名稱隱藏',
-      body:
-        'C++20 的 `operator<=>` 搭配 `= default` 可一次生成一致的關係運算子，並自動處理 `==`（通常需另行 `= default`）。設計比較時要注意 `<=>` 的回傳類型（`strong_ordering`／`partial_ordering`）。\n\n衍生類別若定義與基底同名的函式會隱藏基底的所有同名多載（name hiding），需以 `using Base::f;` 引入。漏寫 `override` 可能意外造成隱藏而非覆寫。',
+      body: 'C++20 的 `operator<=>` 搭配 `= default` 可一次生成一致的關係運算子，並自動處理 `==`（通常需另行 `= default`）。設計比較時要注意 `<=>` 的回傳類型（`strong_ordering`／`partial_ordering`）。\n\n衍生類別若定義與基底同名的函式會隱藏基底的所有同名多載（name hiding），需以 `using Base::f;` 引入。漏寫 `override` 可能意外造成隱藏而非覆寫。',
     },
   ],
   pitfalls: [
@@ -134,26 +134,26 @@ int main() {
 #include <vector>
 
 struct Shape {
-    virtual ~Shape() = default;
-    virtual double area() const = 0;
+  virtual ~Shape() = default;
+  virtual double area() const = 0;
 };
 struct Circle : Shape {
-    double r;
-    Circle(double r) : r(r) {}
-    double area() const override { return 3.14159265 * r * r; }
+  double r;
+  Circle(double r) : r(r) {}
+  double area() const override { return 3.14159265 * r * r; }
 };
 struct Square : Shape {
-    double s;
-    Square(double s) : s(s) {}
-    double area() const override { return s * s; }
+  double s;
+  Square(double s) : s(s) {}
+  double area() const override { return s * s; }
 };
 
 int main() {
-    std::vector<std::unique_ptr<Shape>> shapes;
-    shapes.push_back(std::make_unique<Circle>(1.0));
-    shapes.push_back(std::make_unique<Square>(2.0));
-    for (const auto& s : shapes) std::cout << "area = " << s->area() << '\\n';
-    return 0;
+  std::vector<std::unique_ptr<Shape>> shapes;
+  shapes.push_back(std::make_unique<Circle>(1.0));
+  shapes.push_back(std::make_unique<Square>(2.0));
+  for (const auto& s : shapes) std::cout << "area = " << s->area() << '\\n';
+  return 0;
 }`,
   },
   furtherReading: [

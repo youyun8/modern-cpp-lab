@@ -9,8 +9,7 @@ const ch21AdvancedI: ChapterContent = {
     'Move 語意、universal references 與型別推導規則：如何以移動避免不必要複製，並正確做完美轉發。',
   concept: {
     standard: 'C++23',
-    body:
-      'Move 語意讓資源（如 heap 緩衝區）從一個物件「轉移」到另一個，而非昂貴地複製。右值參考 T&& 可繫結到暫時值；std::move 只是把左值轉型為右值參考，讓移動建構／指定得以被選用，本身不搬移任何東西。在樣板中，T&& 是「轉發參考」（forwarding／universal reference），依引數是左值或右值分別推導為 T& 或 T&&，這就是引數推導與參考塌陷的結果。std::forward<T> 依此保留原本的值類別，達成完美轉發。要點：移動後來源處於「有效但未指定」狀態，不應再依賴其值；移動成員應標記 noexcept，容器才會採用移動；回傳區域變數時編譯器多會 RVO／NRVO 省略複製，不必手動 std::move。',
+    body: 'Move 語意讓資源（如 heap 緩衝區）從一個物件「轉移」到另一個，而非昂貴地複製。右值參考 T&& 可繫結到暫時值；std::move 只是把左值轉型為右值參考，讓移動建構／指定得以被選用，本身不搬移任何東西。在樣板中，T&& 是「轉發參考」（forwarding／universal reference），依引數是左值或右值分別推導為 T& 或 T&&，這就是引數推導與參考塌陷的結果。std::forward<T> 依此保留原本的值類別，達成完美轉發。要點：移動後來源處於「有效但未指定」狀態，不應再依賴其值；移動成員應標記 noexcept，容器才會採用移動；回傳區域變數時編譯器多會 RVO／NRVO 省略複製，不必手動 std::move。',
   },
   code: {
     lang: 'cpp',
@@ -22,45 +21,45 @@ const ch21AdvancedI: ChapterContent = {
 // 轉發參考 + std::forward：完美轉發保留左值／右值類別。 [1]
 template <typename T>
 void addTo(std::vector<std::string>& out, T&& value) {
-    out.push_back(std::forward<T>(value));  // [2]
+  out.push_back(std::forward<T>(value));  // [2]
 }
 
 std::string makeName() { return std::string(1000, 'x'); }  // 大字串
 
 int main() {
-    std::vector<std::string> names;
-    std::string lv = "left";
-    addTo(names, lv);          // [3] T 推導為 std::string&（左值 → 複製）
-    addTo(names, makeName());  // [4] T 推導為 std::string（右值 → 移動）
+  std::vector<std::string> names;
+  std::string lv = "left";
+  addTo(names, lv);  // [3] T 推導為 std::string&（左值 → 複製）
+  addTo(names, makeName());  // [4] T 推導為 std::string（右值 → 移動）
 
-    std::string a = "hello";
-    std::string b = std::move(a);  // [5] a 進入有效但未指定狀態
-    std::println("b={}, count={}", b, names.size());
-    return 0;
+  std::string a = "hello";
+  std::string b = std::move(a);  // [5] a 進入有效但未指定狀態
+  std::println("b={}, count={}", b, names.size());
+  return 0;
 }`,
     callouts: [
       { n: 1, text: '在樣板中，T&& 是轉發參考：依實際引數推導為左值或右值參考（參考塌陷）。' },
       { n: 2, text: 'std::forward<T> 依 T 的推導結果還原原本的值類別，左值仍複製、右值可移動。' },
       { n: 3, text: '傳入具名左值 lv 時，T 推導為 std::string&，push_back 執行複製。' },
       { n: 4, text: '傳入暫時值時，T 推導為 std::string，forward 產生右值，push_back 執行移動。' },
-      { n: 5, text: 'std::move 只是轉型；移動後 a 為有效但未指定狀態，除非重新賦值否則不應使用其值。' },
+      {
+        n: 5,
+        text: 'std::move 只是轉型；移動後 a 為有效但未指定狀態，除非重新賦值否則不應使用其值。',
+      },
     ],
   },
   deepDive: [
     {
       heading: '值類別、參考塌陷與轉發參考',
-      body:
-        '運算式分為 lvalue、xvalue、prvalue 三類值類別。在型別推導脈絡中 `T&&` 是轉發參考，透過參考塌陷（`& && -> &`、`&& && -> &&`）依引數推導；非推導脈絡的 `T&&`（如 `std::vector<T>::push_back(T&&)`）則是純右值參考。\n\n區分這兩者是正確使用 `std::forward` 的前提：只有在轉發參考上才該用 `forward`，在具體右值參考上通常用 `std::move`。',
+      body: '運算式分為 lvalue、xvalue、prvalue 三類值類別。在型別推導脈絡中 `T&&` 是轉發參考，透過參考塌陷（`& && -> &`、`&& && -> &&`）依引數推導；非推導脈絡的 `T&&`（如 `std::vector<T>::push_back(T&&)`）則是純右值參考。\n\n區分這兩者是正確使用 `std::forward` 的前提：只有在轉發參考上才該用 `forward`，在具體右值參考上通常用 `std::move`。',
     },
     {
       heading: '複製省略、RVO 與回傳',
-      body:
-        'C++17 起，回傳 prvalue 的複製省略是強制的（guaranteed copy elision）；NRVO（回傳具名區域變數）則是允許但非強制的最佳化。對 `return local;` 加 `std::move` 通常是反效果——它會阻止 NRVO 並可能變慢。\n\nmove-only 型別（如 `unique_ptr`）依賴移動語意在容器與函式間轉移所有權；設計 API 時以值 + 移動傳遞匯參數，兼顧彈性與效率。',
+      body: 'C++17 起，回傳 prvalue 的複製省略是強制的（guaranteed copy elision）；NRVO（回傳具名區域變數）則是允許但非強制的最佳化。對 `return local;` 加 `std::move` 通常是反效果——它會阻止 NRVO 並可能變慢。\n\nmove-only 型別（如 `unique_ptr`）依賴移動語意在容器與函式間轉移所有權；設計 API 時以值 + 移動傳遞匯參數，兼顧彈性與效率。',
     },
     {
       heading: 'noexcept、容器與被移動狀態',
-      body:
-        '移動建構／指定應標 `noexcept`；否則 `std::vector` 擴容時為維持強例外保證會退回複製，喪失移動效益。標準型別被移動後處於「有效但未指定」狀態，可解構或重新賦值，但不應依賴其值。\n\n自我移動（`x = std::move(x)`）對多數標準型別是允許但結果未指定的；自訂型別應確保至少不會損毀。',
+      body: '移動建構／指定應標 `noexcept`；否則 `std::vector` 擴容時為維持強例外保證會退回複製，喪失移動效益。標準型別被移動後處於「有效但未指定」狀態，可解構或重新賦值，但不應依賴其值。\n\n自我移動（`x = std::move(x)`）對多數標準型別是允許但結果未指定的；自訂型別應確保至少不會損毀。',
     },
   ],
   pitfalls: [
@@ -128,11 +127,11 @@ int main() {
 #include <utility>
 
 int main() {
-    std::string a = "hello world";
-    std::string b = std::move(a);  // 移動而非複製
-    std::cout << "b = " << b << '\\n';
-    std::cout << "a.size() after move = " << a.size() << " (有效但未指定)\\n";
-    return 0;
+  std::string a = "hello world";
+  std::string b = std::move(a);  // 移動而非複製
+  std::cout << "b = " << b << '\\n';
+  std::cout << "a.size() after move = " << a.size() << " (有效但未指定)\\n";
+  return 0;
 }`,
   },
   furtherReading: [

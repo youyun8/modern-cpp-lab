@@ -9,8 +9,7 @@ const ch04BasicConceptsII: ChapterContent = {
     '整數型別、溢位與算術運算的細節與陷阱：有號與無號的差異、整數提升、隱式轉換與未定義行為。',
   concept: {
     standard: 'C++23',
-    body:
-      '整數分為有號與無號兩類。有號整數溢位是「未定義行為（UB）」，編譯器可據此激進最佳化，因此絕不可依賴溢位回繞；無號整數則以 2 的冪為模回繞，行為明確但容易在「無號減法變成巨大正數」時出錯。運算前，小於 int 的型別會先做整數提升（integer promotion）至 int；混合有號與無號運算時會發生 usual arithmetic conversions，常把有號值悄悄轉為無號，導致 -1 > 0u 之類的陷阱。實務原則：迴圈索引與一般算術優先用有號型別，位元操作與明確模運算才用無號，並開啟 -fsanitize=undefined 偵測溢位。',
+    body: '整數分為有號與無號兩類。有號整數溢位是「未定義行為（UB）」，編譯器可據此激進最佳化，因此絕不可依賴溢位回繞；無號整數則以 2 的冪為模回繞，行為明確但容易在「無號減法變成巨大正數」時出錯。運算前，小於 int 的型別會先做整數提升（integer promotion）至 int；混合有號與無號運算時會發生 usual arithmetic conversions，常把有號值悄悄轉為無號，導致 -1 > 0u 之類的陷阱。實務原則：迴圈索引與一般算術優先用有號型別，位元操作與明確模運算才用無號，並開啟 -fsanitize=undefined 偵測溢位。',
   },
   code: {
     lang: 'cpp',
@@ -19,21 +18,22 @@ const ch04BasicConceptsII: ChapterContent = {
 #include <print>
 
 int main() {
-    int smax = std::numeric_limits<int>::max();  // [1]
-    // smax + 1;   // [2] 有號溢位是未定義行為，切勿依賴
+  int smax = std::numeric_limits<int>::max();  // [1]
+  // smax + 1;   // [2] 有號溢位是未定義行為，切勿依賴
 
-    unsigned int u = 0;
-    --u;  // [3] 無號回繞：變成 UINT_MAX，行為有定義但常非本意
+  unsigned int u = 0;
+  --u;  // [3] 無號回繞：變成 UINT_MAX，行為有定義但常非本意
 
-    int a = -1;
-    unsigned int b = 1;
-    bool surprising = (a < b);  // [4] a 被轉為無號，結果可能與直覺相反
+  int a = -1;
+  unsigned int b = 1;
+  bool surprising = (a < b);  // [4] a 被轉為無號，結果可能與直覺相反
 
-    std::int8_t small = 100;
-    auto promoted = small + small;  // [5] 先提升為 int 再相加，型別為 int
+  std::int8_t small = 100;
+  auto promoted = small + small;  // [5] 先提升為 int 再相加，型別為 int
 
-    std::println("u={}, (a<b)={}, promoted type size={}", u, surprising, sizeof(promoted));
-    return 0;
+  std::println("u={}, (a<b)={}, promoted type size={}", u, surprising,
+               sizeof(promoted));
+  return 0;
 }`,
     callouts: [
       { n: 1, text: 'std::numeric_limits<T> 查詢型別的極值，是安全處理邊界的標準工具。' },
@@ -46,18 +46,15 @@ int main() {
   deepDive: [
     {
       heading: '有號溢位是 UB——以及它帶來的最佳化',
-      body:
-        '有號整數溢位是未定義行為，編譯器據此假設 `x + 1 > x` 恆真，用以最佳化迴圈與邊界檢查。這代表你無法用 `if (x + 1 < x)` 偵測溢位——該分支可能被直接刪除。\n\n正確做法：以 `__builtin_add_overflow`（GCC／Clang）或 C++26 的 `<stdckdint>` 檢查、以 `-fsanitize=undefined` 在測試期捕捉，或改用無號型別取得明確的模運算回繞語意。',
+      body: '有號整數溢位是未定義行為，編譯器據此假設 `x + 1 > x` 恆真，用以最佳化迴圈與邊界檢查。這代表你無法用 `if (x + 1 < x)` 偵測溢位——該分支可能被直接刪除。\n\n正確做法：以 `__builtin_add_overflow`（GCC／Clang）或 C++26 的 `<stdckdint>` 檢查、以 `-fsanitize=undefined` 在測試期捕捉，或改用無號型別取得明確的模運算回繞語意。',
     },
     {
       heading: '轉換階層與 size_t 陷阱',
-      body:
-        '整數運算依循轉換階層（rank）與提升規則；`size_t` 為無號，因此 `for (size_t i = n - 1; i >= 0; --i)` 會因 `i >= 0` 恆真而無窮迴圈，且 `n - 1` 在 `n == 0` 時回繞成極大值。\n\n容器索引與長度多為無號（`size()` 回傳 `size_type`），與有號索引混用是常見錯誤來源。C++20 的 `std::ssize` 回傳有號長度，可緩解此類問題。',
+      body: '整數運算依循轉換階層（rank）與提升規則；`size_t` 為無號，因此 `for (size_t i = n - 1; i >= 0; --i)` 會因 `i >= 0` 恆真而無窮迴圈，且 `n - 1` 在 `n == 0` 時回繞成極大值。\n\n容器索引與長度多為無號（`size()` 回傳 `size_type`），與有號索引混用是常見錯誤來源。C++20 的 `std::ssize` 回傳有號長度，可緩解此類問題。',
     },
     {
       heading: '位元操作與 <bit>',
-      body:
-        '位移量大於等於型別寬度或為負值是 UB；移位前務必檢查。C++20 保證有號整數採二補數表示，右移負數為算術移位。\n\n`<bit>` 提供可攜且常被硬體加速的操作：`std::popcount`、`std::countl_zero`、`std::rotl`、以及型別安全的 `std::bit_cast`（取代以 `reinterpret_cast` 或 union 做位元重解讀的 UB 寫法）。',
+      body: '位移量大於等於型別寬度或為負值是 UB；移位前務必檢查。C++20 保證有號整數採二補數表示，右移負數為算術移位。\n\n`<bit>` 提供可攜且常被硬體加速的操作：`std::popcount`、`std::countl_zero`、`std::rotl`、以及型別安全的 `std::bit_cast`（取代以 `reinterpret_cast` 或 union 做位元重解讀的 UB 寫法）。',
     },
   ],
   pitfalls: [
@@ -124,14 +121,14 @@ int main() {
 #include <limits>
 
 int main() {
-    unsigned int u = 0;
-    --u;  // 無號回繞
-    int a = -1;
-    unsigned int b = 1;
-    std::cout << "u = " << u << '\\n';
-    std::cout << "(a < b) = " << (a < b) << "  (可能與直覺不同)\\n";
-    std::cout << "INT_MAX = " << std::numeric_limits<int>::max() << '\\n';
-    return 0;
+  unsigned int u = 0;
+  --u;  // 無號回繞
+  int a = -1;
+  unsigned int b = 1;
+  std::cout << "u = " << u << '\\n';
+  std::cout << "(a < b) = " << (a < b) << "  (可能與直覺不同)\\n";
+  std::cout << "INT_MAX = " << std::numeric_limits<int>::max() << '\\n';
+  return 0;
 }`,
   },
   furtherReading: [

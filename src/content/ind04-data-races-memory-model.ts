@@ -9,8 +9,7 @@ const ind04DataRacesMemoryModel: ChapterContent = {
     'happens-before、sequenced-before、synchronizes-with 三個關係，資料競爭即未定義行為，以及為何 volatile 不是同步原語。',
   concept: {
     standard: 'C++11',
-    body:
-      'C++ 記憶體模型（C++11 引入）以三個關係精確定義多執行緒程式的可見性：sequenced-before 描述單一執行緒內運算式求值的順序；synchronizes-with 描述跨執行緒的同步點，典型由一個 release 操作與讀到該值的 acquire 操作配對產生；happens-before 則是前兩者經遞移閉包組成的全域關係——若 A happens-before B，A 的效果保證對 B 可見。若兩個不同執行緒的操作同時存取同一記憶體位置、至少一個是寫入、且兩者之間沒有 happens-before 關係，就構成資料競爭（data race）。標準明確規定：含有資料競爭的程式其行為是未定義行為（undefined behavior），不是「結果不可預期」這麼溫和，而是編譯器可以假設資料競爭不存在，並據此做任意激進轉換。',
+    body: 'C++ 記憶體模型（C++11 引入）以三個關係精確定義多執行緒程式的可見性：sequenced-before 描述單一執行緒內運算式求值的順序；synchronizes-with 描述跨執行緒的同步點，典型由一個 release 操作與讀到該值的 acquire 操作配對產生；happens-before 則是前兩者經遞移閉包組成的全域關係——若 A happens-before B，A 的效果保證對 B 可見。若兩個不同執行緒的操作同時存取同一記憶體位置、至少一個是寫入、且兩者之間沒有 happens-before 關係，就構成資料競爭（data race）。標準明確規定：含有資料競爭的程式其行為是未定義行為（undefined behavior），不是「結果不可預期」這麼溫和，而是編譯器可以假設資料競爭不存在，並據此做任意激進轉換。',
   },
   code: {
     lang: 'cpp',
@@ -24,17 +23,17 @@ volatile bool legacy_ready = false;  // [1]
 int legacy_payload = 0;              // plain, non-atomic, non-volatile data
 
 void legacy_producer() {
-    legacy_payload = 42;  // [2] ordinary write, no ordering guarantee
-    legacy_ready = true;  // [3] volatile write: reordering across
-                          //     threads is still permitted
+  legacy_payload = 42;  // [2] ordinary write, no ordering guarantee
+  legacy_ready = true;  // [3] volatile write: reordering across
+                        //     threads is still permitted
 }
 
 void legacy_consumer() {
-    while (!legacy_ready) {  // [4] volatile read is not atomic and is not
-        // spin                //     an acquire: the compiler/CPU may still
-    }  //     reorder or the read may tear on some
-       //     targets
-    std::printf("legacy_payload = %d\\n", legacy_payload);  // may print 0
+  while (!legacy_ready) {  // [4] volatile read is not atomic and is not
+    // spin                //     an acquire: the compiler/CPU may still
+  }  //     reorder or the read may tear on some
+     //     targets
+  std::printf("legacy_payload = %d\\n", legacy_payload);  // may print 0
 }
 
 // Correct fix: std::atomic with explicit release/acquire ordering.
@@ -42,23 +41,23 @@ std::atomic<bool> ready{false};  // [5]
 int payload = 0;
 
 void producer() {
-    payload = 42;                                  // sequenced-before [6]
-    ready.store(true, std::memory_order_release);  // [6] publishes payload
+  payload = 42;                                  // sequenced-before [6]
+  ready.store(true, std::memory_order_release);  // [6] publishes payload
 }
 
 void consumer() {
-    while (!ready.load(std::memory_order_acquire)) {  // [6] pairs with store
-        // spin
-    }
-    std::printf("payload = %d\\n", payload);  // guaranteed to print 42
+  while (!ready.load(std::memory_order_acquire)) {  // [6] pairs with store
+                                                    // spin
+  }
+  std::printf("payload = %d\\n", payload);  // guaranteed to print 42
 }
 
 int main() {
-    std::thread t1{producer};
-    std::thread t2{consumer};
-    t1.join();
-    t2.join();
-    return 0;
+  std::thread t1{producer};
+  std::thread t2{consumer};
+  t1.join();
+  t2.join();
+  return 0;
 }`,
     callouts: [
       {
@@ -90,23 +89,19 @@ int main() {
   deepDive: [
     {
       heading: 'sequenced-before、synchronizes-with、happens-before 的精確關係',
-      body:
-        '`sequenced-before` 是單一執行緒內的偏序關係：在同一個執行緒中，若運算式 A 的求值在運算式 B 之前完成（例如以逗號分隔的敘述、函式呼叫前的引數求值等），則 A sequenced-before B。它純粹描述「同一條指令流內的先後」，與其他執行緒無關。\n\n`synchronizes-with` 描述跨執行緒的同步：當一個執行緒對某個原子物件做 release 操作（`memory_order_release` 或更強），而另一個執行緒對同一物件做 acquire 操作（`memory_order_acquire` 或更強）並讀到該次 release 寫入（或其後的值），這兩個操作之間就建立 synchronizes-with 關係。互斥鎖的 unlock／lock、`std::thread` 的建構／join、`std::atomic` 的 release／acquire 配對都是產生 synchronizes-with 的來源。\n\n`happens-before` 是把 sequenced-before 與 synchronizes-with 做遞移閉包後得到的全域關係：若 A sequenced-before B，則 A happens-before B；若 A synchronizes-with B，則 A happens-before B；若 A happens-before B 且 B happens-before C，則 A happens-before C。這條鏈式關係就是判斷「執行緒 X 的寫入是否保證對執行緒 Y 可見」的唯一依據——沒有 happens-before，就沒有可見性保證，即使實際測試中「看起來正確」。',
+      body: '`sequenced-before` 是單一執行緒內的偏序關係：在同一個執行緒中，若運算式 A 的求值在運算式 B 之前完成（例如以逗號分隔的敘述、函式呼叫前的引數求值等），則 A sequenced-before B。它純粹描述「同一條指令流內的先後」，與其他執行緒無關。\n\n`synchronizes-with` 描述跨執行緒的同步：當一個執行緒對某個原子物件做 release 操作（`memory_order_release` 或更強），而另一個執行緒對同一物件做 acquire 操作（`memory_order_acquire` 或更強）並讀到該次 release 寫入（或其後的值），這兩個操作之間就建立 synchronizes-with 關係。互斥鎖的 unlock／lock、`std::thread` 的建構／join、`std::atomic` 的 release／acquire 配對都是產生 synchronizes-with 的來源。\n\n`happens-before` 是把 sequenced-before 與 synchronizes-with 做遞移閉包後得到的全域關係：若 A sequenced-before B，則 A happens-before B；若 A synchronizes-with B，則 A happens-before B；若 A happens-before B 且 B happens-before C，則 A happens-before C。這條鏈式關係就是判斷「執行緒 X 的寫入是否保證對執行緒 Y 可見」的唯一依據——沒有 happens-before，就沒有可見性保證，即使實際測試中「看起來正確」。',
     },
     {
       heading: '資料競爭為何是 UB，而不只是「跑出爛值」',
-      body:
-        '標準（[intro.races]）的定義是：兩個不同執行緒的操作衝突（存取同一記憶體位置且至少一者為寫入），且彼此之間沒有 happens-before 關係，就是資料競爭；程式含有資料競爭時，其行為未定義。這與「唯讀共享」或「單執行緒重排」完全不同層級——UB 意味著標準對程式之後的任何行為都不再做任何保證。\n\n實務後果遠比「讀到舊值」嚴重，因為最佳化器可以假設程式不含資料競爭來做激進轉換：\n\n1. 整個迴圈被消除——若編譯器證明某個非原子變數在迴圈內被寫入但（在假設無資料競爭的前提下）從未被其他執行緒讀取，可能把看似「自旋等待旗標」的迴圈直接優化成無窮迴圈或直接刪除，因為它假設該變數不會被其他執行緒改變。\n2. 時序被重排到違反直覺——沒有同步關係約束時，讀寫可以被搬移、合併、快取到暫存器，寫回時機與原始碼順序無關；兩個看似「先設值再設旗標」的敘述，實際機器碼可能顛倒。\n3. 「發明」讀寫（invented loads/stores）——最佳化器可能把條件式存取轉成無條件存取（store widening/narrowing 等），在資料競爭語意下這種存取的值可被視為任意，未定義值可能污染其他看似無關的變數，甚至讓另一個執行緒讀到的並非任何一次寫入曾經存在過的值。\n4. 「時光旅行」最佳化——由於 UB 之後一切皆有可能，編譯器甚至可以把 UB 發生前的程式碼也一併改變效果（因為整條路徑「反正不會發生」的邏輯只在無 UB 前提下成立），實務上曾出現資料競爭導致與競爭點無關的程式碼被裁剪或行為異常。\n\n這些都是真實編譯器在啟用最佳化時會做的轉換，不是理論上的恐嚇；這也是為什麼「我測試過，這段沒同步的程式碼在我的機器上一直正確」完全不能作為正確性論證。',
+      body: '標準（[intro.races]）的定義是：兩個不同執行緒的操作衝突（存取同一記憶體位置且至少一者為寫入），且彼此之間沒有 happens-before 關係，就是資料競爭；程式含有資料競爭時，其行為未定義。這與「唯讀共享」或「單執行緒重排」完全不同層級——UB 意味著標準對程式之後的任何行為都不再做任何保證。\n\n實務後果遠比「讀到舊值」嚴重，因為最佳化器可以假設程式不含資料競爭來做激進轉換：\n\n1. 整個迴圈被消除——若編譯器證明某個非原子變數在迴圈內被寫入但（在假設無資料競爭的前提下）從未被其他執行緒讀取，可能把看似「自旋等待旗標」的迴圈直接優化成無窮迴圈或直接刪除，因為它假設該變數不會被其他執行緒改變。\n2. 時序被重排到違反直覺——沒有同步關係約束時，讀寫可以被搬移、合併、快取到暫存器，寫回時機與原始碼順序無關；兩個看似「先設值再設旗標」的敘述，實際機器碼可能顛倒。\n3. 「發明」讀寫（invented loads/stores）——最佳化器可能把條件式存取轉成無條件存取（store widening/narrowing 等），在資料競爭語意下這種存取的值可被視為任意，未定義值可能污染其他看似無關的變數，甚至讓另一個執行緒讀到的並非任何一次寫入曾經存在過的值。\n4. 「時光旅行」最佳化——由於 UB 之後一切皆有可能，編譯器甚至可以把 UB 發生前的程式碼也一併改變效果（因為整條路徑「反正不會發生」的邏輯只在無 UB 前提下成立），實務上曾出現資料競爭導致與競爭點無關的程式碼被裁剪或行為異常。\n\n這些都是真實編譯器在啟用最佳化時會做的轉換，不是理論上的恐嚇；這也是為什麼「我測試過，這段沒同步的程式碼在我的機器上一直正確」完全不能作為正確性論證。',
     },
     {
       heading: 'volatile 不是同步原語：它保證什麼、不保證什麼',
-      body:
-        '`volatile` 的語意只有一條：對 volatile 限定物件的每一次讀寫都必須被視為具有「可觀察的副作用」，編譯器不能將其優化掉、合併或重新排序到違反單一執行緒抽象機（abstract machine）可觀察行為的地步。它的設計目的是給記憶體映射 I/O（MMIO）、訊號處理常式（signal handler）內與 `sig_atomic_t` 搭配等場景使用，確保每次存取都真的落地。\n\n它完全沒有處理三件事：（一）原子性——`volatile` 讀寫在多數平台上對簡單型別可能是原子的，但標準沒有這項保證，對非對齊或超過機器字組大小的型別可能撕裂；（二）跨執行緒排序——`volatile` 不建立 synchronizes-with，因此不阻止編譯器把其他非 volatile 的讀寫重排到 volatile 存取的前後，CPU 的記憶體屏障也完全不受影響；（三）可見性——`volatile` 寫入沒有 release 語意，不保證這次寫入之前的其他變數寫入會先被其他執行緒看到。\n\n因此範例中的 `legacy_ready`／`legacy_payload` 是典型的「volatile 當作旗標」誤用：即使在 x86 這種強順序（TSO）硬體上，因為缺乏編譯器層級的排序保證，最佳化仍可能重排存取順序；換到 ARM／POWER 等弱順序硬體上，缺乏硬體屏障會讓問題更明顯地重現。',
+      body: '`volatile` 的語意只有一條：對 volatile 限定物件的每一次讀寫都必須被視為具有「可觀察的副作用」，編譯器不能將其優化掉、合併或重新排序到違反單一執行緒抽象機（abstract machine）可觀察行為的地步。它的設計目的是給記憶體映射 I/O（MMIO）、訊號處理常式（signal handler）內與 `sig_atomic_t` 搭配等場景使用，確保每次存取都真的落地。\n\n它完全沒有處理三件事：（一）原子性——`volatile` 讀寫在多數平台上對簡單型別可能是原子的，但標準沒有這項保證，對非對齊或超過機器字組大小的型別可能撕裂；（二）跨執行緒排序——`volatile` 不建立 synchronizes-with，因此不阻止編譯器把其他非 volatile 的讀寫重排到 volatile 存取的前後，CPU 的記憶體屏障也完全不受影響；（三）可見性——`volatile` 寫入沒有 release 語意，不保證這次寫入之前的其他變數寫入會先被其他執行緒看到。\n\n因此範例中的 `legacy_ready`／`legacy_payload` 是典型的「volatile 當作旗標」誤用：即使在 x86 這種強順序（TSO）硬體上，因為缺乏編譯器層級的排序保證，最佳化仍可能重排存取順序；換到 ARM／POWER 等弱順序硬體上，缺乏硬體屏障會讓問題更明顯地重現。',
     },
     {
       heading: 'HPC 老程式碼的實務啟示',
-      body:
-        '許多歷史悠久的高效能運算程式碼——尤其是移植自 C 或早期 C++（C++11 之前，當時語言根本沒有記憶體模型與 `std::thread` 概念）——習慣以 `volatile` 全域旗標、`volatile` 計數器實作「輕量級」執行緒間信號傳遞。在 C++11 之後，這些程式碼在語言層級是資料競爭、是未定義行為，只是因為早期編譯器最佳化較保守、目標硬體是強順序 x86，才「恰好」在特定環境下正常運作。\n\n升級編譯器版本、開啟更高最佳化等級（`-O2`／`-O3`）、換成 LTO、或移植到 ARM／RISC-V 等弱順序架構，都可能讓這類程式碼開始出現間歇性錯誤，而且往往難以重現與除錯，因為 UB 觸發的行為本身就不穩定。\n\n正確的現代寫法是：跨執行緒的旗標、計數器、發佈的指標一律使用 `std::atomic`，並依實際需求選擇 `memory_order`（預設 `seq_cst` 最安全，效能敏感處再視需要放寬到 `acquire`／`release` 或 `relaxed`）。C++20 額外提供 `std::atomic_ref`，可以在不改動既有資料結構型別的前提下，對一段記憶體施加原子語意，是移轉舊有 `volatile` 慣用法的實用橋樑；也應搭配 ThreadSanitizer（TSan）在 CI 中持續掃描資料競爭，因為資料競爭很多時候不會在單次測試中顯現。',
+      body: '許多歷史悠久的高效能運算程式碼——尤其是移植自 C 或早期 C++（C++11 之前，當時語言根本沒有記憶體模型與 `std::thread` 概念）——習慣以 `volatile` 全域旗標、`volatile` 計數器實作「輕量級」執行緒間信號傳遞。在 C++11 之後，這些程式碼在語言層級是資料競爭、是未定義行為，只是因為早期編譯器最佳化較保守、目標硬體是強順序 x86，才「恰好」在特定環境下正常運作。\n\n升級編譯器版本、開啟更高最佳化等級（`-O2`／`-O3`）、換成 LTO、或移植到 ARM／RISC-V 等弱順序架構，都可能讓這類程式碼開始出現間歇性錯誤，而且往往難以重現與除錯，因為 UB 觸發的行為本身就不穩定。\n\n正確的現代寫法是：跨執行緒的旗標、計數器、發佈的指標一律使用 `std::atomic`，並依實際需求選擇 `memory_order`（預設 `seq_cst` 最安全，效能敏感處再視需要放寬到 `acquire`／`release` 或 `relaxed`）。C++20 額外提供 `std::atomic_ref`，可以在不改動既有資料結構型別的前提下，對一段記憶體施加原子語意，是移轉舊有 `volatile` 慣用法的實用橋樑；也應搭配 ThreadSanitizer（TSan）在 CI 中持續掃描資料競爭，因為資料競爭很多時候不會在單次測試中顯現。',
     },
   ],
   pitfalls: [
@@ -142,7 +137,10 @@ int main() {
       stem: '關於「資料競爭是未定義行為」的實際後果，下列敘述何者最準確？',
       options: [
         { id: 'a', text: '只是讀到的值可能是舊值或新值其中之一，其餘行為完全正常' },
-        { id: 'b', text: '編譯器可以假設程式不含資料競爭並據此做激進最佳化，可能導致迴圈被整段刪除、存取被重排、甚至產生與競爭點無關的異常行為' },
+        {
+          id: 'b',
+          text: '編譯器可以假設程式不含資料競爭並據此做激進最佳化，可能導致迴圈被整段刪除、存取被重排、甚至產生與競爭點無關的異常行為',
+        },
         { id: 'c', text: '只會在除錯模式下出現問題，發佈版一定正常' },
         { id: 'd', text: '只影響該變數本身，不會波及其他程式邏輯' },
       ],
@@ -155,7 +153,10 @@ int main() {
       stem: '在多執行緒程式中用 `volatile bool` 作為「工作完成旗標」讓另一個執行緒自旋等待，這種寫法的問題是什麼？',
       options: [
         { id: 'a', text: '完全沒有問題，這是標準建議的寫法' },
-        { id: 'b', text: 'volatile 只保證不被優化掉存取本身，不提供原子性、跨執行緒排序或可見性保證，因此不構成有效同步' },
+        {
+          id: 'b',
+          text: 'volatile 只保證不被優化掉存取本身，不提供原子性、跨執行緒排序或可見性保證，因此不構成有效同步',
+        },
         { id: 'c', text: 'volatile 會讓程式編譯失敗' },
         { id: 'd', text: 'volatile 等同於 memory_order_seq_cst 的 std::atomic' },
       ],
@@ -185,36 +186,36 @@ std::atomic<bool> ready{false};
 int payload = 0;
 
 int main() {
-    std::thread producer([]() {
-        payload = 42;
-        ready.store(true, std::memory_order_release);
-    });
-    std::thread consumer([]() {
-        while (!ready.load(std::memory_order_acquire)) {
-            // spin
-        }
-        std::printf("payload = %d\\n", payload);  // always 42
-    });
-    producer.join();
-    consumer.join();
+  std::thread producer([]() {
+    payload = 42;
+    ready.store(true, std::memory_order_release);
+  });
+  std::thread consumer([]() {
+    while (!ready.load(std::memory_order_acquire)) {
+      // spin
+    }
+    std::printf("payload = %d\\n", payload);  // always 42
+  });
+  producer.join();
+  consumer.join();
 
-    // Try replacing the block above with the volatile-based version and
-    // reason about why the compiler is free to break it:
-    //
-    // std::thread p2([]() {
-    //     legacy_payload = 42;
-    //     legacy_ready = true;
-    // });
-    // std::thread c2([]() {
-    //     while (!legacy_ready) {
-    //         // spin
-    //     }
-    //     std::printf("legacy_payload = %d\\n", legacy_payload);
-    // });
-    // p2.join();
-    // c2.join();
+  // Try replacing the block above with the volatile-based version and
+  // reason about why the compiler is free to break it:
+  //
+  // std::thread p2([]() {
+  //     legacy_payload = 42;
+  //     legacy_ready = true;
+  // });
+  // std::thread c2([]() {
+  //     while (!legacy_ready) {
+  //         // spin
+  //     }
+  //     std::printf("legacy_payload = %d\\n", legacy_payload);
+  // });
+  // p2.join();
+  // c2.join();
 
-    return 0;
+  return 0;
 }`,
   },
   furtherReading: [
@@ -234,7 +235,7 @@ int main() {
       description: 'volatile 限定詞的精確語意，說明它與執行緒同步無關。',
     },
     {
-      title: "What Every C Programmer Should Know About Undefined Behavior (LLVM Blog)",
+      title: 'What Every C Programmer Should Know About Undefined Behavior (LLVM Blog)',
       href: 'https://blog.llvm.org/2011/05/what-every-c-programmer-should-know.html',
       description: '解釋編譯器如何基於「假設無 UB」做激進最佳化，理解資料競爭後果的重要背景文章。',
     },

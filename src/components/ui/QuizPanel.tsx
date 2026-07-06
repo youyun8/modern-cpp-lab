@@ -31,18 +31,11 @@ export default function QuizPanel({ chapterSlug, questions }: QuizPanelProps) {
           const attempt = quiz.getAttempt(q.id);
           const answeredCorrectly = attempt.revealed && attempt.correct;
           return (
-            <li
-              key={q.id}
-              className="rounded-xl border border-border bg-surface-raised p-4"
-            >
+            <li key={q.id} className="rounded-xl border border-border bg-surface-raised p-4">
               <p className="mb-3 font-medium text-content">
                 {qi + 1}. {q.stem}
               </p>
-              <div
-                role="radiogroup"
-                aria-label={`第 ${qi + 1} 題選項`}
-                className="space-y-2"
-              >
+              <div role="radiogroup" aria-label={`第 ${qi + 1} 題選項`} className="space-y-2">
                 {q.options.map((opt, oi) => {
                   const selected = attempt.selectedOptionId === opt.id;
                   const isCorrect = q.correctOptionId === opt.id;
@@ -63,9 +56,7 @@ export default function QuizPanel({ chapterSlug, questions }: QuizPanelProps) {
                       onClick={() => quiz.select(q.id, opt.id)}
                       className={`flex w-full items-start gap-2 rounded-lg border px-3 py-2 text-left text-sm text-content transition-colors ${state} disabled:cursor-not-allowed`}
                     >
-                      <span className="font-mono text-content-muted">
-                        {kOptionLabels[oi]}.
-                      </span>
+                      <span className="font-mono text-content-muted">{kOptionLabels[oi]}.</span>
                       <span>{opt.text}</span>
                     </button>
                   );

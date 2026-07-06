@@ -9,8 +9,7 @@ const ind08MutexLocks: ChapterContent = {
     'mutex／shared_mutex（C++17 讀寫鎖）、lock_guard／unique_lock／scoped_lock，死結四條件與鎖排序。',
   concept: {
     standard: 'C++17',
-    body:
-      '互斥鎖（mutex）是共享狀態最基本的同步機制：同一時間只允許一個執行緒持有鎖並進入臨界區。std::mutex 是最輕量的版本；std::recursive_mutex 允許同一執行緒重複上鎖（代價是額外的計數與較高開銷）；std::shared_mutex（C++17）提供讀寫鎖語意——多個讀者可同時持有共享鎖，但寫者需要獨占鎖，適合讀多寫少的場景。鎖本身不該手動 lock/unlock，而應交給 RAII 包裝：lock_guard 是最單純、開銷最低的選擇；unique_lock 支援延遲鎖定、可轉移所有權、可提前解鎖；scoped_lock（C++17）可一次鎖住多個 mutex 且保證不死結。工業實務上，鎖是熱路徑效能的頭號嫌疑犯：鎖競爭、快取行彈跳與優先反轉都可能讓「正確」的鎖版本遠比預期慢，因此判斷何時該用分割（sharding）或無鎖取代鎖，和正確使用鎖同等重要。',
+    body: '互斥鎖（mutex）是共享狀態最基本的同步機制：同一時間只允許一個執行緒持有鎖並進入臨界區。std::mutex 是最輕量的版本；std::recursive_mutex 允許同一執行緒重複上鎖（代價是額外的計數與較高開銷）；std::shared_mutex（C++17）提供讀寫鎖語意——多個讀者可同時持有共享鎖，但寫者需要獨占鎖，適合讀多寫少的場景。鎖本身不該手動 lock/unlock，而應交給 RAII 包裝：lock_guard 是最單純、開銷最低的選擇；unique_lock 支援延遲鎖定、可轉移所有權、可提前解鎖；scoped_lock（C++17）可一次鎖住多個 mutex 且保證不死結。工業實務上，鎖是熱路徑效能的頭號嫌疑犯：鎖競爭、快取行彈跳與優先反轉都可能讓「正確」的鎖版本遠比預期慢，因此判斷何時該用分割（sharding）或無鎖取代鎖，和正確使用鎖同等重要。',
   },
   code: {
     lang: 'cpp',
@@ -19,69 +18,80 @@ const ind08MutexLocks: ChapterContent = {
 #include <thread>
 
 struct Account {
-    std::mutex m;
-    long balance = 0;
+  std::mutex m;
+  long balance = 0;
 };
 
 // 危險版本：依序個別上鎖，鎖定順序取決於呼叫者，可能死結。 [1]
 void transferNaive(Account& from, Account& to, long amount) {
-    std::lock_guard<std::mutex> lockFrom(from.m);  // [2]
-    std::lock_guard<std::mutex> lockTo(to.m);
-    from.balance -= amount;
-    to.balance += amount;
+  std::lock_guard<std::mutex> lockFrom(from.m);  // [2]
+  std::lock_guard<std::mutex> lockTo(to.m);
+  from.balance -= amount;
+  to.balance += amount;
 }
 
 // 安全版本：std::scoped_lock 一次鎖住兩個 mutex，內部用
 // std::lock 演算法避免死結，無論呼叫順序為何都安全。 [3]
 void transferSafe(Account& from, Account& to, long amount) {
-    std::scoped_lock lock(from.m, to.m);  // [4] C++17 多鎖建構
-    from.balance -= amount;
-    to.balance += amount;
+  std::scoped_lock lock(from.m, to.m);  // [4] C++17 多鎖建構
+  from.balance -= amount;
+  to.balance += amount;
 }  // [5] 離開作用域自動、依序釋放兩把鎖
 
 int main() {
-    Account a, b;
-    a.balance = 100;
+  Account a, b;
+  a.balance = 100;
 
-    // 兩個方向同時轉帳：naive 版本在 a→b、b→a 交錯執行時可能死結；
-    // scoped_lock 版本則保證不會。 [6]
-    std::thread t1(transferSafe, std::ref(a), std::ref(b), 30);
-    std::thread t2(transferSafe, std::ref(b), std::ref(a), 10);
-    t1.join();
-    t2.join();
+  // 兩個方向同時轉帳：naive 版本在 a→b、b→a 交錯執行時可能死結；
+  // scoped_lock 版本則保證不會。 [6]
+  std::thread t1(transferSafe, std::ref(a), std::ref(b), 30);
+  std::thread t2(transferSafe, std::ref(b), std::ref(a), 10);
+  t1.join();
+  t2.join();
 
-    std::println("a.balance = {}, b.balance = {}", a.balance, b.balance);
-    return 0;
+  std::println("a.balance = {}, b.balance = {}", a.balance, b.balance);
+  return 0;
 }`,
     callouts: [
-      { n: 1, text: 'transferNaive 分別對兩個 mutex 呼叫 lock_guard 建構子，鎖定順序完全由呼叫端的參數順序決定。' },
-      { n: 2, text: '若另一執行緒以相反順序呼叫 transferNaive(b, a, ...)，兩者互相持有對方需要的鎖，形成典型死結。' },
-      { n: 3, text: 'std::scoped_lock 建構時會以類似 std::lock 的演算法一次取得所有 mutex，內部用回退／重試策略避免循環等待。' },
-      { n: 4, text: '傳入多個 mutex 給同一個 scoped_lock，無論呼叫順序為何，取鎖結果都是死結安全的。' },
-      { n: 5, text: 'scoped_lock 是 RAII：解構子自動釋放所有持有的鎖，不需手動 unlock，也不怕例外路徑漏放。' },
+      {
+        n: 1,
+        text: 'transferNaive 分別對兩個 mutex 呼叫 lock_guard 建構子，鎖定順序完全由呼叫端的參數順序決定。',
+      },
+      {
+        n: 2,
+        text: '若另一執行緒以相反順序呼叫 transferNaive(b, a, ...)，兩者互相持有對方需要的鎖，形成典型死結。',
+      },
+      {
+        n: 3,
+        text: 'std::scoped_lock 建構時會以類似 std::lock 的演算法一次取得所有 mutex，內部用回退／重試策略避免循環等待。',
+      },
+      {
+        n: 4,
+        text: '傳入多個 mutex 給同一個 scoped_lock，無論呼叫順序為何，取鎖結果都是死結安全的。',
+      },
+      {
+        n: 5,
+        text: 'scoped_lock 是 RAII：解構子自動釋放所有持有的鎖，不需手動 unlock，也不怕例外路徑漏放。',
+      },
       { n: 6, text: '對照組：naive 版本在雙向轉帳的競爭情境下有機會死結，safe 版本則保證終止。' },
     ],
   },
   deepDive: [
     {
       heading: 'mutex、recursive_mutex、shared_mutex 的取捨',
-      body:
-        'std::mutex 是預設選擇：非遞迴、開銷最小，同一執行緒重複 `lock()` 是未定義行為（通常死結）。std::recursive_mutex 允許同一執行緒多次上鎖（需對應次數的解鎖），但額外的擁有者計數帶來效能成本，且往往是設計氣味——需要遞迴鎖通常代表函式呼叫圖或鎖粒度沒設計好。\n\nstd::shared_mutex（C++17）實作讀寫鎖：以 `lock_shared()`／`unlock_shared()` 取得共享（讀）鎖，多個讀者可並存；以 `lock()`／`unlock()` 取得獨占（寫）鎖，會等待所有讀者釋放。適合讀取遠多於寫入、且讀取臨界區夠長以攤銷額外開銷的場景（例如設定表、快取）；若臨界區很短，shared_mutex 內部簿記的成本可能反而高於單純 `std::mutex`。',
+      body: 'std::mutex 是預設選擇：非遞迴、開銷最小，同一執行緒重複 `lock()` 是未定義行為（通常死結）。std::recursive_mutex 允許同一執行緒多次上鎖（需對應次數的解鎖），但額外的擁有者計數帶來效能成本，且往往是設計氣味——需要遞迴鎖通常代表函式呼叫圖或鎖粒度沒設計好。\n\nstd::shared_mutex（C++17）實作讀寫鎖：以 `lock_shared()`／`unlock_shared()` 取得共享（讀）鎖，多個讀者可並存；以 `lock()`／`unlock()` 取得獨占（寫）鎖，會等待所有讀者釋放。適合讀取遠多於寫入、且讀取臨界區夠長以攤銷額外開銷的場景（例如設定表、快取）；若臨界區很短，shared_mutex 內部簿記的成本可能反而高於單純 `std::mutex`。',
     },
     {
       heading: 'lock_guard、unique_lock、scoped_lock 的語意差異',
-      body:
-        '`std::lock_guard` 在建構時上鎖、解構時解鎖，作用域固定、不可轉移、不可提前解鎖，是開銷最低的 RAII 包裝，適合「整個作用域都需要鎖」的簡單情境。\n\n`std::unique_lock` 更彈性：支援 `std::defer_lock`（延後鎖定）、`std::try_to_lock`、可在中途 `lock()`／`unlock()`、可移動（轉移鎖的擁有權），也是條件變數 `std::condition_variable::wait` 要求的鎖型別，因為 wait 需要能在等待期間釋放鎖、被喚醒後重新取得。代價是比 lock_guard 多一點狀態與間接開銷。\n\n`std::scoped_lock`（C++17）是 lock_guard 的多鎖泛化：建構子接受任意數量的 mutex，內部以類似 `std::lock` 的演算法（依序嘗試、遇阻塞則釋放已取得的鎖再重試）取得全部，保證不會因鎖定順序不同而死結；只鎖一個 mutex 時它退化為等同 lock_guard 的行為，因此可作為預設選擇。',
+      body: '`std::lock_guard` 在建構時上鎖、解構時解鎖，作用域固定、不可轉移、不可提前解鎖，是開銷最低的 RAII 包裝，適合「整個作用域都需要鎖」的簡單情境。\n\n`std::unique_lock` 更彈性：支援 `std::defer_lock`（延後鎖定）、`std::try_to_lock`、可在中途 `lock()`／`unlock()`、可移動（轉移鎖的擁有權），也是條件變數 `std::condition_variable::wait` 要求的鎖型別，因為 wait 需要能在等待期間釋放鎖、被喚醒後重新取得。代價是比 lock_guard 多一點狀態與間接開銷。\n\n`std::scoped_lock`（C++17）是 lock_guard 的多鎖泛化：建構子接受任意數量的 mutex，內部以類似 `std::lock` 的演算法（依序嘗試、遇阻塞則釋放已取得的鎖再重試）取得全部，保證不會因鎖定順序不同而死結；只鎖一個 mutex 時它退化為等同 lock_guard 的行為，因此可作為預設選擇。',
     },
     {
       heading: '死結四條件、鎖排序與 std::call_once',
-      body:
-        '死結需同時滿足 Coffman 四條件：互斥（資源不可共享）、持有並等待（持有一把鎖的同時等待另一把）、不可搶佔（鎖不能被強制取走）、循環等待（一組執行緒形成等待環）。破壞任一條件即可避免死結；實務上最常用的兩種手段是（a）固定的全域鎖排序——所有程式碼永遠按同一順序取得多把鎖，消除循環等待；（b）用 `std::scoped_lock` 或 `std::lock` 讓「取得多把鎖」成為單一原子步驟，由函式庫保證安全。\n\nstd::call_once 搭配 std::once_flag 解決「執行緒安全的延遲初始化」問題：多個執行緒同時呼叫 `std::call_once(flag, initFunc)`，函式庫保證 initFunc 恰好執行一次，其餘呼叫者會阻塞直到完成，且完成後續呼叫零額外鎖開銷（實作通常用一次性的原子檢查）。這比「用 mutex 手動保護一個 bool 旗標」更簡潔也更不容易寫錯（例如忘記處理拋出例外時旗標應重置的邊界情況，call_once 已內建處理）。',
+      body: '死結需同時滿足 Coffman 四條件：互斥（資源不可共享）、持有並等待（持有一把鎖的同時等待另一把）、不可搶佔（鎖不能被強制取走）、循環等待（一組執行緒形成等待環）。破壞任一條件即可避免死結；實務上最常用的兩種手段是（a）固定的全域鎖排序——所有程式碼永遠按同一順序取得多把鎖，消除循環等待；（b）用 `std::scoped_lock` 或 `std::lock` 讓「取得多把鎖」成為單一原子步驟，由函式庫保證安全。\n\nstd::call_once 搭配 std::once_flag 解決「執行緒安全的延遲初始化」問題：多個執行緒同時呼叫 `std::call_once(flag, initFunc)`，函式庫保證 initFunc 恰好執行一次，其餘呼叫者會阻塞直到完成，且完成後續呼叫零額外鎖開銷（實作通常用一次性的原子檢查）。這比「用 mutex 手動保護一個 bool 旗標」更簡潔也更不容易寫錯（例如忘記處理拋出例外時旗標應重置的邊界情況，call_once 已內建處理）。',
     },
     {
       heading: 'HPC 視角：鎖在熱路徑幾乎總是錯的',
-      body:
-        '在高效能運算與延遲敏感系統中，出現在每次迭代、每個封包、每個 GPU kernel 啟動路徑上的鎖，幾乎必然是可擴展性瓶頸：鎖競爭讓執行緒序列化執行，快取行在核心間彈跳（false sharing 的一種形式），作業系統排程器介入可能引發優先反轉與長尾延遲。剖析工具（perf、VTune）常直接指出鎖等待佔掉多數牆鐘時間。\n\n處理熱路徑鎖競爭的第一選擇通常不是「換成無鎖資料結構」，而是分割（sharding／partitioning）：把一個全域鎖保護的資料結構拆成 N 份、依 thread-id 或 key 的雜湊決定歸屬的分片，各分片各自一把鎖，把競爭機率降到 1/N；更進一步可依 NUMA 節點分割，讓執行緒優先存取本地記憶體的分片，同時降低跨插槽流量與鎖競爭。只有在分割仍不足以消除瓶頸、且測過資料確實證明鎖是瓶頸時，才值得承擔無鎖資料結構的正確性與維護複雜度（見〈無鎖資料結構〉一章）。過早無鎖化是常見的過度工程。',
+      body: '在高效能運算與延遲敏感系統中，出現在每次迭代、每個封包、每個 GPU kernel 啟動路徑上的鎖，幾乎必然是可擴展性瓶頸：鎖競爭讓執行緒序列化執行，快取行在核心間彈跳（false sharing 的一種形式），作業系統排程器介入可能引發優先反轉與長尾延遲。剖析工具（perf、VTune）常直接指出鎖等待佔掉多數牆鐘時間。\n\n處理熱路徑鎖競爭的第一選擇通常不是「換成無鎖資料結構」，而是分割（sharding／partitioning）：把一個全域鎖保護的資料結構拆成 N 份、依 thread-id 或 key 的雜湊決定歸屬的分片，各分片各自一把鎖，把競爭機率降到 1/N；更進一步可依 NUMA 節點分割，讓執行緒優先存取本地記憶體的分片，同時降低跨插槽流量與鎖競爭。只有在分割仍不足以消除瓶頸、且測過資料確實證明鎖是瓶頸時，才值得承擔無鎖資料結構的正確性與維護複雜度（見〈無鎖資料結構〉一章）。過早無鎖化是常見的過度工程。',
     },
   ],
   pitfalls: [
@@ -130,7 +140,10 @@ int main() {
       stem: '在效能敏感的熱路徑上發現鎖競爭是主要瓶頸時，通常應優先嘗試的做法是什麼？',
       options: [
         { id: 'a', text: '立即改寫成自製的無鎖資料結構' },
-        { id: 'b', text: '把資料依 thread／key／NUMA 節點分割（sharding），讓多把較細粒度的鎖分攤競爭' },
+        {
+          id: 'b',
+          text: '把資料依 thread／key／NUMA 節點分割（sharding），讓多把較細粒度的鎖分攤競爭',
+        },
         { id: 'c', text: '把 std::mutex 換成 std::recursive_mutex' },
         { id: 'd', text: '把所有臨界區合併成一個更大的臨界區' },
       ],
@@ -150,27 +163,28 @@ int main() {
 #include <thread>
 
 struct Account {
-    std::mutex m;
-    long balance = 0;
+  std::mutex m;
+  long balance = 0;
 };
 
 void transferSafe(Account& from, Account& to, long amount) {
-    std::scoped_lock lock(from.m, to.m);  // 一次鎖住兩個 mutex，死結安全
-    from.balance -= amount;
-    to.balance += amount;
+  std::scoped_lock lock(from.m, to.m);  // 一次鎖住兩個 mutex，死結安全
+  from.balance -= amount;
+  to.balance += amount;
 }
 
 int main() {
-    Account a, b;
-    a.balance = 100;
+  Account a, b;
+  a.balance = 100;
 
-    std::thread t1(transferSafe, std::ref(a), std::ref(b), 30);
-    std::thread t2(transferSafe, std::ref(b), std::ref(a), 10);
-    t1.join();
-    t2.join();
+  std::thread t1(transferSafe, std::ref(a), std::ref(b), 30);
+  std::thread t2(transferSafe, std::ref(b), std::ref(a), 10);
+  t1.join();
+  t2.join();
 
-    std::cout << "a.balance = " << a.balance << ", b.balance = " << b.balance << '\\n';
-    return 0;
+  std::cout << "a.balance = " << a.balance << ", b.balance = " << b.balance
+            << '\\n';
+  return 0;
 }`,
   },
   furtherReading: [

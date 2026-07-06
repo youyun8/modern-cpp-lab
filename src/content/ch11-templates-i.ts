@@ -9,8 +9,7 @@ const ch11TemplatesI: ChapterContent = {
     '函式樣板、型別推導、type traits 與 C++20 concepts：如何撰寫泛型且具備清楚約束的程式碼。',
   concept: {
     standard: 'C++20',
-    body:
-      '函式樣板讓同一份邏輯適用於多種型別，編譯器在使用處以樣板引數推導（template argument deduction）產生具體實例。type traits（如 std::is_integral_v、std::remove_reference_t）在編譯期查詢與變換型別，是泛型程式的基礎。C++20 的 concepts 讓你對樣板參數施加具名約束，例如 std::integral 或自訂 concept，把「這個型別必須支援什麼」寫進介面。相較於舊式 SFINAE，concepts 讓約束可讀、錯誤訊息清楚、還能參與多載解析。實務上以 concept 表達需求、以 requires 子句組合條件，能大幅提升泛型 API 的可用性與診斷品質。',
+    body: '函式樣板讓同一份邏輯適用於多種型別，編譯器在使用處以樣板引數推導（template argument deduction）產生具體實例。type traits（如 std::is_integral_v、std::remove_reference_t）在編譯期查詢與變換型別，是泛型程式的基礎。C++20 的 concepts 讓你對樣板參數施加具名約束，例如 std::integral 或自訂 concept，把「這個型別必須支援什麼」寫進介面。相較於舊式 SFINAE，concepts 讓約束可讀、錯誤訊息清楚、還能參與多載解析。實務上以 concept 表達需求、以 requires 子句組合條件，能大幅提升泛型 API 的可用性與診斷品質。',
   },
   code: {
     lang: 'cpp',
@@ -20,13 +19,13 @@ const ch11TemplatesI: ChapterContent = {
 // 具名 concept：型別必須支援 + 且結果可轉回自身。 [1]
 template <typename T>
 concept Addable = requires(T a, T b) {
-    { a + b } -> std::convertible_to<T>;  // [2]
+  { a + b } -> std::convertible_to<T>;  // [2]
 };
 
 // 以 concept 約束函式樣板；違反約束時錯誤訊息清楚。 [3]
 template <Addable T>
 T sum(T a, T b) {
-    return a + b;
+  return a + b;
 }
 
 // 也可用 requires 子句表達額外限制。 [4]
@@ -34,14 +33,17 @@ template <typename T>
 requires std::integral<T> T twice(T x) { return x + x; }
 
 int main() {
-    std::println("{}", sum(3, 4));      // T = int
-    std::println("{}", sum(1.5, 2.5));  // T = double
-    std::println("{}", twice(21));      // [5] 僅整數可用
-    return 0;
+  std::println("{}", sum(3, 4));      // T = int
+  std::println("{}", sum(1.5, 2.5));  // T = double
+  std::println("{}", twice(21));      // [5] 僅整數可用
+  return 0;
 }`,
     callouts: [
       { n: 1, text: 'concept 是編譯期的具名布林述詞，描述型別必須滿足的語法／語意需求。' },
-      { n: 2, text: 'requires 運算式檢查 a + b 是否合法，且結果可轉換為 T；不符者不滿足 concept。' },
+      {
+        n: 2,
+        text: 'requires 運算式檢查 a + b 是否合法，且結果可轉換為 T；不符者不滿足 concept。',
+      },
       { n: 3, text: '以 template <Addable T> 約束參數，非 Addable 型別會在呼叫處得到清楚的診斷。' },
       { n: 4, text: 'requires 子句可放在樣板標頭後，表達如 std::integral<T> 等額外條件。' },
       { n: 5, text: 'twice 僅接受整數型別；傳入浮點數會因不滿足約束而編譯失敗，訊息明確。' },
@@ -50,18 +52,15 @@ int main() {
   deepDive: [
     {
       heading: '兩階段查找與相依名稱',
-      body:
-        '樣板採兩階段查找：定義期檢查非相依名稱，實例化期才解析相依名稱。相依型別前需加 `typename`（如 `typename T::value_type`），相依樣板成員前需加 `template`（如 `obj.template get<0>()`），否則編譯器無法分辨是型別、成員或比較運算。\n\n這是初學者最常見的樣板編譯錯誤來源之一，理解查找時機能快速定位問題。',
+      body: '樣板採兩階段查找：定義期檢查非相依名稱，實例化期才解析相依名稱。相依型別前需加 `typename`（如 `typename T::value_type`），相依樣板成員前需加 `template`（如 `obj.template get<0>()`），否則編譯器無法分辨是型別、成員或比較運算。\n\n這是初學者最常見的樣板編譯錯誤來源之一，理解查找時機能快速定位問題。',
     },
     {
       heading: 'concepts 相對於 enable_if 的優勢',
-      body:
-        'concepts 提供「包容關係（subsumption）」，讓更嚴格的約束在多載解析中勝出，取代脆弱的 `std::enable_if` 標籤分派。約束違反時的診斷直接指出「不滿足哪個需求」，而非數十行樣板展開。\n\n`requires` 子句與具名 concept 可組合、可重用，讓泛型 API 的契約寫進簽章，是現代泛型程式的首選約束方式。',
+      body: 'concepts 提供「包容關係（subsumption）」，讓更嚴格的約束在多載解析中勝出，取代脆弱的 `std::enable_if` 標籤分派。約束違反時的診斷直接指出「不滿足哪個需求」，而非數十行樣板展開。\n\n`requires` 子句與具名 concept 可組合、可重用，讓泛型 API 的契約寫進簽章，是現代泛型程式的首選約束方式。',
     },
     {
       heading: '實例化、編譯成本與 extern template',
-      body:
-        '樣板在每個使用它的轉譯單元隱式實例化，可能造成重複工作與二進位膨脹。`extern template` 可宣告「不要在此單元實例化」，改由單一單元顯式實例化，縮短編譯時間與體積。\n\n樣板的定義通常必須放在標頭（否則其他單元找不到定義而連結失敗），這也是樣板重編譯成本高的原因；把與型別無關的邏輯抽到非樣板函式可緩解膨脹。',
+      body: '樣板在每個使用它的轉譯單元隱式實例化，可能造成重複工作與二進位膨脹。`extern template` 可宣告「不要在此單元實例化」，改由單一單元顯式實例化，縮短編譯時間與體積。\n\n樣板的定義通常必須放在標頭（否則其他單元找不到定義而連結失敗），這也是樣板重編譯成本高的原因；把與型別無關的邏輯抽到非樣板函式可緩解膨脹。',
     },
   ],
   pitfalls: [
@@ -129,18 +128,18 @@ int main() {
 
 template <typename T>
 concept Addable = requires(T a, T b) {
-    { a + b } -> std::convertible_to<T>;
+  { a + b } -> std::convertible_to<T>;
 };
 
 template <Addable T>
 T sum(T a, T b) {
-    return a + b;
+  return a + b;
 }
 
 int main() {
-    std::cout << sum(3, 4) << '\\n';
-    std::cout << sum(1.5, 2.5) << '\\n';
-    return 0;
+  std::cout << sum(3, 4) << '\\n';
+  std::cout << sum(1.5, 2.5) << '\\n';
+  return 0;
 }`,
   },
   furtherReading: [

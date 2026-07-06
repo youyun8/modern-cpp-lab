@@ -16,11 +16,7 @@ export type ChapterQuizState = Record<string, Record<string, QuestionAttempt>>;
 export interface QuizSlice {
   quizByChapter: ChapterQuizState;
   selectAnswer: (chapterSlug: string, questionId: string, optionId: string) => void;
-  submitAnswer: (
-    chapterSlug: string,
-    questionId: string,
-    correctOptionId: string,
-  ) => void;
+  submitAnswer: (chapterSlug: string, questionId: string, correctOptionId: string) => void;
   revealAnswer: (chapterSlug: string, questionId: string) => void;
   resetChapterQuiz: (chapterSlug: string) => void;
   getChapterScore: (chapterSlug: string) => { correct: number; total: number };
@@ -42,10 +38,7 @@ function ensureQuestion(
   );
 }
 
-export const createQuizSlice: StateCreator<QuizSlice, [], [], QuizSlice> = (
-  set,
-  get,
-) => ({
+export const createQuizSlice: StateCreator<QuizSlice, [], [], QuizSlice> = (set, get) => ({
   quizByChapter: {},
 
   selectAnswer: (chapterSlug, questionId, optionId) =>

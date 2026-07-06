@@ -8,8 +8,7 @@ const labMemoryModel: ChapterContent = {
     'C++ 記憶體模型深入解析：happens-before 關係、acquire／release 與 seq_cst 語意、訊息傳遞與 store-buffer 範例，以及 memory_order 列舉對照表。',
   concept: {
     standard: 'C++11',
-    body:
-      'C++ 記憶體模型定義了多執行緒下記憶體操作的可見性與排序。核心是 happens-before 關係：若操作 A happens-before B，則 A 的寫入對 B 可見。單一執行緒內以 sequenced-before 建立次序；跨執行緒則靠 atomic 的 release 與 acquire 配對產生 synchronises-with。memory_order_seq_cst 提供單一全域總次序，最直觀但成本最高；acquire／release 只保證配對點前後的排序；relaxed 僅保證原子性。理解這些語意才能寫出正確又高效的無鎖程式。',
+    body: 'C++ 記憶體模型定義了多執行緒下記憶體操作的可見性與排序。核心是 happens-before 關係：若操作 A happens-before B，則 A 的寫入對 B 可見。單一執行緒內以 sequenced-before 建立次序；跨執行緒則靠 atomic 的 release 與 acquire 配對產生 synchronises-with。memory_order_seq_cst 提供單一全域總次序，最直觀但成本最高；acquire／release 只保證配對點前後的排序；relaxed 僅保證原子性。理解這些語意才能寫出正確又高效的無鎖程式。',
   },
   code: {
     lang: 'cpp',
@@ -21,46 +20,46 @@ std::atomic<bool> ready{false};  // [1]
 int payload = 0;                 // plain, non-atomic data
 
 void producer() {
-    payload = 42;                                  // [2]
-    ready.store(true, std::memory_order_release);  // [3]
+  payload = 42;                                  // [2]
+  ready.store(true, std::memory_order_release);  // [3]
 }
 
 void consumer() {
-    while (!ready.load(std::memory_order_acquire))  // [4]
-        ;                                           // spin until published
-    assert(payload == 42);                          // [5] guaranteed to hold
+  while (!ready.load(std::memory_order_acquire))  // [4]
+    ;                                             // spin until published
+  assert(payload == 42);                          // [5] guaranteed to hold
 }
 
 int main() {
-    std::thread t1{producer};
-    std::thread t2{consumer};
-    t1.join();
-    t2.join();
-    return 0;
+  std::thread t1{producer};
+  std::thread t2{consumer};
+  t1.join();
+  t2.join();
+  return 0;
 }`,
     callouts: [
       { n: 1, text: 'ready 是原子旗標，作為資料是否「已發佈」的同步點。' },
       { n: 2, text: 'payload 是一般變數，其寫入必須在 release 之前完成（sequenced-before）。' },
       { n: 3, text: 'release 儲存確保先前所有寫入不會被重排到它之後。' },
-      { n: 4, text: 'acquire 載入確保後續讀取不會被重排到它之前，與 release 配對形成 synchronises-with。' },
+      {
+        n: 4,
+        text: 'acquire 載入確保後續讀取不會被重排到它之前，與 release 配對形成 synchronises-with。',
+      },
       { n: 5, text: '由於 release／acquire 建立 happens-before，consumer 讀到 payload 必為 42。' },
     ],
   },
   deepDive: [
     {
       heading: 'happens-before 是如何被建立的',
-      body:
-        '單一執行緒內以 sequenced-before 排序；跨執行緒則靠一個 `release` 寫入與讀到該值的 `acquire` 讀取形成 synchronizes-with，兩者再經遞移性組成 happens-before。若 A happens-before B，A 的所有寫入對 B 可見。\n\n沒有這條鏈，非原子資料的讀寫就是資料競爭（UB）。因此無鎖程式的正確性，本質是「用 atomic 建立足夠的 happens-before 邊」。',
+      body: '單一執行緒內以 sequenced-before 排序；跨執行緒則靠一個 `release` 寫入與讀到該值的 `acquire` 讀取形成 synchronizes-with，兩者再經遞移性組成 happens-before。若 A happens-before B，A 的所有寫入對 B 可見。\n\n沒有這條鏈，非原子資料的讀寫就是資料競爭（UB）。因此無鎖程式的正確性，本質是「用 atomic 建立足夠的 happens-before 邊」。',
     },
     {
       heading: '記憶體順序光譜',
-      body:
-        '`seq_cst` 提供單一全域總次序，最直觀；`release`／`acquire` 只約束配對點前後；`relaxed` 僅保證原子性與修改順序（modification order），適合純計數。`std::atomic_thread_fence` 可在不綁定特定變數下建立柵欄。\n\n典型範式：以 `release` 發佈資料指標、以 `acquire` 讀取後安全解參考（message passing）。`consume` 語意難以正確實作，實務上已不建議使用。',
+      body: '`seq_cst` 提供單一全域總次序，最直觀；`release`／`acquire` 只約束配對點前後；`relaxed` 僅保證原子性與修改順序（modification order），適合純計數。`std::atomic_thread_fence` 可在不綁定特定變數下建立柵欄。\n\n典型範式：以 `release` 發佈資料指標、以 `acquire` 讀取後安全解參考（message passing）。`consume` 語意難以正確實作，實務上已不建議使用。',
     },
     {
       heading: '硬體模型與驗證',
-      body:
-        'x86 屬強順序（TSO），許多缺少同步的程式碼「碰巧」正確；ARM／POWER 為弱順序，同樣程式碼會出錯。因此「在我的 x86 上沒問題」不代表可攜正確。\n\n應以 ThreadSanitizer 驗證，並盡量在弱順序硬體上測試。`std::atomic_ref`（C++20）可對非原子物件施加原子操作，方便對既有資料結構加上同步。',
+      body: 'x86 屬強順序（TSO），許多缺少同步的程式碼「碰巧」正確；ARM／POWER 為弱順序，同樣程式碼會出錯。因此「在我的 x86 上沒問題」不代表可攜正確。\n\n應以 ThreadSanitizer 驗證，並盡量在弱順序硬體上測試。`std::atomic_ref`（C++20）可對非原子物件施加原子操作，方便對既有資料結構加上同步。',
     },
   ],
   pitfalls: [
@@ -132,19 +131,19 @@ std::atomic<bool> ready{false};
 int payload = 0;
 
 int main() {
-    std::thread producer([]() {
-        payload = 42;
-        ready.store(true, std::memory_order_release);
-    });
-    std::thread consumer([]() {
-        while (!ready.load(std::memory_order_acquire)) {
-            // spin
-        }
-        assert(payload == 42);
-    });
-    producer.join();
-    consumer.join();
-    return 0;
+  std::thread producer([]() {
+    payload = 42;
+    ready.store(true, std::memory_order_release);
+  });
+  std::thread consumer([]() {
+    while (!ready.load(std::memory_order_acquire)) {
+      // spin
+    }
+    assert(payload == 42);
+  });
+  producer.join();
+  consumer.join();
+  return 0;
 }`,
   },
   furtherReading: [

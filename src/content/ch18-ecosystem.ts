@@ -9,8 +9,7 @@ const ch18Ecosystem: ChapterContent = {
     'CMake 建置、doxygen 文件與各式線上開發工具：如何用現代工具鏈組織、建置、文件化並分享 C++ 專案。',
   concept: {
     standard: 'C++23',
-    body:
-      'C++ 沒有內建套件管理，因此工具生態格外重要。CMake 是事實上的跨平台建置系統：以 CMakeLists.txt 宣告目標（target）、相依與編譯選項，透過 target_link_libraries 等指令組織相依關係，並產生 Make／Ninja／IDE 專案。套件管理器 vcpkg 與 Conan 解決第三方相依取得與版本。品質工具包含 clang-format（自動排版）、clang-tidy（靜態分析與現代化建議）。文件方面，Doxygen 由註解生成 API 文件。線上工具則有 Compiler Explorer（觀察組語）、Wandbox／Quick-bench（快速實驗與微基準）。掌握這套工具鏈能讓專案可重現、可維護、易於協作。',
+    body: 'C++ 沒有內建套件管理，因此工具生態格外重要。CMake 是事實上的跨平台建置系統：以 CMakeLists.txt 宣告目標（target）、相依與編譯選項，透過 target_link_libraries 等指令組織相依關係，並產生 Make／Ninja／IDE 專案。套件管理器 vcpkg 與 Conan 解決第三方相依取得與版本。品質工具包含 clang-format（自動排版）、clang-tidy（靜態分析與現代化建議）。文件方面，Doxygen 由註解生成 API 文件。線上工具則有 Compiler Explorer（觀察組語）、Wandbox／Quick-bench（快速實驗與微基準）。掌握這套工具鏈能讓專案可重現、可維護、易於協作。',
   },
   code: {
     lang: 'bash',
@@ -40,18 +39,15 @@ clang-tidy src/main.cpp -- -std=c++23`,
   deepDive: [
     {
       heading: '現代 CMake 的核心觀念',
-      body:
-        '現代 CMake 圍繞 target 與「使用需求」：以 `target_*` 指令設定屬性，並以 `PUBLIC`／`PRIVATE`／`INTERFACE` 決定屬性是否傳遞給下游。generator expressions（`$<...>`）可依組態／編譯器條件化設定。\n\n`FetchContent` 與 presets 讓相依取得與組態可重現。應避免全域的 `include_directories`／`add_definitions`，改用 target 範圍設定。',
+      body: '現代 CMake 圍繞 target 與「使用需求」：以 `target_*` 指令設定屬性，並以 `PUBLIC`／`PRIVATE`／`INTERFACE` 決定屬性是否傳遞給下游。generator expressions（`$<...>`）可依組態／編譯器條件化設定。\n\n`FetchContent` 與 presets 讓相依取得與組態可重現。應避免全域的 `include_directories`／`add_definitions`，改用 target 範圍設定。',
     },
     {
       heading: '相依管理與可重現建置',
-      body:
-        'vcpkg 與 Conan 以 manifest 模式（`vcpkg.json`／`conanfile`）宣告相依與版本，達成可重現、可鎖定的相依樹，取代手動下載或系統套件的版本漂移。\n\n配合容器固定工具鏈，可讓「在我機器上能跑」變成整個團隊與 CI 一致的結果。',
+      body: 'vcpkg 與 Conan 以 manifest 模式（`vcpkg.json`／`conanfile`）宣告相依與版本，達成可重現、可鎖定的相依樹，取代手動下載或系統套件的版本漂移。\n\n配合容器固定工具鏈，可讓「在我機器上能跑」變成整個團隊與 CI 一致的結果。',
     },
     {
       heading: '品質工具鏈與自動化',
-      body:
-        '`clang-format` 統一排版、`clang-tidy` 做靜態分析與現代化建議（需要 `compile_commands.json`）。以 pre-commit hook 與 CI 強制執行，避免風格與品質漂移。\n\n文件可用 Doxygen（API）搭配 Sphinx／MkDocs（敘事文件）。把格式化、靜態分析、sanitizer 測試與文件生成全部納入 CI，是工業級專案的基本盤。',
+      body: '`clang-format` 統一排版、`clang-tidy` 做靜態分析與現代化建議（需要 `compile_commands.json`）。以 pre-commit hook 與 CI 強制執行，避免風格與品質漂移。\n\n文件可用 Doxygen（API）搭配 Sphinx／MkDocs（敘事文件）。把格式化、靜態分析、sanitizer 測試與文件生成全部納入 CI，是工業級專案的基本盤。',
     },
   ],
   pitfalls: [
@@ -110,8 +106,7 @@ clang-tidy src/main.cpp -- -std=c++23`,
   diagram: {
     key: 'generic-flow',
     nodes: ['CMake', '編譯', '文件', '部署'],
-    caption:
-      'C++ 工具鏈流程：以 CMake 組織建置、編譯產生產物，再以 Doxygen 生成文件並部署。',
+    caption: 'C++ 工具鏈流程：以 CMake 組織建置、編譯產生產物，再以 Doxygen 生成文件並部署。',
   },
   tryIt: {
     code: `#include <iostream>
@@ -120,14 +115,14 @@ clang-tidy src/main.cpp -- -std=c++23`,
 /// \\param n 非負整數
 /// \\return n!
 unsigned long long factorial(int n) {
-    unsigned long long r = 1;
-    for (int i = 2; i <= n; ++i) r *= i;
-    return r;
+  unsigned long long r = 1;
+  for (int i = 2; i <= n; ++i) r *= i;
+  return r;
 }
 
 int main() {
-    std::cout << "10! = " << factorial(10) << '\\n';
-    return 0;
+  std::cout << "10! = " << factorial(10) << '\\n';
+  return 0;
 }`,
   },
   furtherReading: [

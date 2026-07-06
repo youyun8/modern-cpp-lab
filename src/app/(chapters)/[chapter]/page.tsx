@@ -11,20 +11,12 @@ export function generateStaticParams() {
   return kChapterSlugs.map((chapter) => ({ chapter }));
 }
 
-export function generateMetadata({
-  params,
-}: {
-  params: { chapter: string };
-}): Metadata {
+export function generateMetadata({ params }: { params: { chapter: string } }): Metadata {
   const content = getContent(params.chapter);
   return content ? buildMetadata(content) : {};
 }
 
-export default async function Page({
-  params,
-}: {
-  params: { chapter: string };
-}) {
+export default async function Page({ params }: { params: { chapter: string } }) {
   const content = getContent(params.chapter);
   if (!content) notFound();
   const codeHtml = await highlightCode(content.code);

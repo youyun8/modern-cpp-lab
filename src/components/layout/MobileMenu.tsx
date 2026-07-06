@@ -27,7 +27,12 @@ export default function MobileMenu() {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label="行動裝置導覽選單">
+    <div
+      className="fixed inset-0 z-50 md:hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-label="行動裝置導覽選單"
+    >
       <div
         className="absolute inset-0 bg-black/60"
         onClick={() => setOpen(false)}

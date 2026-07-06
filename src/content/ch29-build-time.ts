@@ -9,8 +9,7 @@ const ch29BuildTime: ChapterContent = {
     'Precompiled headers、unity build、ThinLTO 與 include-what-you-use：如何縮短大型 C++ 專案的編譯時間。',
   concept: {
     standard: 'C++23',
-    body:
-      '大型 C++ 專案的建置時間常成為生產力瓶頸，根源多在標頭：每個轉譯單元都重新解析大量被包含的標頭。緩解手段包括：預先編譯標頭（PCH）把常用且穩定的標頭編譯一次重複使用；unity build（jumbo build）把多個 .cpp 合併為一個以攤平標頭解析與啟動成本，但會降低增量建置的細緻度；include-what-you-use（IWYU）與前置宣告減少不必要的 #include；把定義移出標頭、善用 PIMPL 以切斷相依；以 ccache 快取編譯結果避免重複工作。連結階段可用 ThinLTO——比完整 LTO 更可平行、增量的連結期最佳化，兼顧建置速度與最佳化效果。務必先量測（如 -ftime-trace）找出真正的瓶頸，再對症下藥。',
+    body: '大型 C++ 專案的建置時間常成為生產力瓶頸，根源多在標頭：每個轉譯單元都重新解析大量被包含的標頭。緩解手段包括：預先編譯標頭（PCH）把常用且穩定的標頭編譯一次重複使用；unity build（jumbo build）把多個 .cpp 合併為一個以攤平標頭解析與啟動成本，但會降低增量建置的細緻度；include-what-you-use（IWYU）與前置宣告減少不必要的 #include；把定義移出標頭、善用 PIMPL 以切斷相依；以 ccache 快取編譯結果避免重複工作。連結階段可用 ThinLTO——比完整 LTO 更可平行、增量的連結期最佳化，兼顧建置速度與最佳化效果。務必先量測（如 -ftime-trace）找出真正的瓶頸，再對症下藥。',
   },
   code: {
     lang: 'bash',
@@ -37,18 +36,15 @@ clang++ -std=c++23 -ftime-trace -c heavy.cpp              # [5]`,
   deepDive: [
     {
       heading: '找出編譯瓶頸：-ftime-trace 與相依',
-      body:
-        'Clang 的 `-ftime-trace` 產生可在瀏覽器檢視的編譯時間分佈，精準指出最耗時的標頭與樣板實例化。多數瓶頸來自被大量傳遞包含的重量級標頭（如 `<iostream>`、大型第三方標頭）。\n\n前置宣告與 PIMPL 可把實作細節從標頭移出，形成編譯防火牆，讓改動不觸發大範圍重編。先量測、再針對最貴的相依動手。',
+      body: 'Clang 的 `-ftime-trace` 產生可在瀏覽器檢視的編譯時間分佈，精準指出最耗時的標頭與樣板實例化。多數瓶頸來自被大量傳遞包含的重量級標頭（如 `<iostream>`、大型第三方標頭）。\n\n前置宣告與 PIMPL 可把實作細節從標頭移出，形成編譯防火牆，讓改動不觸發大範圍重編。先量測、再針對最貴的相依動手。',
     },
     {
       heading: '建置基礎設施',
-      body:
-        '`ccache` 依輸入雜湊快取目的檔，重建時直接命中；Ninja 提供快速且高度平行的建置；分散式建置（distcc／icecc）把編譯工作分攤到多台機器。unity build 合併多檔以攤平標頭解析成本，加快完整建置，但犧牲增量建置的細緻度。\n\n這些手段可組合：例如 Ninja + ccache 是常見的高效組合。',
+      body: '`ccache` 依輸入雜湊快取目的檔，重建時直接命中；Ninja 提供快速且高度平行的建置；分散式建置（distcc／icecc）把編譯工作分攤到多台機器。unity build 合併多檔以攤平標頭解析成本，加快完整建置，但犧牲增量建置的細緻度。\n\n這些手段可組合：例如 Ninja + ccache 是常見的高效組合。',
     },
     {
       heading: '模組與樣板成本',
-      body:
-        'C++20 Modules 與 `import std;`（C++23）從根本消除重複解析標頭，是編譯時間的長期解方，但需工具鏈與建置系統支援。預先編譯標頭（PCH）是過渡方案，需注意失效與相依管理。\n\n樣板實例化本身成本高；把與型別無關的邏輯抽到非樣板函式、以 `extern template` 集中實例化，能同時降低編譯時間與二進位體積。',
+      body: 'C++20 Modules 與 `import std;`（C++23）從根本消除重複解析標頭，是編譯時間的長期解方，但需工具鏈與建置系統支援。預先編譯標頭（PCH）是過渡方案，需注意失效與相依管理。\n\n樣板實例化本身成本高；把與型別無關的邏輯抽到非樣板函式、以 `extern template` 集中實例化，能同時降低編譯時間與二進位體積。',
     },
   ],
   pitfalls: [
@@ -82,7 +78,10 @@ clang++ -std=c++23 -ftime-trace -c heavy.cpp              # [5]`,
       stem: 'unity build（jumbo build）的取捨是什麼？',
       options: [
         { id: 'a', text: '完全沒有缺點' },
-        { id: 'b', text: '合併多個 .cpp 可攤平標頭解析成本、加快完整建置，但會降低增量建置的細緻度' },
+        {
+          id: 'b',
+          text: '合併多個 .cpp 可攤平標頭解析成本、加快完整建置，但會降低增量建置的細緻度',
+        },
         { id: 'c', text: '它只適用於 C 而非 C++' },
         { id: 'd', text: '它會讓執行檔變慢' },
       ],
@@ -118,14 +117,14 @@ struct HeavyType;                  // 只宣告，不需完整定義
 void process(const HeavyType& h);  // 介面只需前置宣告
 
 struct HeavyType {
-    int data = 7;
+  int data = 7;
 };
 void process(const HeavyType& h) { std::cout << h.data << '\\n'; }
 
 int main() {
-    HeavyType h;
-    process(h);
-    return 0;
+  HeavyType h;
+  process(h);
+  return 0;
 }`,
   },
   furtherReading: [

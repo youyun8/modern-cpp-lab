@@ -2,11 +2,7 @@
 
 import { useEffect } from 'react';
 import { useStore } from '@/store';
-import {
-  kDefaultPreferences,
-  type Preferences,
-  type ThemeMode,
-} from '@/store/uiSlice';
+import { kDefaultPreferences, type Preferences, type ThemeMode } from '@/store/uiSlice';
 
 /** Shared localStorage key + pre-paint script, imported by layout.tsx too. */
 export const kSettingsStorageKey = 'cpp-parallel-lab-settings';
@@ -15,9 +11,7 @@ export const kSettingsStorageKey = 'cpp-parallel-lab-settings';
 export function resolveScheme(theme: ThemeMode): 'dark' | 'light' {
   if (theme === 'dark' || theme === 'light') return theme;
   if (typeof window !== 'undefined' && window.matchMedia) {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches
-      ? 'dark'
-      : 'light';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
   return 'dark';
 }
@@ -71,8 +65,7 @@ export function useDarkMode(): void {
   useEffect(() => {
     if (theme !== 'auto' || !window.matchMedia) return;
     const media = window.matchMedia('(prefers-color-scheme: dark)');
-    const onChange = () =>
-      document.documentElement.classList.toggle('dark', media.matches);
+    const onChange = () => document.documentElement.classList.toggle('dark', media.matches);
     media.addEventListener('change', onChange);
     return () => media.removeEventListener('change', onChange);
   }, [theme]);

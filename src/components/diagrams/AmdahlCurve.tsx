@@ -29,8 +29,7 @@ export default function AmdahlCurve(_props: DiagramComponentProps) {
 
   // x axis: log2(N) from 0 (N=1) to 10 (N=1024)
   const xForN = (n: number) => kPad + (Math.log2(n) / Math.log2(kMaxN)) * plotW;
-  const yForS = (s: number) =>
-    kHeight - kPad - (Math.min(s, kMaxSpeedup) / kMaxSpeedup) * plotH;
+  const yForS = (s: number) => kHeight - kPad - (Math.min(s, kMaxSpeedup) / kMaxSpeedup) * plotH;
 
   const path = useMemo(() => {
     const pts: string[] = [];
@@ -56,22 +55,64 @@ export default function AmdahlCurve(_props: DiagramComponentProps) {
         aria-label={`Amdahl 定律加速曲線，平行比例 p 為 ${(p * 100).toFixed(0)}%`}
       >
         {/* Axes */}
-        <line x1={kPad} y1={kHeight - kPad} x2={kWidth - kPad} y2={kHeight - kPad} className="stroke-border" strokeWidth={1.5} />
-        <line x1={kPad} y1={kPad} x2={kPad} y2={kHeight - kPad} className="stroke-border" strokeWidth={1.5} />
+        <line
+          x1={kPad}
+          y1={kHeight - kPad}
+          x2={kWidth - kPad}
+          y2={kHeight - kPad}
+          className="stroke-border"
+          strokeWidth={1.5}
+        />
+        <line
+          x1={kPad}
+          y1={kPad}
+          x2={kPad}
+          y2={kHeight - kPad}
+          className="stroke-border"
+          strokeWidth={1.5}
+        />
 
         {/* Grid + ticks */}
         {nTicks.map((n) => (
           <g key={`x${n}`}>
-            <line x1={xForN(n)} y1={kPad} x2={xForN(n)} y2={kHeight - kPad} className="stroke-border" strokeWidth={0.5} opacity={0.4} />
-            <text x={xForN(n)} y={kHeight - kPad + 18} textAnchor="middle" className="fill-content-muted" fontSize={12}>
+            <line
+              x1={xForN(n)}
+              y1={kPad}
+              x2={xForN(n)}
+              y2={kHeight - kPad}
+              className="stroke-border"
+              strokeWidth={0.5}
+              opacity={0.4}
+            />
+            <text
+              x={xForN(n)}
+              y={kHeight - kPad + 18}
+              textAnchor="middle"
+              className="fill-content-muted"
+              fontSize={12}
+            >
               {n}
             </text>
           </g>
         ))}
         {sTicks.map((s) => (
           <g key={`y${s}`}>
-            <line x1={kPad} y1={yForS(s)} x2={kWidth - kPad} y2={yForS(s)} className="stroke-border" strokeWidth={0.5} opacity={0.4} />
-            <text x={kPad - 10} y={yForS(s) + 4} textAnchor="end" className="fill-content-muted" fontSize={12}>
+            <line
+              x1={kPad}
+              y1={yForS(s)}
+              x2={kWidth - kPad}
+              y2={yForS(s)}
+              className="stroke-border"
+              strokeWidth={0.5}
+              opacity={0.4}
+            />
+            <text
+              x={kPad - 10}
+              y={yForS(s) + 4}
+              textAnchor="end"
+              className="fill-content-muted"
+              fontSize={12}
+            >
               {s}×
             </text>
           </g>
@@ -94,7 +135,13 @@ export default function AmdahlCurve(_props: DiagramComponentProps) {
         <path d={path} fill="none" stroke="rgb(96 165 250)" strokeWidth={2.5} />
 
         {/* Axis labels (Traditional Chinese) */}
-        <text x={kWidth / 2} y={kHeight - 8} textAnchor="middle" className="fill-content" fontSize={13}>
+        <text
+          x={kWidth / 2}
+          y={kHeight - 8}
+          textAnchor="middle"
+          className="fill-content"
+          fontSize={13}
+        >
           處理器數量 N（對數尺度）
         </text>
         <text

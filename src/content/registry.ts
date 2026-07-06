@@ -73,10 +73,40 @@ import labCoroutines from './lab-coroutines';
 import labGpuBridge from './lab-gpu-bridge';
 
 const kAll: ChapterContent[] = [
-  ch01, ch02, ch03, ch04, ch05, ch06, ch07, ch08, ch09, ch10,
-  ch11, ch12, ch13, ch14, ch15, ch16, ch17, ch18, ch19, ch20,
-  ch21, ch22, ch23, ch24, ch25, ch26, ch27, ch28, ch29,
-  labMemoryModel, labLockFree, labParallelStl, labCoroutines, labGpuBridge,
+  ch01,
+  ch02,
+  ch03,
+  ch04,
+  ch05,
+  ch06,
+  ch07,
+  ch08,
+  ch09,
+  ch10,
+  ch11,
+  ch12,
+  ch13,
+  ch14,
+  ch15,
+  ch16,
+  ch17,
+  ch18,
+  ch19,
+  ch20,
+  ch21,
+  ch22,
+  ch23,
+  ch24,
+  ch25,
+  ch26,
+  ch27,
+  ch28,
+  ch29,
+  labMemoryModel,
+  labLockFree,
+  labParallelStl,
+  labCoroutines,
+  labGpuBridge,
   ind01WhyParallelRoofline,
   ind02HardwareReality,
   ind03ConcurrencyVsParallelism,
@@ -119,9 +149,7 @@ export const kContentBySlug: Record<string, ChapterContent> = Object.fromEntries
 );
 
 /** All chapter (non-lab) slugs, i.e. those with a chapterLabel. */
-export const kChapterSlugs: string[] = kAll
-  .filter((c) => c.chapterLabel)
-  .map((c) => c.slug);
+export const kChapterSlugs: string[] = kAll.filter((c) => c.chapterLabel).map((c) => c.slug);
 
 /** Lab slugs stripped of the "lab-" prefix, for the /lab/[lab] route. */
 export const kLabSlugs: string[] = kAll

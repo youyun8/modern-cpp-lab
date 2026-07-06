@@ -43,9 +43,7 @@ export default function ChapterPage({
             </span>
           )}
         </div>
-        <h1 className="text-2xl font-bold text-content sm:text-3xl">
-          {content.title}
-        </h1>
+        <h1 className="text-2xl font-bold text-content sm:text-3xl">{content.title}</h1>
       </header>
 
       {content.isStub && (
@@ -56,16 +54,11 @@ export default function ChapterPage({
 
       <ConceptCard concept={content.concept} />
 
-      {content.deepDive && content.deepDive.length > 0 && (
-        <DeepDive sections={content.deepDive} />
-      )}
+      {content.deepDive && content.deepDive.length > 0 && <DeepDive sections={content.deepDive} />}
 
       <CodeBlock html={codeHtml} callouts={content.code.callouts} />
 
-      <PracticeNotes
-        pitfalls={content.pitfalls}
-        bestPractices={content.bestPractices}
-      />
+      <PracticeNotes pitfalls={content.pitfalls} bestPractices={content.bestPractices} />
 
       <QuizPanel chapterSlug={content.slug} questions={content.quiz} />
 

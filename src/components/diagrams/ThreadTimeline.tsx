@@ -89,11 +89,7 @@ export default function ThreadTimeline(_props: DiagramComponentProps) {
                       width={(s.end - s.start) * kTrackW}
                       height={40}
                       rx={6}
-                      className={
-                        isActive
-                          ? 'fill-accent'
-                          : 'fill-accent-soft stroke-accent'
-                      }
+                      className={isActive ? 'fill-accent' : 'fill-accent-soft stroke-accent'}
                       strokeWidth={1}
                     />
                   );

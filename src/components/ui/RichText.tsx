@@ -19,13 +19,7 @@ function renderInline(text: string): ReactNode[] {
   );
 }
 
-export default function RichText({
-  text,
-  className,
-}: {
-  text: string;
-  className?: string;
-}) {
+export default function RichText({ text, className }: { text: string; className?: string }) {
   const paragraphs = text.split(/\n\s*\n/).filter((p) => p.trim().length > 0);
   return (
     <>

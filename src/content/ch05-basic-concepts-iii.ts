@@ -9,8 +9,7 @@ const ch05BasicConceptsIII: ChapterContent = {
     'IEEE 754 浮點數表示、ULP 與 NaN 等特殊值的行為，以及為何浮點相等比較幾乎總是錯誤的。',
   concept: {
     standard: 'C++23',
-    body:
-      '浮點數以 IEEE 754 格式儲存：一個符號位、若干指數位與尾數位（float 為 32 位、double 為 64 位）。它以有限位元近似實數，因此 0.1 + 0.2 不精確等於 0.3。相鄰兩個可表示浮點數之間的間距稱為一個 ULP（unit in the last place），數值越大 ULP 越大，故絕對誤差門檻並不可靠。特殊值包括 +0／-0、正負無限大，以及 NaN；NaN 與任何值（含自己）比較皆為 false，可用 std::isnan 偵測。比較浮點數應採相對誤差或 ULP 容忍度，而非直接用 ==。',
+    body: '浮點數以 IEEE 754 格式儲存：一個符號位、若干指數位與尾數位（float 為 32 位、double 為 64 位）。它以有限位元近似實數，因此 0.1 + 0.2 不精確等於 0.3。相鄰兩個可表示浮點數之間的間距稱為一個 ULP（unit in the last place），數值越大 ULP 越大，故絕對誤差門檻並不可靠。特殊值包括 +0／-0、正負無限大，以及 NaN；NaN 與任何值（含自己）比較皆為 false，可用 std::isnan 偵測。比較浮點數應採相對誤差或 ULP 容忍度，而非直接用 ==。',
   },
   code: {
     lang: 'cpp',
@@ -21,44 +20,44 @@ const ch05BasicConceptsIII: ChapterContent = {
 
 // 以相對＋絕對誤差比較浮點數，遠比 == 可靠。 [1]
 bool nearlyEqual(double a, double b, double eps = 1e-9) {
-    double diff = std::fabs(a - b);
-    double scale = std::fmax(std::fabs(a), std::fabs(b));
-    return diff <= eps * std::fmax(1.0, scale);  // [2]
+  double diff = std::fabs(a - b);
+  double scale = std::fmax(std::fabs(a), std::fabs(b));
+  return diff <= eps * std::fmax(1.0, scale);  // [2]
 }
 
 int main() {
-    double x = 0.1 + 0.2;
-    std::println("0.1+0.2 == 0.3 ? {}", x == 0.3);  // [3] 幾乎必為 false
-    std::println("nearlyEqual ? {}", nearlyEqual(x, 0.3));
+  double x = 0.1 + 0.2;
+  std::println("0.1+0.2 == 0.3 ? {}", x == 0.3);  // [3] 幾乎必為 false
+  std::println("nearlyEqual ? {}", nearlyEqual(x, 0.3));
 
-    double nan = std::numeric_limits<double>::quiet_NaN();
-    std::println("nan == nan ? {}", nan == nan);  // [4] 永遠 false
-    std::println("isnan ? {}", std::isnan(nan));  // [5] 正確偵測
-    return 0;
+  double nan = std::numeric_limits<double>::quiet_NaN();
+  std::println("nan == nan ? {}", nan == nan);  // [4] 永遠 false
+  std::println("isnan ? {}", std::isnan(nan));  // [5] 正確偵測
+  return 0;
 }`,
     callouts: [
       { n: 1, text: '直接用 == 比較浮點數幾乎總是錯的；應以誤差門檻判斷「足夠接近」。' },
       { n: 2, text: '結合相對誤差（隨數值大小縮放）與絕對誤差（處理接近 0 的情況）較穩健。' },
       { n: 3, text: '0.1、0.2、0.3 都無法以二進位精確表示，累積誤差使等式不成立。' },
       { n: 4, text: 'NaN 與任何值比較皆為 false，包括與自己比較，這是 IEEE 754 的規定。' },
-      { n: 5, text: '要判斷是否為 NaN 必須用 std::isnan，不能用 x == x 之外的直覺方法（雖然 x != x 也可）。' },
+      {
+        n: 5,
+        text: '要判斷是否為 NaN 必須用 std::isnan，不能用 x == x 之外的直覺方法（雖然 x != x 也可）。',
+      },
     ],
   },
   deepDive: [
     {
       heading: 'IEEE 754 佈局與特殊值的成本',
-      body:
-        '`float`（32 位）、`double`（64 位）以符號、指數與尾數編碼。除了 `±0`、`±inf`、`NaN`，還有次正規數（denormal／subnormal）用以在極小值附近保持精度，但在許多硬體上處理次正規數會有顯著的效能懸崖。\n\n延遲敏感的數值程式有時會啟用 flush-to-zero／denormals-are-zero 模式以避開此成本，但這會改變數值行為，需審慎評估。',
+      body: '`float`（32 位）、`double`（64 位）以符號、指數與尾數編碼。除了 `±0`、`±inf`、`NaN`，還有次正規數（denormal／subnormal）用以在極小值附近保持精度，但在許多硬體上處理次正規數會有顯著的效能懸崖。\n\n延遲敏感的數值程式有時會啟用 flush-to-zero／denormals-are-zero 模式以避開此成本，但這會改變數值行為，需審慎評估。',
     },
     {
       heading: '誤差累積與穩健比較',
-      body:
-        '浮點加法不具結合律，天真地累加大量數值會累積誤差；`std::abs(a-b) < eps` 這種固定絕對門檻在數值很大時失效。實務上結合相對誤差與絕對誤差，或以 ULP 距離比較。\n\n災難性抵消（catastrophic cancellation，兩個相近大數相減）會放大相對誤差；大量求和可用 Kahan 或成對（pairwise）求和降低誤差。金融計算則常改用定點或十進位型別以避免二進位表示問題。',
+      body: '浮點加法不具結合律，天真地累加大量數值會累積誤差；`std::abs(a-b) < eps` 這種固定絕對門檻在數值很大時失效。實務上結合相對誤差與絕對誤差，或以 ULP 距離比較。\n\n災難性抵消（catastrophic cancellation，兩個相近大數相減）會放大相對誤差；大量求和可用 Kahan 或成對（pairwise）求和降低誤差。金融計算則常改用定點或十進位型別以避免二進位表示問題。',
     },
     {
       heading: '編譯器旗標如何改變浮點語意',
-      body:
-        '`-ffast-math`（含於 `-Ofast`）假設沒有 `NaN`／`inf`、允許重排與結合律，會使 `std::isnan` 檢查失效並改變結果，除非你完全理解否則不應開啟。\n\nFMA 收縮（`a*b+c` 融合為單一指令）由 `-ffp-contract` 控制，會影響最後一位精度與跨平台可重現性。要求位元級可重現時，需固定這些旗標並避免非決定性的平行歸約順序。',
+      body: '`-ffast-math`（含於 `-Ofast`）假設沒有 `NaN`／`inf`、允許重排與結合律，會使 `std::isnan` 檢查失效並改變結果，除非你完全理解否則不應開啟。\n\nFMA 收縮（`a*b+c` 融合為單一指令）由 `-ffp-contract` 控制，會影響最後一位精度與跨平台可重現性。要求位元級可重現時，需固定這些旗標並避免非決定性的平行歸約順序。',
     },
   ],
   pitfalls: [
@@ -126,14 +125,14 @@ int main() {
 #include <limits>
 
 int main() {
-    double x = 0.1 + 0.2;
-    std::cout.precision(17);
-    std::cout << "0.1 + 0.2 = " << x << '\\n';
-    std::cout << "(== 0.3) ? " << (x == 0.3) << '\\n';
-    double nan = std::numeric_limits<double>::quiet_NaN();
-    std::cout << "nan == nan ? " << (nan == nan) << '\\n';
-    std::cout << "isnan ? " << std::isnan(nan) << '\\n';
-    return 0;
+  double x = 0.1 + 0.2;
+  std::cout.precision(17);
+  std::cout << "0.1 + 0.2 = " << x << '\\n';
+  std::cout << "(== 0.3) ? " << (x == 0.3) << '\\n';
+  double nan = std::numeric_limits<double>::quiet_NaN();
+  std::cout << "nan == nan ? " << (nan == nan) << '\\n';
+  std::cout << "isnan ? " << std::isnan(nan) << '\\n';
+  return 0;
 }`,
   },
   furtherReading: [

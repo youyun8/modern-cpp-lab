@@ -3,11 +3,7 @@
 import { useEffect } from 'react';
 import { useStore } from '@/store';
 import { resolveScheme } from '@/hooks/useDarkMode';
-import type {
-  ContentWidth,
-  FontScale,
-  ThemeMode,
-} from '@/store/uiSlice';
+import type { ContentWidth, FontScale, ThemeMode } from '@/store/uiSlice';
 
 interface Option<T> {
   value: T;
@@ -53,15 +49,11 @@ function OptionGroup<T extends string>({
             aria-pressed={active}
             onClick={() => onSelect(opt.value)}
             className={`flex flex-col rounded-lg border p-3 text-left transition ${
-              active
-                ? 'border-accent bg-accent-soft'
-                : 'border-border hover:border-accent'
+              active ? 'border-accent bg-accent-soft' : 'border-border hover:border-accent'
             }`}
           >
             <span className="text-sm font-semibold text-content">{opt.label}</span>
-            <span className="mt-0.5 text-xs text-content-muted">
-              {opt.description}
-            </span>
+            <span className="mt-0.5 text-xs text-content-muted">{opt.description}</span>
           </button>
         );
       })}
@@ -97,10 +89,7 @@ export default function SettingsPanel() {
   const effective = resolveScheme(theme) === 'dark' ? '深色' : '淺色';
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex justify-end bg-black/40"
-      onClick={() => setOpen(false)}
-    >
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/40" onClick={() => setOpen(false)}>
       <aside
         role="dialog"
         aria-modal="true"
@@ -128,32 +117,18 @@ export default function SettingsPanel() {
         <div className="space-y-7 p-5">
           <section className="space-y-2">
             <h3 className="text-sm font-semibold text-content">色彩主題</h3>
-            <p className="text-xs text-content-muted">
-              目前實際顯示：{effective}。
-            </p>
-            <OptionGroup
-              options={themeOptions}
-              current={theme}
-              onSelect={setTheme}
-            />
+            <p className="text-xs text-content-muted">目前實際顯示：{effective}。</p>
+            <OptionGroup options={themeOptions} current={theme} onSelect={setTheme} />
           </section>
 
           <section className="space-y-2">
             <h3 className="text-sm font-semibold text-content">文字大小</h3>
-            <OptionGroup
-              options={fontOptions}
-              current={fontScale}
-              onSelect={setFontScale}
-            />
+            <OptionGroup options={fontOptions} current={fontScale} onSelect={setFontScale} />
           </section>
 
           <section className="space-y-2">
             <h3 className="text-sm font-semibold text-content">內容寬度</h3>
-            <OptionGroup
-              options={widthOptions}
-              current={contentWidth}
-              onSelect={setContentWidth}
-            />
+            <OptionGroup options={widthOptions} current={contentWidth} onSelect={setContentWidth} />
           </section>
 
           <section className="space-y-2">

@@ -37,8 +37,8 @@ export default function HomePage() {
           現代 C++ 平行程式設計學習網站
         </h1>
         <p className="max-w-2xl text-[15px] leading-7 text-content-muted">
-          本網站以 Federico Busato 的「Modern C++ Programming」課程為藍本，
-          完整保留 29 章的原始編號，並以<strong className="text-content">平行化、並行與效能最佳化</strong>
+          本網站以 Federico Busato 的「Modern C++ Programming」課程為藍本， 完整保留 29
+          章的原始編號，並以<strong className="text-content">平行化、並行與效能最佳化</strong>
           為編輯重心。每一章皆包含概念卡片、標註程式碼、互動測驗、視覺圖表、
           可複製的「試試看」面板，以及延伸閱讀。
         </p>
@@ -90,9 +90,7 @@ export default function HomePage() {
         <div className="grid gap-6 sm:grid-cols-2">
           {kNavGroups.map((group) => (
             <div key={group.id} className="rounded-xl border border-border p-4">
-              <h3 className="mb-2 text-sm font-semibold text-content-muted">
-                {group.heading}
-              </h3>
+              <h3 className="mb-2 text-sm font-semibold text-content-muted">{group.heading}</h3>
               <ul className="space-y-1">
                 {group.items.map((item) => (
                   <li key={item.slug}>

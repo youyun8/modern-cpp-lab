@@ -11,11 +11,7 @@ export function generateStaticParams() {
   return kLabSlugs.map((lab) => ({ lab }));
 }
 
-export function generateMetadata({
-  params,
-}: {
-  params: { lab: string };
-}): Metadata {
+export function generateMetadata({ params }: { params: { lab: string } }): Metadata {
   const content = getContent(`lab-${params.lab}`);
   return content ? buildMetadata(content) : {};
 }

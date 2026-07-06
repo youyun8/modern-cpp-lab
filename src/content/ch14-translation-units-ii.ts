@@ -9,8 +9,7 @@ const ch14TranslationUnitsII: ChapterContent = {
     'C++20 Modules、#include 機制與函式庫的組織：模組如何取代文字式的標頭包含，改善編譯速度與封裝。',
   concept: {
     standard: 'C++20',
-    body:
-      '傳統 #include 是純文字複製貼上：每個單元都重新解析被包含的標頭，造成重複工作與巨集洩漏。C++20 的 Modules 改為以編譯後的二進位模組介面（BMI）匯入，只需編譯一次即可重複使用，並且不傳遞巨集、不受包含順序影響。以 export module math; 宣告模組，用 export 標示對外符號，其餘為模組私有。使用端以 import math; 匯入。模組能顯著縮短大型專案的編譯時間並強化封裝，但需要建置系統與編譯器支援，且與既有標頭生態的整合仍在成熟中。過渡期可用 import <vector>; 形式匯入標準標頭單元。',
+    body: '傳統 #include 是純文字複製貼上：每個單元都重新解析被包含的標頭，造成重複工作與巨集洩漏。C++20 的 Modules 改為以編譯後的二進位模組介面（BMI）匯入，只需編譯一次即可重複使用，並且不傳遞巨集、不受包含順序影響。以 export module math; 宣告模組，用 export 標示對外符號，其餘為模組私有。使用端以 import math; 匯入。模組能顯著縮短大型專案的編譯時間並強化封裝，但需要建置系統與編譯器支援，且與既有標頭生態的整合仍在成熟中。過渡期可用 import <vector>; 形式匯入標準標頭單元。',
   },
   code: {
     lang: 'cpp',
@@ -18,7 +17,7 @@ const ch14TranslationUnitsII: ChapterContent = {
 export module math;  // [1] 宣告模組名稱
 
 export int add(int a, int b) {  // [2] export：對匯入端可見
-    return a + b;
+  return a + b;
 }
 
 int helper() { return 1; }  // [3] 未 export：模組私有
@@ -35,24 +34,24 @@ double area(double r) { return 3.14159265 * r * r; }
       { n: 2, text: 'export 標示的符號才會對 import 端可見，形成明確的公開介面。' },
       { n: 3, text: '未加 export 的符號屬模組內部，外部無法存取，強化封裝。' },
       { n: 4, text: 'export 可套用於整個 namespace，一次公開其內所有符號。' },
-      { n: 5, text: 'import math; 匯入編譯好的 BMI，不做文字展開，也不會洩漏巨集或受包含順序影響。' },
+      {
+        n: 5,
+        text: 'import math; 匯入編譯好的 BMI，不做文字展開，也不會洩漏巨集或受包含順序影響。',
+      },
     ],
   },
   deepDive: [
     {
       heading: '模組的建置模型與 BMI',
-      body:
-        '每個具名模組有介面單元（`export module m;`）與可選的實作單元。編譯介面時產生二進位模組介面（BMI），供 `import` 使用。BMI 與編譯器、版本、旗標強相關，不可跨工具鏈散布，也不應納入版本控制。\n\n這帶來建置順序相依：使用 `import m;` 的單元必須在 `m` 的 BMI 產生後才能編譯。因此建置系統（CMake 3.28+、Ninja）必須理解模組相依圖，這也是模組工具鏈成熟較慢的原因。',
+      body: '每個具名模組有介面單元（`export module m;`）與可選的實作單元。編譯介面時產生二進位模組介面（BMI），供 `import` 使用。BMI 與編譯器、版本、旗標強相關，不可跨工具鏈散布，也不應納入版本控制。\n\n這帶來建置順序相依：使用 `import m;` 的單元必須在 `m` 的 BMI 產生後才能編譯。因此建置系統（CMake 3.28+、Ninja）必須理解模組相依圖，這也是模組工具鏈成熟較慢的原因。',
     },
     {
       heading: '遷移策略：header units 與 import std',
-      body:
-        'C++23 的 `import std;` 一次匯入整個標準庫，可大幅縮短編譯時間（在支援的工具鏈上）。既有標頭可用 header unit（`import <vector>;`）漸進採用，而不必立即改寫成具名模組。\n\n遷移時可用 global module fragment（在 `module;` 之後、`export module` 之前放 `#include`）容納尚未模組化的舊標頭。建議由葉節點模組開始、逐步向上遷移。',
+      body: 'C++23 的 `import std;` 一次匯入整個標準庫，可大幅縮短編譯時間（在支援的工具鏈上）。既有標頭可用 header unit（`import <vector>;`）漸進採用，而不必立即改寫成具名模組。\n\n遷移時可用 global module fragment（在 `module;` 之後、`export module` 之前放 `#include`）容納尚未模組化的舊標頭。建議由葉節點模組開始、逐步向上遷移。',
     },
     {
       heading: '封裝與 ODR 的實質收益',
-      body:
-        '模組只匯出 `export` 的實體，其餘具內部連結，天然強化封裝並消除巨集洩漏——`import` 不會把被匯入模組的巨集帶入。相較 `#include` 的文字展開，模組不受包含順序影響，也不重複解析。\n\n代價是目前 IDE、靜態分析與跨編譯器互通仍在成熟中；大型專案宜評估工具鏈整備度後再全面採用。',
+      body: '模組只匯出 `export` 的實體，其餘具內部連結，天然強化封裝並消除巨集洩漏——`import` 不會把被匯入模組的巨集帶入。相較 `#include` 的文字展開，模組不受包含順序影響，也不重複解析。\n\n代價是目前 IDE、靜態分析與跨編譯器互通仍在成熟中；大型專案宜評估工具鏈整備度後再全面採用。',
     },
   ],
   pitfalls: [
@@ -124,9 +123,9 @@ double area(double r) { return 3.14159265 * r * r; }
 }  // namespace geo
 
 int main() {
-    std::cout << "add(2,3) = " << add(2, 3) << '\\n';
-    std::cout << "area(1.0) = " << geo::area(1.0) << '\\n';
-    return 0;
+  std::cout << "add(2,3) = " << add(2, 3) << '\\n';
+  std::cout << "area(1.0) = " << geo::area(1.0) << '\\n';
+  return 0;
 }`,
   },
   furtherReading: [

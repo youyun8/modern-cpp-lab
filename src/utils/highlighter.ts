@@ -21,9 +21,7 @@ export interface HighlightedCode {
 }
 
 /** Highlights a snippet at build time, returning dark + light markup. */
-export async function highlightCode(
-  code: AnnotatedCode,
-): Promise<HighlightedCode> {
+export async function highlightCode(code: AnnotatedCode): Promise<HighlightedCode> {
   const highlighter = await getHighlighter();
   return {
     dark: highlighter.codeToHtml(code.code, { lang: code.lang, theme: 'github-dark' }),

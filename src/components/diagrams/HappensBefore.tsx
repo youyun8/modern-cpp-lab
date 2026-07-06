@@ -41,7 +41,13 @@ export default function HappensBefore(_props: DiagramComponentProps) {
         className={accent ? 'fill-accent-soft stroke-accent' : 'fill-surface-raised stroke-border'}
         strokeWidth={1.5}
       />
-      <text x={n.x} y={n.y + 5} textAnchor="middle" className="fill-content font-mono" fontSize={13}>
+      <text
+        x={n.x}
+        y={n.y + 5}
+        textAnchor="middle"
+        className="fill-content font-mono"
+        fontSize={13}
+      >
         {n.label}
       </text>
     </g>
@@ -58,7 +64,14 @@ export default function HappensBefore(_props: DiagramComponentProps) {
         <marker id="hb-arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
           <path d="M0,0 L8,3 L0,6 Z" fill="rgb(96 165 250)" />
         </marker>
-        <marker id="hb-arrow-red" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+        <marker
+          id="hb-arrow-red"
+          markerWidth="10"
+          markerHeight="10"
+          refX="8"
+          refY="3"
+          orient="auto"
+        >
           <path d="M0,0 L8,3 L0,6 Z" fill="rgb(248 113 113)" />
         </marker>
       </defs>
@@ -71,8 +84,24 @@ export default function HappensBefore(_props: DiagramComponentProps) {
       </text>
 
       {/* sequenced-before edges within each thread */}
-      <line x1={kCol1} y1={90} x2={kCol1} y2={140} className="stroke-border" strokeWidth={2} markerEnd="url(#hb-arrow)" />
-      <line x1={kCol2} y1={180} x2={kCol2} y2={230} className="stroke-border" strokeWidth={2} markerEnd="url(#hb-arrow)" />
+      <line
+        x1={kCol1}
+        y1={90}
+        x2={kCol1}
+        y2={140}
+        className="stroke-border"
+        strokeWidth={2}
+        markerEnd="url(#hb-arrow)"
+      />
+      <line
+        x1={kCol2}
+        y1={180}
+        x2={kCol2}
+        y2={230}
+        className="stroke-border"
+        strokeWidth={2}
+        markerEnd="url(#hb-arrow)"
+      />
 
       {/* synchronises-with edge (release -> acquire) */}
       <line
@@ -84,7 +113,13 @@ export default function HappensBefore(_props: DiagramComponentProps) {
         strokeWidth={2.5}
         markerEnd="url(#hb-arrow-red)"
       />
-      <text x={(kCol1 + kCol2) / 2} y={150} textAnchor="middle" className="fill-[rgb(248_113_113)]" fontSize={12}>
+      <text
+        x={(kCol1 + kCol2) / 2}
+        y={150}
+        textAnchor="middle"
+        className="fill-[rgb(248_113_113)]"
+        fontSize={12}
+      >
         synchronises-with
       </text>
 

@@ -1,13 +1,7 @@
 import type { QuizQuestion } from './QuizQuestion';
 import type { DiagramSpec } from './DiagramProps';
 
-export type CppStandard =
-  | 'C++11'
-  | 'C++14'
-  | 'C++17'
-  | 'C++20'
-  | 'C++23'
-  | 'C++26';
+export type CppStandard = 'C++11' | 'C++14' | 'C++17' | 'C++20' | 'C++23' | 'C++26';
 
 /** A numbered callout mapped to the annotated code block. */
 export interface CodeCallout {

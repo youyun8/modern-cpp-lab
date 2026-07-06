@@ -71,11 +71,23 @@ export default function CacheLineVisualizer(_props: DiagramComponentProps) {
       >
         {Array.from({ length: lineCount }).map((_, i) => renderLine(i))}
         <g>
-          <rect x={80} y={lineCount * (kCell + 24) + 30} width={16} height={16} className="fill-accent" />
+          <rect
+            x={80}
+            y={lineCount * (kCell + 24) + 30}
+            width={16}
+            height={16}
+            className="fill-accent"
+          />
           <text x={102} y={lineCount * (kCell + 24) + 43} className="fill-content" fontSize={13}>
             核心 1 的計數器 A
           </text>
-          <rect x={260} y={lineCount * (kCell + 24) + 30} width={16} height={16} className="fill-[rgb(248_113_113)]" />
+          <rect
+            x={260}
+            y={lineCount * (kCell + 24) + 30}
+            width={16}
+            height={16}
+            className="fill-[rgb(248_113_113)]"
+          />
           <text x={282} y={lineCount * (kCell + 24) + 43} className="fill-content" fontSize={13}>
             核心 2 的計數器 B
           </text>

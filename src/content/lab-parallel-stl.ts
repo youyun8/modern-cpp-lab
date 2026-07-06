@@ -8,8 +8,7 @@ const labParallelStl: ChapterContent = {
     'std::execution 執行策略深入解析：seq／par／par_unseq／unseq 的差異、std::transform_reduce 與 std::for_each 的用法，以及 par_unseq 何時不安全。',
   concept: {
     standard: 'C++17',
-    body:
-      'C++17 為多數標準演算法加入執行策略參數。std::execution::seq 依序執行；par 允許多執行緒平行；unseq（C++20）允許單執行緒內向量化交錯；par_unseq 同時平行且向量化。策略越強，對呼叫端的限制越嚴：par 禁止資料競爭，par_unseq 額外禁止在元素函式內取得鎖或做無法交錯的操作（否則造成死鎖或未定義行為）。std::transform_reduce 是 map-reduce 的慣用組合，能一次完成轉換與歸約，並易於平行化。',
+    body: 'C++17 為多數標準演算法加入執行策略參數。std::execution::seq 依序執行；par 允許多執行緒平行；unseq（C++20）允許單執行緒內向量化交錯；par_unseq 同時平行且向量化。策略越強，對呼叫端的限制越嚴：par 禁止資料競爭，par_unseq 額外禁止在元素函式內取得鎖或做無法交錯的操作（否則造成死鎖或未定義行為）。std::transform_reduce 是 map-reduce 的慣用組合，能一次完成轉換與歸約，並易於平行化。',
   },
   code: {
     lang: 'cpp',
@@ -19,24 +18,28 @@ const labParallelStl: ChapterContent = {
 #include <vector>
 
 double parallelDot(const std::vector<double>& a, const std::vector<double>& b) {
-    return std::transform_reduce(   // [2]
-        std::execution::par_unseq,  // [3]
-        a.begin(), a.end(), b.begin(),
-        0.0,                   // init
-        std::plus<>{},         // reduce
-        std::multiplies<>{});  // transform
+  return std::transform_reduce(   // [2]
+      std::execution::par_unseq,  // [3]
+      a.begin(), a.end(), b.begin(),
+      0.0,                   // init
+      std::plus<>{},         // reduce
+      std::multiplies<>{});  // transform
 }
 
 void normalizeInPlace(std::vector<double>& data, double scale) {
-    std::for_each(std::execution::par,                                            // [4]
-                  data.begin(), data.end(), [scale](double& x) { x *= scale; });  // [5]
+  std::for_each(std::execution::par,  // [4]
+                data.begin(), data.end(),
+                [scale](double& x) { x *= scale; });  // [5]
 }
 
 // DANGER: taking a lock inside a par_unseq element function may deadlock,
 // because unsequenced execution can interleave calls on one thread. [6]`,
     callouts: [
       { n: 1, text: '<execution> 標頭引入 std::execution::seq／par／unseq／par_unseq 策略物件。' },
-      { n: 2, text: 'std::transform_reduce 一次完成「轉換」與「歸約」，是 map-reduce 的標準寫法。' },
+      {
+        n: 2,
+        text: 'std::transform_reduce 一次完成「轉換」與「歸約」，是 map-reduce 的標準寫法。',
+      },
       { n: 3, text: 'par_unseq 同時要求可平行與可向量化，限制最嚴、潛在效能最高。' },
       { n: 4, text: 'std::for_each 搭配 par 策略把元素處理分散到多個執行緒。' },
       { n: 5, text: 'Lambda 明確以 [scale] 值捕獲純量，避免共享可變狀態造成競爭。' },
@@ -46,18 +49,15 @@ void normalizeInPlace(std::vector<double>& data, double scale) {
   deepDive: [
     {
       heading: '四種執行策略的語意',
-      body:
-        '`seq`（循序）、`par`（多執行緒平行）、`unseq`（單執行緒向量化）、`par_unseq`（平行且向量化）。`unseq`／`par_unseq` 允許同一執行緒內交錯執行元素操作，因此其中不得有鎖或會因交錯而出錯的操作。\n\n選擇策略等於對「元素操作彼此獨立且無副作用」做出承諾；承諾錯誤即為未定義行為。',
+      body: '`seq`（循序）、`par`（多執行緒平行）、`unseq`（單執行緒向量化）、`par_unseq`（平行且向量化）。`unseq`／`par_unseq` 允許同一執行緒內交錯執行元素操作，因此其中不得有鎖或會因交錯而出錯的操作。\n\n選擇策略等於對「元素操作彼此獨立且無副作用」做出承諾；承諾錯誤即為未定義行為。',
     },
     {
       heading: '正確性陷阱',
-      body:
-        '傳給平行演算法的述詞與元素存取函式必須能安全地並行／交錯執行：不得有資料競爭、不得依賴執行順序。若演算法主體拋出例外且未被處理，程式會呼叫 `std::terminate`（而非傳播例外）。\n\n因此平行演算法中的可呼叫物件應是純函式或具備適當同步，並在內部處理可能的例外。',
+      body: '傳給平行演算法的述詞與元素存取函式必須能安全地並行／交錯執行：不得有資料競爭、不得依賴執行順序。若演算法主體拋出例外且未被處理，程式會呼叫 `std::terminate`（而非傳播例外）。\n\n因此平行演算法中的可呼叫物件應是純函式或具備適當同步，並在內部處理可能的例外。',
     },
     {
       heading: '效能實務與後端',
-      body:
-        '平行化有固定額外成本：小型資料或記憶體受限的工作可能因排程與同步開銷而變慢。libstdc++ 的平行策略需連結 Intel TBB 才會真正平行。\n\n最佳收益來自大量、計算受限、元素獨立的工作；務必與循序版本做基準比較，別假設 `par` 一定更快。',
+      body: '平行化有固定額外成本：小型資料或記憶體受限的工作可能因排程與同步開銷而變慢。libstdc++ 的平行策略需連結 Intel TBB 才會真正平行。\n\n最佳收益來自大量、計算受限、元素獨立的工作；務必與循序版本做基準比較，別假設 `par` 一定更快。',
     },
   ],
   pitfalls: [
@@ -129,17 +129,19 @@ void normalizeInPlace(std::vector<double>& data, double scale) {
 //   g++ -std=c++23 -O2 -pthread -march=native main.cpp
 // On some toolchains libtbb is required to link the parallel algorithms.
 int main() {
-    std::vector<double> a(1'000'000, 1.5);
-    std::vector<double> b(1'000'000, 2.0);
+  std::vector<double> a(1'000'000, 1.5);
+  std::vector<double> b(1'000'000, 2.0);
 
-    double dot = std::transform_reduce(std::execution::par_unseq, a.begin(), a.end(), b.begin(),
-                                       0.0, std::plus<>{}, std::multiplies<>{});
+  double dot =
+      std::transform_reduce(std::execution::par_unseq, a.begin(), a.end(),
+                            b.begin(), 0.0, std::plus<>{}, std::multiplies<>{});
 
-    std::for_each(std::execution::par, a.begin(), a.end(), [](double& x) { x *= 0.5; });
+  std::for_each(std::execution::par, a.begin(), a.end(),
+                [](double& x) { x *= 0.5; });
 
-    std::cout << "dot = " << dot << '\\n';
-    std::cout << "a[0] = " << a.front() << '\\n';
-    return 0;
+  std::cout << "dot = " << dot << '\\n';
+  std::cout << "a[0] = " << a.front() << '\\n';
+  return 0;
 }`,
   },
   furtherReading: [

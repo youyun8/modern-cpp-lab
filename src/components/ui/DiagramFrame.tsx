@@ -14,9 +14,7 @@ export default function DiagramFrame({ spec }: { spec: DiagramSpec }) {
       <figure className="mx-auto max-w-xl rounded-xl border border-border bg-surface-raised p-4">
         <Diagram spec={spec} />
         {spec.caption && (
-          <figcaption className="mt-3 text-sm text-content-muted">
-            {spec.caption}
-          </figcaption>
+          <figcaption className="mt-3 text-sm text-content-muted">{spec.caption}</figcaption>
         )}
       </figure>
     </section>

@@ -9,8 +9,7 @@ const ch27SoftwareDesignII: ChapterContent = {
     'CRTP、PIMPL 慣用法與常見設計模式：如何以靜態多型消除虛擬開銷，並以指標隔離實作降低編譯相依。',
   concept: {
     standard: 'C++23',
-    body:
-      'CRTP（Curiously Recurring Template Pattern）讓基底樣板以衍生類別作為樣板參數（class D : Base<D>），基底可在編譯期呼叫衍生的方法，達成「靜態多型」：具介面共用之利，卻無虛擬函式的間接跳轉，可完全內聯，常用於 mixin 與高效能函式庫。PIMPL（Pointer to IMPLementation）把類別的私有成員藏到一個前置宣告的 Impl 結構，僅在標頭保留一個指標；好處是隱藏實作細節、降低編譯相依（改實作不需重編使用者）、並提供穩定的 ABI，代價是一次額外的間接與 heap 配置。其他常見模式包含 Strategy（以可替換物件封裝演算法）、Factory（集中物件建立）、Observer、Type Erasure（如 std::function）等；選擇時應以問題需求與效能預算為準，而非為模式而模式。',
+    body: 'CRTP（Curiously Recurring Template Pattern）讓基底樣板以衍生類別作為樣板參數（class D : Base<D>），基底可在編譯期呼叫衍生的方法，達成「靜態多型」：具介面共用之利，卻無虛擬函式的間接跳轉，可完全內聯，常用於 mixin 與高效能函式庫。PIMPL（Pointer to IMPLementation）把類別的私有成員藏到一個前置宣告的 Impl 結構，僅在標頭保留一個指標；好處是隱藏實作細節、降低編譯相依（改實作不需重編使用者）、並提供穩定的 ABI，代價是一次額外的間接與 heap 配置。其他常見模式包含 Strategy（以可替換物件封裝演算法）、Factory（集中物件建立）、Observer、Type Erasure（如 std::function）等；選擇時應以問題需求與效能預算為準，而非為模式而模式。',
   },
   code: {
     lang: 'cpp',
@@ -19,35 +18,38 @@ const ch27SoftwareDesignII: ChapterContent = {
 // CRTP：基底以衍生型別為樣板參數，達成可內聯的靜態多型。 [1]
 template <typename Derived>
 struct Shape {
-    double area() const {
-        return static_cast<const Derived*>(this)->areaImpl();  // [2]
-    }
+  double area() const {
+    return static_cast<const Derived*>(this)->areaImpl();  // [2]
+  }
 };
 
 struct Circle : Shape<Circle> {
-    double r;
-    explicit Circle(double r) : r(r) {}
-    double areaImpl() const { return 3.14159265 * r * r; }  // [3]
+  double r;
+  explicit Circle(double r) : r(r) {}
+  double areaImpl() const { return 3.14159265 * r * r; }  // [3]
 };
 
 // PIMPL 骨架：標頭只見前置宣告與一個指標。 [4]
 class Widget {
-    struct Impl;   // 前置宣告，實作藏於 .cpp
-    Impl* pimpl_;  // [5] 僅暴露一個指標，隱藏細節與相依
-public:
-    Widget();
-    ~Widget();
-    int value() const;
+  struct Impl;   // 前置宣告，實作藏於 .cpp
+  Impl* pimpl_;  // [5] 僅暴露一個指標，隱藏細節與相依
+ public:
+  Widget();
+  ~Widget();
+  int value() const;
 };
 
 int main() {
-    Circle c{2.0};
-    std::println("area = {:.3f}", c.area());  // 靜態多型，可完全內聯
-    return 0;
+  Circle c{2.0};
+  std::println("area = {:.3f}", c.area());  // 靜態多型，可完全內聯
+  return 0;
 }`,
     callouts: [
       { n: 1, text: 'CRTP 讓 Shape 在編譯期就知道實際衍生型別，呼叫可被內聯，無 vtable 開銷。' },
-      { n: 2, text: 'static_cast 到 Derived 後呼叫其 areaImpl，這是靜態（編譯期）分派而非虛擬分派。' },
+      {
+        n: 2,
+        text: 'static_cast 到 Derived 後呼叫其 areaImpl，這是靜態（編譯期）分派而非虛擬分派。',
+      },
       { n: 3, text: '衍生類別提供 areaImpl 實作；介面共用但沒有執行期間接跳轉的成本。' },
       { n: 4, text: 'PIMPL 在標頭僅前置宣告 Impl，完整定義放在 .cpp，使用者無須看到私有細節。' },
       { n: 5, text: '只暴露一個指標即可隔離實作變動：改 Impl 不需重編譯使用者，並穩定 ABI。' },
@@ -56,18 +58,15 @@ int main() {
   deepDive: [
     {
       heading: 'CRTP 的機制與限制',
-      body:
-        'CRTP 讓基底樣板在編譯期得知衍生型別，用於靜態多型與 mixin（把可重用行為注入衍生類別）。但在基底類別本體中，衍生類別尚不完整，因此不能直接使用衍生的成員定義——只能在成員函式本體（延後實例化）內透過 `static_cast` 存取。\n\n`std::enable_shared_from_this` 即為標準庫中的 CRTP 應用。CRTP 適合型別在編譯期已知、且需要零成本多型的場景。',
+      body: 'CRTP 讓基底樣板在編譯期得知衍生型別，用於靜態多型與 mixin（把可重用行為注入衍生類別）。但在基底類別本體中，衍生類別尚不完整，因此不能直接使用衍生的成員定義——只能在成員函式本體（延後實例化）內透過 `static_cast` 存取。\n\n`std::enable_shared_from_this` 即為標準庫中的 CRTP 應用。CRTP 適合型別在編譯期已知、且需要零成本多型的場景。',
     },
     {
       heading: 'PIMPL 的成本與 ABI 細節',
-      body:
-        'PIMPL 以一次間接與一次堆積配置換取編譯防火牆（改實作不需重編使用者）與穩定 ABI。關鍵陷阱：以 `std::unique_ptr<Impl>` 作成員時，其解構子需要 `Impl` 的完整定義，因此外層類別的解構子必須「宣告在標頭、定義在 .cpp」，否則會出現不完整型別錯誤。\n\nPIMPL 特別適合需維持二進位相容的函式庫發佈。',
+      body: 'PIMPL 以一次間接與一次堆積配置換取編譯防火牆（改實作不需重編使用者）與穩定 ABI。關鍵陷阱：以 `std::unique_ptr<Impl>` 作成員時，其解構子需要 `Impl` 的完整定義，因此外層類別的解構子必須「宣告在標頭、定義在 .cpp」，否則會出現不完整型別錯誤。\n\nPIMPL 特別適合需維持二進位相容的函式庫發佈。',
     },
     {
       heading: '型別抹除與模式選擇',
-      body:
-        '`std::function`、`std::any` 以型別抹除提供統一介面，代價是間接呼叫與可能的堆積配置；自製型別抹除可針對需求最佳化。設計模式（Strategy、Factory、Observer）是溝通詞彙，但應因需求而用，而非為模式而模式。\n\n選擇時衡量：需要編譯期或執行期多型？需要 ABI 穩定嗎？熱路徑嗎？再據此挑選 CRTP、虛擬函式、PIMPL 或型別抹除。',
+      body: '`std::function`、`std::any` 以型別抹除提供統一介面，代價是間接呼叫與可能的堆積配置；自製型別抹除可針對需求最佳化。設計模式（Strategy、Factory、Observer）是溝通詞彙，但應因需求而用，而非為模式而模式。\n\n選擇時衡量：需要編譯期或執行期多型？需要 ABI 穩定嗎？熱路徑嗎？再據此挑選 CRTP、虛擬函式、PIMPL 或型別抹除。',
     },
   ],
   pitfalls: [
@@ -134,25 +133,25 @@ int main() {
 
 template <typename Derived>
 struct Shape {
-    double area() const { return static_cast<const Derived*>(this)->areaImpl(); }
+  double area() const { return static_cast<const Derived*>(this)->areaImpl(); }
 };
 struct Circle : Shape<Circle> {
-    double r;
-    Circle(double r) : r(r) {}
-    double areaImpl() const { return 3.14159265 * r * r; }
+  double r;
+  Circle(double r) : r(r) {}
+  double areaImpl() const { return 3.14159265 * r * r; }
 };
 struct Square : Shape<Square> {
-    double s;
-    Square(double s) : s(s) {}
-    double areaImpl() const { return s * s; }
+  double s;
+  Square(double s) : s(s) {}
+  double areaImpl() const { return s * s; }
 };
 
 int main() {
-    Circle c{2.0};
-    Square q{3.0};
-    std::cout << "circle = " << c.area() << '\\n';
-    std::cout << "square = " << q.area() << '\\n';
-    return 0;
+  Circle c{2.0};
+  Square q{3.0};
+  std::cout << "circle = " << c.area() << '\\n';
+  std::cout << "square = " << q.area() << '\\n';
+  return 0;
 }`,
   },
   furtherReading: [

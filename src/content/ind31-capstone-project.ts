@@ -82,61 +82,81 @@ const ind31CapstoneProject: ChapterContent = {
 // engine) you choose; the harness shape stays the same.
 
 double reference_kernel(const std::vector<double>& data) {  // [1]
-    double sum = 0.0;
-    for (double x : data) {
-        sum += x;
-    }
-    return sum;
+  double sum = 0.0;
+  for (double x : data) {
+    sum += x;
+  }
+  return sum;
 }
 
-double candidate_kernel(const std::vector<double>& data, int num_threads);  // [2]
+double candidate_kernel(const std::vector<double>& data,
+                        int num_threads);  // [2]
 
 bool within_tolerance(double got, double want, double rel_tol) {  // [3]
-    double diff = std::fabs(got - want);
-    double scale = std::max(std::fabs(want), 1.0);
-    return diff <= rel_tol * scale;
+  double diff = std::fabs(got - want);
+  double scale = std::max(std::fabs(want), 1.0);
+  return diff <= rel_tol * scale;
 }
 
 struct RunResult {
-    double seconds;
-    bool correct;
+  double seconds;
+  bool correct;
 };
 
-RunResult time_one_run(const std::vector<double>& data, int num_threads, double reference,
-                       double rel_tol) {
-    auto start = std::chrono::steady_clock::now();
-    double got = candidate_kernel(data, num_threads);  // [4]
-    auto end = std::chrono::steady_clock::now();
+RunResult time_one_run(const std::vector<double>& data, int num_threads,
+                       double reference, double rel_tol) {
+  auto start = std::chrono::steady_clock::now();
+  double got = candidate_kernel(data, num_threads);  // [4]
+  auto end = std::chrono::steady_clock::now();
 
-    RunResult result;
-    result.seconds = std::chrono::duration<double>(end - start).count();
-    result.correct = within_tolerance(got, reference, rel_tol);
-    return result;
+  RunResult result;
+  result.seconds = std::chrono::duration<double>(end - start).count();
+  result.correct = within_tolerance(got, reference, rel_tol);
+  return result;
 }
 
 int main() {
-    const std::vector<double> data(1'000'000, 1.0);
-    const double reference = reference_kernel(data);
-    const double rel_tol = 1e-9;  // [5] Justify this number in your report.
+  const std::vector<double> data(1'000'000, 1.0);
+  const double reference = reference_kernel(data);
+  const double rel_tol = 1e-9;  // [5] Justify this number in your report.
 
-    const double baseline = time_one_run(data, 1, reference, rel_tol).seconds;
+  const double baseline = time_one_run(data, 1, reference, rel_tol).seconds;
 
-    for (int threads : {1, 2, 4, 8}) {
-        RunResult r = time_one_run(data, threads, reference, rel_tol);
-        double speedup = baseline / r.seconds;
-        double efficiency = speedup / static_cast<double>(threads);  // [6]
-        std::printf("threads=%d correct=%d time=%.6fs speedup=%.2fx efficiency=%.2f\\n", threads,
-                    r.correct ? 1 : 0, r.seconds, speedup, efficiency);
-    }
-    return 0;
+  for (int threads : {1, 2, 4, 8}) {
+    RunResult r = time_one_run(data, threads, reference, rel_tol);
+    double speedup = baseline / r.seconds;
+    double efficiency = speedup / static_cast<double>(threads);  // [6]
+    std::printf(
+        "threads=%d correct=%d time=%.6fs speedup=%.2fx efficiency=%.2f\\n",
+        threads, r.correct ? 1 : 0, r.seconds, speedup, efficiency);
+  }
+  return 0;
 }`,
     callouts: [
-      { n: 1, text: '先寫一份簡單、易驗證的序列參考實作，作為所有平行版本的正確性基準（best practice：先求對，再求快）。' },
-      { n: 2, text: '候選核心（多執行緒／向量化／offload／無鎖佇列版本等）由你依所選題目實作；此處僅宣告介面。' },
-      { n: 3, text: '容差判斷需依第 25 章討論的相對誤差／絕對誤差取捨，並在報告中說明選擇依據，而非隨意取一個「看起來安全」的數字。' },
-      { n: 4, text: '正式量測前務必先跑過 ASan/TSan 乾淨的版本；在 sanitizer 建置下量測到的時間不代表真實效能，只用於正確性檢查。' },
-      { n: 5, text: '容差常數必須寫明理由：是基於浮點誤差的理論上界，還是基於歸約順序敏感度的實測結果？空白理由等於沒有驗證。' },
-      { n: 6, text: '效率 = 加速比 / 執行緒數；本章要求在 8 執行緒下達到 >= 0.7，未達標時需用 Amdahl 定律等模型解釋差距來源。' },
+      {
+        n: 1,
+        text: '先寫一份簡單、易驗證的序列參考實作，作為所有平行版本的正確性基準（best practice：先求對，再求快）。',
+      },
+      {
+        n: 2,
+        text: '候選核心（多執行緒／向量化／offload／無鎖佇列版本等）由你依所選題目實作；此處僅宣告介面。',
+      },
+      {
+        n: 3,
+        text: '容差判斷需依第 25 章討論的相對誤差／絕對誤差取捨，並在報告中說明選擇依據，而非隨意取一個「看起來安全」的數字。',
+      },
+      {
+        n: 4,
+        text: '正式量測前務必先跑過 ASan/TSan 乾淨的版本；在 sanitizer 建置下量測到的時間不代表真實效能，只用於正確性檢查。',
+      },
+      {
+        n: 5,
+        text: '容差常數必須寫明理由：是基於浮點誤差的理論上界，還是基於歸約順序敏感度的實測結果？空白理由等於沒有驗證。',
+      },
+      {
+        n: 6,
+        text: '效率 = 加速比 / 執行緒數；本章要求在 8 執行緒下達到 >= 0.7，未達標時需用 Amdahl 定律等模型解釋差距來源。',
+      },
     ],
   },
   pitfalls: [
@@ -159,7 +179,10 @@ int main() {
       stem: '一份合格的 Capstone 效能報告，下列哪一項是必要條件？',
       options: [
         { id: 'a', text: '只要在最高執行緒數下贏過序列版本即可，不需要完整的 scaling 曲線。' },
-        { id: 'b', text: '需要多個執行緒數下的量測點（含中位數與變異），並說明未達目標效率時的原因。' },
+        {
+          id: 'b',
+          text: '需要多個執行緒數下的量測點（含中位數與變異），並說明未達目標效率時的原因。',
+        },
         { id: 'c', text: '只要程式能編譯並跑出答案，效能數字可以之後再補。' },
       ],
       correctOptionId: 'b',
@@ -171,7 +194,10 @@ int main() {
       stem: '為什麼 ThreadSanitizer／AddressSanitizer 應該在整個開發過程中持續執行，而不是留到專案結束前才跑一次？',
       options: [
         { id: 'a', text: '因為 sanitizer 只能在最終版本上執行，中途執行會影響最終分數。' },
-        { id: 'b', text: '因為 data race 與記憶體錯誤會隨程式碼演進不斷新增，越晚發現定位成本越高，且沒被抓到的錯誤會讓效能數字失去意義。' },
+        {
+          id: 'b',
+          text: '因為 data race 與記憶體錯誤會隨程式碼演進不斷新增，越晚發現定位成本越高，且沒被抓到的錯誤會讓效能數字失去意義。',
+        },
         { id: 'c', text: '因為 sanitizer 的檢查結果只在建置的最後一天才會生效。' },
       ],
       correctOptionId: 'b',
@@ -183,8 +209,14 @@ int main() {
       stem: '選擇數值結果的驗證容差時，下列哪一種作法最能支撐「正確性證據」這項要求？',
       options: [
         { id: 'a', text: '選一個看起來夠小的常數（例如 `1e-6`），只要測試通過就代表數值正確。' },
-        { id: 'b', text: '依浮點誤差理論上界或歸約順序敏感度的實測結果推導容差，並在不同執行緒數／排程下重複驗證都落在容差內。' },
-        { id: 'c', text: '容差可以事後依實際跑出來的誤差反向調整，只要最終報告裡數字看起來一致即可。' },
+        {
+          id: 'b',
+          text: '依浮點誤差理論上界或歸約順序敏感度的實測結果推導容差，並在不同執行緒數／排程下重複驗證都落在容差內。',
+        },
+        {
+          id: 'c',
+          text: '容差可以事後依實際跑出來的誤差反向調整，只要最終報告裡數字看起來一致即可。',
+        },
       ],
       correctOptionId: 'b',
       explanation:
@@ -193,7 +225,13 @@ int main() {
   ],
   diagram: {
     key: 'generic-flow',
-    nodes: ['選題與範疇界定', '序列參考實作', '平行化與效能量測', '正確性與可重現性驗證', '效能報告交付'],
+    nodes: [
+      '選題與範疇界定',
+      '序列參考實作',
+      '平行化與效能量測',
+      '正確性與可重現性驗證',
+      '效能報告交付',
+    ],
     caption:
       'Capstone 專案的五階段流程：先界定範疇並寫出序列參考，再逐步平行化並量測，最後用 sanitizer 與容差驗證正確性，交付可重現的效能報告。',
   },
@@ -208,19 +246,19 @@ int main() {
 // pass/fail line. Swap accumulate() for your real candidate kernel.
 
 int main() {
-    std::vector<double> data(100'000, 0.5);
+  std::vector<double> data(100'000, 0.5);
 
-    double reference = std::accumulate(data.begin(), data.end(), 0.0);
-    double candidate = std::accumulate(data.rbegin(), data.rend(), 0.0);
+  double reference = std::accumulate(data.begin(), data.end(), 0.0);
+  double candidate = std::accumulate(data.rbegin(), data.rend(), 0.0);
 
-    double rel_tol = 1e-9;
-    double diff = std::fabs(candidate - reference);
-    double scale = std::max(std::fabs(reference), 1.0);
-    bool ok = diff <= rel_tol * scale;
+  double rel_tol = 1e-9;
+  double diff = std::fabs(candidate - reference);
+  double scale = std::max(std::fabs(reference), 1.0);
+  bool ok = diff <= rel_tol * scale;
 
-    std::printf("reference=%.6f candidate=%.6f within_tolerance=%d\\n", reference, candidate,
-                ok ? 1 : 0);
-    return 0;
+  std::printf("reference=%.6f candidate=%.6f within_tolerance=%d\\n", reference,
+              candidate, ok ? 1 : 0);
+  return 0;
 }`,
   },
   furtherReading: [

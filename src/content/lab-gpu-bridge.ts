@@ -8,8 +8,7 @@ const labGpuBridge: ChapterContent = {
     'CPU–GPU 並行橋接：std::thread 如何與非同步 CUDA/HIP 核心啟動互動、cudaStream_t 對比 std::future 的心智模型，以及 hipBLASLt / AITER 分派模式概觀。',
   concept: {
     standard: 'C++23',
-    body:
-      'GPU 程式設計的核心是非同步：核心啟動（kernel launch）與記憶體複製對 host 而言多是「發射即返回」，實際工作排入一條 stream（CUDA 的 cudaStream_t、HIP 的 hipStream_t）依序執行。這與 CPU 端的 std::async／std::future 有相似心智模型——都代表「稍後才會完成的工作」，但 stream 是明確、可重疊的工作佇列：同一 stream 內保序，不同 stream 可並行，並以事件（event）表達相依。host 端可用 std::thread 同時餵多條 stream 或做 CPU 前處理，再以 cudaStreamSynchronize／事件等待對應 std::future::get。實務函式庫如 hipBLASLt 提供可調參的 GEMM，AITER 等分派層則依形狀與硬體選擇最佳核心。要點：讓資料傳輸與計算重疊、避免不必要的同步點、並以 pinned memory 提升 H2D／D2H 頻寬。',
+    body: 'GPU 程式設計的核心是非同步：核心啟動（kernel launch）與記憶體複製對 host 而言多是「發射即返回」，實際工作排入一條 stream（CUDA 的 cudaStream_t、HIP 的 hipStream_t）依序執行。這與 CPU 端的 std::async／std::future 有相似心智模型——都代表「稍後才會完成的工作」，但 stream 是明確、可重疊的工作佇列：同一 stream 內保序，不同 stream 可並行，並以事件（event）表達相依。host 端可用 std::thread 同時餵多條 stream 或做 CPU 前處理，再以 cudaStreamSynchronize／事件等待對應 std::future::get。實務函式庫如 hipBLASLt 提供可調參的 GEMM，AITER 等分派層則依形狀與硬體選擇最佳核心。要點：讓資料傳輸與計算重疊、避免不必要的同步點、並以 pinned memory 提升 H2D／D2H 頻寬。',
   },
   code: {
     lang: 'cpp',
@@ -20,43 +19,49 @@ const labGpuBridge: ChapterContent = {
 // __global__ void scale(float* d, float k, int n); // GPU 核心宣告
 
 void pipeline(float* h_in, float* d_buf, int n /*, cudaStream_t s */) {
-    // cudaMemcpyAsync(d_buf, h_in, n*sizeof(float),
-    //                 cudaMemcpyHostToDevice, s);        // [2] 非同步 H2D
-    // scale<<<(n+255)/256, 256, 0, s>>>(d_buf, 2.0f, n); // [3] 發射即返回
-    // cudaMemcpyAsync(h_in, d_buf, n*sizeof(float),
-    //                 cudaMemcpyDeviceToHost, s);        // [4] 非同步 D2H
-    // host 此時可繼續做別的事；稍後再同步。               [5]
+  // cudaMemcpyAsync(d_buf, h_in, n*sizeof(float),
+  //                 cudaMemcpyHostToDevice, s);        // [2] 非同步 H2D
+  // scale<<<(n+255)/256, 256, 0, s>>>(d_buf, 2.0f, n); // [3] 發射即返回
+  // cudaMemcpyAsync(h_in, d_buf, n*sizeof(float),
+  //                 cudaMemcpyDeviceToHost, s);        // [4] 非同步 D2H
+  // host 此時可繼續做別的事；稍後再同步。               [5]
 }
 
 // 心智模型：cudaStream 之於 GPU，類似 std::future 之於 CPU 非同步工作。
 #include <future>
 int cpuAnalog() {
-    std::future<int> f = std::async(std::launch::async, [] { return 42; });
-    return f.get();  // 對應 cudaStreamSynchronize：等待非同步工作完成
+  std::future<int> f = std::async(std::launch::async, [] { return 42; });
+  return f.get();  // 對應 cudaStreamSynchronize：等待非同步工作完成
 }`,
     callouts: [
-      { n: 1, text: '真正的 GPU 程式需以 nvcc／hipcc 編譯；此處以註解示意非同步 stream 的資料流。' },
+      {
+        n: 1,
+        text: '真正的 GPU 程式需以 nvcc／hipcc 編譯；此處以註解示意非同步 stream 的資料流。',
+      },
       { n: 2, text: 'cudaMemcpyAsync 把 H2D 傳輸排入 stream 後立即返回，不阻塞 host。' },
-      { n: 3, text: '核心啟動 <<<...>>> 也是非同步的：把工作排入同一 stream，host 立刻取回控制權。' },
+      {
+        n: 3,
+        text: '核心啟動 <<<...>>> 也是非同步的：把工作排入同一 stream，host 立刻取回控制權。',
+      },
       { n: 4, text: '同一 stream 內操作保序，因此 D2H 會在核心完成後才執行，無需顯式同步。' },
-      { n: 5, text: 'host 可在 GPU 工作進行時做其他事（或餵其他 stream），最後才以同步點等待結果。' },
+      {
+        n: 5,
+        text: 'host 可在 GPU 工作進行時做其他事（或餵其他 stream），最後才以同步點等待結果。',
+      },
     ],
   },
   deepDive: [
     {
       heading: '主機-裝置非同步模型',
-      body:
-        '核心啟動與 `cudaMemcpyAsync` 對 host 為非同步：排入 stream 後立即返回。同一 stream 內保序，不同 stream 可並行；預設 stream 有特殊的隱式同步語意，容易造成非預期的序列化。\n\npinned（page-locked）記憶體讓 H2D／D2H 傳輸可非同步且頻寬更高；用可分頁記憶體的 async 複製可能退化為同步。事件（event）用於跨 stream 表達相依與計時。',
+      body: '核心啟動與 `cudaMemcpyAsync` 對 host 為非同步：排入 stream 後立即返回。同一 stream 內保序，不同 stream 可並行；預設 stream 有特殊的隱式同步語意，容易造成非預期的序列化。\n\npinned（page-locked）記憶體讓 H2D／D2H 傳輸可非同步且頻寬更高；用可分頁記憶體的 async 複製可能退化為同步。事件（event）用於跨 stream 表達相依與計時。',
     },
     {
       heading: '重疊與 pipelining',
-      body:
-        '要逼近硬體吞吐，需讓資料傳輸與計算重疊：使用多條 stream 搭配雙緩衝（double buffering），在計算前一批的同時傳輸下一批。PCIe／xGMI 傳輸頻寬常是真正的瓶頸，減少 H2D／D2H 往返與提高佔用率（occupancy）同等重要。\n\nhost 端可用 `std::thread` 餵不同 stream 或做前處理，但需注意 CPU 執行緒與 GPU stream 之間的同步。',
+      body: '要逼近硬體吞吐，需讓資料傳輸與計算重疊：使用多條 stream 搭配雙緩衝（double buffering），在計算前一批的同時傳輸下一批。PCIe／xGMI 傳輸頻寬常是真正的瓶頸，減少 H2D／D2H 往返與提高佔用率（occupancy）同等重要。\n\nhost 端可用 `std::thread` 餵不同 stream 或做前處理，但需注意 CPU 執行緒與 GPU stream 之間的同步。',
     },
     {
       heading: '分派層與函式庫',
-      body:
-        'hipBLASLt／cuBLASLt 等提供可調參的 GEMM，並以啟發式（heuristic）依矩陣形狀與硬體選核心；AITER 等分派層進一步依 shape 選擇最佳實作，或做離線／線上 autotuning。\n\n實務上優先採用這些廠商／社群函式庫而非自寫核心，並以 Nsight Systems／rocprof 剖析，找出傳輸、同步或核心佔用的瓶頸。',
+      body: 'hipBLASLt／cuBLASLt 等提供可調參的 GEMM，並以啟發式（heuristic）依矩陣形狀與硬體選核心；AITER 等分派層進一步依 shape 選擇最佳實作，或做離線／線上 autotuning。\n\n實務上優先採用這些廠商／社群函式庫而非自寫核心，並以 Nsight Systems／rocprof 剖析，找出傳輸、同步或核心佔用的瓶頸。',
     },
   ],
   pitfalls: [
@@ -127,16 +132,16 @@ int cpuAnalog() {
 #include <thread>
 
 int main() {
-    // 類比：把「核心」排入非同步佇列，host 立即返回。
-    auto stream = std::async(std::launch::async, [] {
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        return 21 * 2;  // 假裝這是 GPU 算出的結果
-    });
+  // 類比：把「核心」排入非同步佇列，host 立即返回。
+  auto stream = std::async(std::launch::async, [] {
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    return 21 * 2;  // 假裝這是 GPU 算出的結果
+  });
 
-    std::cout << "host 在 GPU 工作時繼續做別的事...\\n";
-    int result = stream.get();  // 對應 cudaStreamSynchronize
-    std::cout << "GPU 結果 = " << result << '\\n';
-    return 0;
+  std::cout << "host 在 GPU 工作時繼續做別的事...\\n";
+  int result = stream.get();  // 對應 cudaStreamSynchronize
+  std::cout << "GPU 結果 = " << result << '\\n';
+  return 0;
 }`,
   },
   furtherReading: [

@@ -11,13 +11,8 @@ export default function DeepDive({ sections }: { sections: DeepDiveSection[] }) 
       </h2>
       <div className="space-y-4">
         {sections.map((s, i) => (
-          <article
-            key={i}
-            className="rounded-xl border border-border bg-surface-raised p-5"
-          >
-            <h3 className="mb-2 text-base font-semibold text-content">
-              {s.heading}
-            </h3>
+          <article key={i} className="rounded-xl border border-border bg-surface-raised p-5">
+            <h3 className="mb-2 text-base font-semibold text-content">{s.heading}</h3>
             <div className="space-y-3 text-[15px] leading-7 text-content">
               <RichText text={s.body} />
             </div>

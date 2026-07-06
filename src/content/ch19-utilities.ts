@@ -9,8 +9,7 @@ const ch19Utilities: ChapterContent = {
     'std::span、std::mdspan、std::format 與 std::variant 等現代工具：如何以零成本檢視、安全格式化與型別安全的和型別改善程式。',
   concept: {
     standard: 'C++23',
-    body:
-      'C++17 起標準庫加入多個高價值工具。std::span（C++20）是對連續記憶體的非擁有檢視，攜帶指標與長度，讓函式接受任意陣列／vector 而不必樣板化或傳指標與大小；std::mdspan（C++23）把此概念推廣到多維。std::format／std::print（C++20／23）提供型別安全、可本地化的格式化，取代 printf 與冗長的 iostream。std::optional 表示「可能沒有值」，std::variant 是型別安全的和型別（可持有數種型別之一），搭配 std::visit 做窮盡式處理；std::expected（C++23）則以值傳遞錯誤，取代例外於可預期的失敗路徑。這些工具都以零或極低成本提供更強的安全性與表達力。',
+    body: 'C++17 起標準庫加入多個高價值工具。std::span（C++20）是對連續記憶體的非擁有檢視，攜帶指標與長度，讓函式接受任意陣列／vector 而不必樣板化或傳指標與大小；std::mdspan（C++23）把此概念推廣到多維。std::format／std::print（C++20／23）提供型別安全、可本地化的格式化，取代 printf 與冗長的 iostream。std::optional 表示「可能沒有值」，std::variant 是型別安全的和型別（可持有數種型別之一），搭配 std::visit 做窮盡式處理；std::expected（C++23）則以值傳遞錯誤，取代例外於可預期的失敗路徑。這些工具都以零或極低成本提供更強的安全性與表達力。',
   },
   code: {
     lang: 'cpp',
@@ -22,33 +21,36 @@ const ch19Utilities: ChapterContent = {
 
 // std::span：接受任意連續序列而不複製、不樣板化。 [1]
 long long sum(std::span<const int> data) {
-    long long s = 0;
-    for (int x : data) s += x;
-    return s;
+  long long s = 0;
+  for (int x : data) s += x;
+  return s;
 }
 
 using Value = std::variant<int, double, std::string>;  // [2] 型別安全和型別
 
 std::string describe(const Value& v) {
-    return std::visit(
-        [](const auto& x) {               // [3] 窮盡式處理
-            return std::format("{}", x);  // [4]
-        },
-        v);
+  return std::visit(
+      [](const auto& x) {             // [3] 窮盡式處理
+        return std::format("{}", x);  // [4]
+      },
+      v);
 }
 
 int main() {
-    std::vector<int> v{1, 2, 3, 4};
-    int raw[] = {10, 20, 30};
-    std::println("vector sum = {}", sum(v));    // [5] 傳 vector
-    std::println("array sum  = {}", sum(raw));  //    傳 C 陣列
+  std::vector<int> v{1, 2, 3, 4};
+  int raw[] = {10, 20, 30};
+  std::println("vector sum = {}", sum(v));    // [5] 傳 vector
+  std::println("array sum  = {}", sum(raw));  //    傳 C 陣列
 
-    Value a = 42, b = 3.14, c = std::string{"hi"};
-    std::println("{} / {} / {}", describe(a), describe(b), describe(c));
-    return 0;
+  Value a = 42, b = 3.14, c = std::string{"hi"};
+  std::println("{} / {} / {}", describe(a), describe(b), describe(c));
+  return 0;
 }`,
     callouts: [
-      { n: 1, text: 'std::span<const int> 是非擁有檢視，函式因此能接受 vector、std::array 或 C 陣列而不複製。' },
+      {
+        n: 1,
+        text: 'std::span<const int> 是非擁有檢視，函式因此能接受 vector、std::array 或 C 陣列而不複製。',
+      },
       { n: 2, text: 'std::variant 一次只持有其中一種型別的值，是型別安全的和型別（取代 union）。' },
       { n: 3, text: 'std::visit 對 variant 目前持有的型別分派到對應處理，確保所有情況都被涵蓋。' },
       { n: 4, text: 'std::format 以 {} 佔位產生型別安全的字串，泛型 lambda 可統一處理各型別。' },
@@ -58,18 +60,15 @@ int main() {
   deepDive: [
     {
       heading: 'span／mdspan 的語意與邊界安全',
-      body:
-        '`std::span` 是非擁有檢視，預設不做邊界檢查；`subspan`、`first`、`last` 越界是 UB，需自行確保範圍。extent 可為動態或編譯期固定（`std::span<int, 4>`），後者讓編譯器最佳化更積極。\n\n`std::mdspan`（C++23）為多維檢視，可指定佈局（`layout_right`／`layout_left`／`layout_stride`），正好對應 C／Fortran 記憶體序與 BLAS／GPU 資料佈局，是撰寫可攜高效數值核心的利器。',
+      body: '`std::span` 是非擁有檢視，預設不做邊界檢查；`subspan`、`first`、`last` 越界是 UB，需自行確保範圍。extent 可為動態或編譯期固定（`std::span<int, 4>`），後者讓編譯器最佳化更積極。\n\n`std::mdspan`（C++23）為多維檢視，可指定佈局（`layout_right`／`layout_left`／`layout_stride`），正好對應 C／Fortran 記憶體序與 BLAS／GPU 資料佈局，是撰寫可攜高效數值核心的利器。',
     },
     {
       heading: 'format／print 的檢查、擴充與效能',
-      body:
-        '`std::format` 對「編譯期常數格式字串」做編譯期檢查；執行期動態格式字串則改用 `std::vformat`。為自訂型別特化 `std::formatter` 即可讓其支援 `{}`。\n\n效能敏感處用 `std::format_to` 直接寫入既有緩衝區，避免配置暫時字串。相較 `iostream`，格式化 API 更快且無 `<<` 串接的型別不符風險。',
+      body: '`std::format` 對「編譯期常數格式字串」做編譯期檢查；執行期動態格式字串則改用 `std::vformat`。為自訂型別特化 `std::formatter` 即可讓其支援 `{}`。\n\n效能敏感處用 `std::format_to` 直接寫入既有緩衝區，避免配置暫時字串。相較 `iostream`，格式化 API 更快且無 `<<` 串接的型別不符風險。',
     },
     {
       heading: '和型別與現代錯誤處理',
-      body:
-        '`std::variant` + `std::visit`（搭配 overloaded 慣用法）可窮盡處理各種型別；若在賦值中拋出例外，variant 可能進入 `valueless_by_exception` 狀態，需留意。`std::get<T>` 型別不符會拋 `bad_variant_access`。\n\n可預期的失敗優先用 `std::optional`／`std::expected`（C++23），並善用其 monadic 操作 `and_then`／`transform`／`or_else` 串接，寫出無巢狀 if 的錯誤處理流程。',
+      body: '`std::variant` + `std::visit`（搭配 overloaded 慣用法）可窮盡處理各種型別；若在賦值中拋出例外，variant 可能進入 `valueless_by_exception` 狀態，需留意。`std::get<T>` 型別不符會拋 `bad_variant_access`。\n\n可預期的失敗優先用 `std::optional`／`std::expected`（C++23），並善用其 monadic 操作 `and_then`／`transform`／`or_else` 串接，寫出無巢狀 if 的錯誤處理流程。',
     },
   ],
   pitfalls: [
@@ -137,14 +136,16 @@ int main() {
 #include <span>
 #include <vector>
 
-long long sum(std::span<const int> data) { return std::accumulate(data.begin(), data.end(), 0LL); }
+long long sum(std::span<const int> data) {
+  return std::accumulate(data.begin(), data.end(), 0LL);
+}
 
 int main() {
-    std::vector<int> v{1, 2, 3, 4};
-    int raw[] = {10, 20, 30};
-    std::cout << "vector sum = " << sum(v) << '\\n';
-    std::cout << "array sum  = " << sum(raw) << '\\n';
-    return 0;
+  std::vector<int> v{1, 2, 3, 4};
+  int raw[] = {10, 20, 30};
+  std::cout << "vector sum = " << sum(v) << '\\n';
+  std::cout << "array sum  = " << sum(raw) << '\\n';
+  return 0;
 }`,
   },
   furtherReading: [

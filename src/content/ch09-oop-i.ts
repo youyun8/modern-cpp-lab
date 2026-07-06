@@ -9,8 +9,7 @@ const ch09OopI: ChapterContent = {
     'RAII、建構子與解構子，以及 rule of five／rule of zero：如何以型別自動且例外安全地管理資源。',
   concept: {
     standard: 'C++23',
-    body:
-      'RAII（Resource Acquisition Is Initialization）是 C++ 資源管理的核心：在建構子取得資源、在解構子釋放，讓生命週期綁定物件作用域，即使發生例外也保證釋放。特殊成員函式包含建構子、解構子、複製建構／指定、移動建構／指定。「rule of five」指出：一旦你手動定義其中之一（通常因為管理原始資源），通常需一併定義其餘四個以保持一致；更好的是「rule of zero」——用 std::unique_ptr、std::vector 等 RAII 型別包裝資源，讓編譯器自動生成正確的特殊成員，自己一個都不必寫。=default 與 =delete 可明確要求或禁用某成員。',
+    body: 'RAII（Resource Acquisition Is Initialization）是 C++ 資源管理的核心：在建構子取得資源、在解構子釋放，讓生命週期綁定物件作用域，即使發生例外也保證釋放。特殊成員函式包含建構子、解構子、複製建構／指定、移動建構／指定。「rule of five」指出：一旦你手動定義其中之一（通常因為管理原始資源），通常需一併定義其餘四個以保持一致；更好的是「rule of zero」——用 std::unique_ptr、std::vector 等 RAII 型別包裝資源，讓編譯器自動生成正確的特殊成員，自己一個都不必寫。=default 與 =delete 可明確要求或禁用某成員。',
   },
   code: {
     lang: 'cpp',
@@ -19,55 +18,59 @@ const ch09OopI: ChapterContent = {
 
 // 示範 rule of five：手動管理一段原始緩衝區。 [1]
 class Buffer {
-    int* data_;
-    std::size_t size_;
+  int* data_;
+  std::size_t size_;
 
-public:
-    explicit Buffer(std::size_t n)  // [2] 建構子取得資源
-        : data_(new int[n]{}), size_(n) {}
-    ~Buffer() { delete[] data_; }  // [3] 解構子釋放資源
+ public:
+  explicit Buffer(std::size_t n)  // [2] 建構子取得資源
+      : data_(new int[n]{}), size_(n) {}
+  ~Buffer() { delete[] data_; }  // [3] 解構子釋放資源
 
-    Buffer(const Buffer& other)  // [4] 複製建構（深複製）
-        : data_(new int[other.size_]), size_(other.size_) {
-        std::copy(other.data_, other.data_ + size_, data_);
-    }
-    Buffer& operator=(const Buffer&) = delete;  // 簡化：禁用複製指定
+  Buffer(const Buffer& other)  // [4] 複製建構（深複製）
+      : data_(new int[other.size_]), size_(other.size_) {
+    std::copy(other.data_, other.data_ + size_, data_);
+  }
+  Buffer& operator=(const Buffer&) = delete;  // 簡化：禁用複製指定
 
-    Buffer(Buffer&& other) noexcept  // [5] 移動建構：接管指標
-        : data_(std::exchange(other.data_, nullptr)), size_(std::exchange(other.size_, 0)) {}
+  Buffer(Buffer&& other) noexcept  // [5] 移動建構：接管指標
+      : data_(std::exchange(other.data_, nullptr)),
+        size_(std::exchange(other.size_, 0)) {}
 
-    std::size_t size() const { return size_; }
+  std::size_t size() const { return size_; }
 };
 
 int main() {
-    Buffer a(4);
-    Buffer b = std::move(a);  // 呼叫移動建構，a 被清空
-    std::println("b.size = {}", b.size());
-    return 0;  // b 的解構子自動釋放記憶體
+  Buffer a(4);
+  Buffer b = std::move(a);  // 呼叫移動建構，a 被清空
+  std::println("b.size = {}", b.size());
+  return 0;  // b 的解構子自動釋放記憶體
 }`,
     callouts: [
-      { n: 1, text: '此類別直接持有 new[] 出來的原始資源，因此必須遵守 rule of five；實務上應改用 std::vector。' },
+      {
+        n: 1,
+        text: '此類別直接持有 new[] 出來的原始資源，因此必須遵守 rule of five；實務上應改用 std::vector。',
+      },
       { n: 2, text: 'explicit 防止意外的隱式轉換；建構子在此取得（配置）資源。' },
       { n: 3, text: '解構子釋放資源，是 RAII 的關鍵；即使函式因例外提前結束也會被呼叫。' },
       { n: 4, text: '複製建構子做深複製，配置新緩衝區並複製內容，避免兩物件共享同一指標。' },
-      { n: 5, text: '移動建構子以 std::exchange 接管來源指標並將來源置空，noexcept 讓容器能安全使用。' },
+      {
+        n: 5,
+        text: '移動建構子以 std::exchange 接管來源指標並將來源置空，noexcept 讓容器能安全使用。',
+      },
     ],
   },
   deepDive: [
     {
       heading: '特殊成員函式的生成與抑制規則',
-      body:
-        '編譯器自動生成的特殊成員遵循連鎖規則：一旦你宣告了解構子（或複製操作），移動操作就不會被自動生成，物件將退回昂貴的複製。這是效能回歸的常見隱因。\n\n因此若要手動管理資源，應完整而明確地以 `=default`／`=delete` 宣告全部五個成員（rule of five），或更好——遵循 rule of zero，完全不宣告。`=default` 的移動仍需你確認其正確性。',
+      body: '編譯器自動生成的特殊成員遵循連鎖規則：一旦你宣告了解構子（或複製操作），移動操作就不會被自動生成，物件將退回昂貴的複製。這是效能回歸的常見隱因。\n\n因此若要手動管理資源，應完整而明確地以 `=default`／`=delete` 宣告全部五個成員（rule of five），或更好——遵循 rule of zero，完全不宣告。`=default` 的移動仍需你確認其正確性。',
     },
     {
       heading: '例外安全與 copy-and-swap',
-      body:
-        '強例外保證要求操作要麼成功、要麼保持原狀。copy-and-swap 慣用法透過「先建立副本、再以 `noexcept` 的 `swap` 交換」達成強保證，並自然處理自我指定。\n\n移動操作應標 `noexcept`，否則 `std::vector` 擴容時會為了維持強保證而退回複製，喪失移動的效能優勢。`std::vector::push_back` 對元素移動的選擇正取決於此。',
+      body: '強例外保證要求操作要麼成功、要麼保持原狀。copy-and-swap 慣用法透過「先建立副本、再以 `noexcept` 的 `swap` 交換」達成強保證，並自然處理自我指定。\n\n移動操作應標 `noexcept`，否則 `std::vector` 擴容時會為了維持強保證而退回複製，喪失移動的效能優勢。`std::vector::push_back` 對元素移動的選擇正取決於此。',
     },
     {
       heading: '資源管理元件的選擇與成本',
-      body:
-        '`std::unique_ptr` 零額外成本且可帶自訂刪除器（如 `fclose`、GPU 資源釋放），是預設選擇；`std::shared_ptr` 需要原子引用計數與控制區塊，成本較高且可能形成循環參考。\n\n非記憶體資源（鎖、檔案、交易）可用 scope guard（如 `std::lock_guard` 或自製 RAII 包裝）確保釋放。以 RAII 表達所有權讓例外路徑也安全。',
+      body: '`std::unique_ptr` 零額外成本且可帶自訂刪除器（如 `fclose`、GPU 資源釋放），是預設選擇；`std::shared_ptr` 需要原子引用計數與控制區塊，成本較高且可能形成循環參考。\n\n非記憶體資源（鎖、檔案、交易）可用 scope guard（如 `std::lock_guard` 或自製 RAII 包裝）確保釋放。以 RAII 表達所有權讓例外路徑也安全。',
     },
   ],
   pitfalls: [
@@ -101,7 +104,10 @@ int main() {
       stem: '「rule of zero」建議的做法是什麼？',
       options: [
         { id: 'a', text: '一律手動定義全部五個特殊成員函式' },
-        { id: 'b', text: '用 RAII 型別（如智慧指標、容器）包裝資源，讓編譯器自動生成正確的特殊成員' },
+        {
+          id: 'b',
+          text: '用 RAII 型別（如智慧指標、容器）包裝資源，讓編譯器自動生成正確的特殊成員',
+        },
         { id: 'c', text: '刪除所有建構子' },
         { id: 'd', text: '把所有成員設為 public' },
       ],
@@ -126,8 +132,7 @@ int main() {
   diagram: {
     key: 'generic-flow',
     nodes: ['建構', '複製', '移動', '解構'],
-    caption:
-      '物件生命週期與特殊成員：建構取得資源，複製與移動決定資源如何轉移，解構負責釋放。',
+    caption: '物件生命週期與特殊成員：建構取得資源，複製與移動決定資源如何轉移，解構負責釋放。',
   },
   tryIt: {
     code: `#include <iostream>
@@ -136,18 +141,18 @@ int main() {
 
 // rule of zero 版本：用 std::vector 管理資源，無需手寫特殊成員。
 class Buffer {
-    std::vector<int> data_;
+  std::vector<int> data_;
 
-public:
-    explicit Buffer(std::size_t n) : data_(n, 0) {}
-    std::size_t size() const { return data_.size(); }
+ public:
+  explicit Buffer(std::size_t n) : data_(n, 0) {}
+  std::size_t size() const { return data_.size(); }
 };
 
 int main() {
-    Buffer a(4);
-    Buffer b = std::move(a);  // 自動生成的移動建構
-    std::cout << "b.size = " << b.size() << '\\n';
-    return 0;
+  Buffer a(4);
+  Buffer b = std::move(a);  // 自動生成的移動建構
+  std::cout << "b.size = " << b.size() << '\\n';
+  return 0;
 }`,
   },
   furtherReading: [

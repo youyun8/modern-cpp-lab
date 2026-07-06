@@ -8,9 +8,7 @@ import type { DiagramComponentProps } from '@/types/DiagramProps';
  * (Traditional Chinese); a sensible default is used when none are supplied.
  */
 export default function GenericFlow({ spec }: DiagramComponentProps) {
-  const nodes = spec.nodes?.length
-    ? spec.nodes
-    : ['原始碼', '編譯', '最佳化', '執行'];
+  const nodes = spec.nodes?.length ? spec.nodes : ['原始碼', '編譯', '最佳化', '執行'];
 
   const boxWidth = 150;
   const boxHeight = 56;
@@ -26,14 +24,7 @@ export default function GenericFlow({ spec }: DiagramComponentProps) {
       aria-label={`流程圖：${nodes.join(' 到 ')}`}
     >
       <defs>
-        <marker
-          id="flow-arrow"
-          markerWidth="10"
-          markerHeight="10"
-          refX="8"
-          refY="3"
-          orient="auto"
-        >
+        <marker id="flow-arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
           <path d="M0,0 L8,3 L0,6 Z" fill="rgb(96 165 250)" />
         </marker>
       </defs>

@@ -9,8 +9,7 @@ const ch15CodeConventionsI: ChapterContent = {
     '專案佈局、命名慣例與標頭檔組織原則：如何安排 include／src／tests 目錄並維持一致的命名風格。',
   concept: {
     standard: 'C++23',
-    body:
-      '良好的專案結構讓程式易於瀏覽、建置與測試。常見佈局把公開標頭放在 include/<專案名>/、實作放在 src/、測試放在 tests/，並以 CMake 描述目標與相依。標頭應以 #pragma once 或 include guard 防止重複包含，並遵循「self-contained header」原則：每個標頭都能獨立編譯，自行 include 其所需。命名慣例雖無單一標準，但重點是一致：常見以 PascalCase 命名型別、snake_case 或 camelCase 命名函式與變數、UPPER_CASE 命名巨集，並避免以底線開頭的保留名稱。include 順序建議由「自身標頭 → 專案標頭 → 第三方 → 標準庫」，有助於暴露隱藏的相依。',
+    body: '良好的專案結構讓程式易於瀏覽、建置與測試。常見佈局把公開標頭放在 include/<專案名>/、實作放在 src/、測試放在 tests/，並以 CMake 描述目標與相依。標頭應以 #pragma once 或 include guard 防止重複包含，並遵循「self-contained header」原則：每個標頭都能獨立編譯，自行 include 其所需。命名慣例雖無單一標準，但重點是一致：常見以 PascalCase 命名型別、snake_case 或 camelCase 命名函式與變數、UPPER_CASE 命名巨集，並避免以底線開頭的保留名稱。include 順序建議由「自身標頭 → 專案標頭 → 第三方 → 標準庫」，有助於暴露隱藏的相依。',
   },
   code: {
     lang: 'bash',
@@ -25,7 +24,10 @@ const ch15CodeConventionsI: ChapterContent = {
 ├── third_party/             # [4] 外部相依（或用套件管理器）
 └── CMakeLists.txt           # [5] 建置設定的單一入口`,
     callouts: [
-      { n: 1, text: '公開標頭置於 include/<專案名>/，使用端以 #include <myproject/engine.hpp> 引用，路徑清楚。' },
+      {
+        n: 1,
+        text: '公開標頭置於 include/<專案名>/，使用端以 #include <myproject/engine.hpp> 引用，路徑清楚。',
+      },
       { n: 2, text: 'src/ 存放實作；每個 .cpp 對應一個轉譯單元，定義只出現一次。' },
       { n: 3, text: 'tests/ 與程式碼分離，便於獨立建置與 CI 執行。' },
       { n: 4, text: 'third_party/ 隔離外部程式碼；現代做法多改用 vcpkg／Conan 等套件管理器。' },
@@ -35,18 +37,15 @@ const ch15CodeConventionsI: ChapterContent = {
   deepDive: [
     {
       heading: 'include 機制與 IWYU',
-      body:
-        '以 `<>` 引用系統／第三方標頭、以 `""` 引用專案標頭。公開標頭置於 `include/<專案名>/` 讓引用路徑帶命名前綴，避免與其他函式庫衝突。\n\n遵循 include-what-you-use：每個檔案直接引用它實際用到的標頭，不倚賴間接傳遞的包含。前置宣告可切斷不必要的相依、加快編譯，但需注意不能對不完整型別取 `sizeof` 或存取成員。',
+      body: '以 `<>` 引用系統／第三方標頭、以 `""` 引用專案標頭。公開標頭置於 `include/<專案名>/` 讓引用路徑帶命名前綴，避免與其他函式庫衝突。\n\n遵循 include-what-you-use：每個檔案直接引用它實際用到的標頭，不倚賴間接傳遞的包含。前置宣告可切斷不必要的相依、加快編譯，但需注意不能對不完整型別取 `sizeof` 或存取成員。',
     },
     {
       heading: '公開 API 邊界與封裝',
-      body:
-        '把公開標頭與內部實作標頭分離：使用者只該看到穩定的公開介面。API 邊界常以 PIMPL 隱藏實作、降低重編譯，並以 inline namespace 做版本化（如 `v1`）以在不破壞既有使用者下演進。\n\n清楚的邊界讓函式庫的 ABI 與相依可控，是可長期維護的關鍵。',
+      body: '把公開標頭與內部實作標頭分離：使用者只該看到穩定的公開介面。API 邊界常以 PIMPL 隱藏實作、降低重編譯，並以 inline namespace 做版本化（如 `v1`）以在不破壞既有使用者下演進。\n\n清楚的邊界讓函式庫的 ABI 與相依可控，是可長期維護的關鍵。',
     },
     {
       heading: '以 target 為中心的 CMake',
-      body:
-        '現代 CMake 以 target 表達一切：`target_include_directories`、`target_compile_features`、`target_link_libraries` 搭配 `PUBLIC`／`PRIVATE`／`INTERFACE` 控制「使用需求（usage requirements）」的傳遞。\n\n避免全域的 `include_directories`／`add_definitions`，因為它們污染所有 target、難以推理。以 `install(EXPORT)` 匯出 target 讓下游能 `find_package` 取用。',
+      body: '現代 CMake 以 target 表達一切：`target_include_directories`、`target_compile_features`、`target_link_libraries` 搭配 `PUBLIC`／`PRIVATE`／`INTERFACE` 控制「使用需求（usage requirements）」的傳遞。\n\n避免全域的 `include_directories`／`add_definitions`，因為它們污染所有 target、難以推理。以 `install(EXPORT)` 匯出 target 讓下游能 `find_package` 取用。',
     },
   ],
   pitfalls: [
@@ -105,23 +104,22 @@ const ch15CodeConventionsI: ChapterContent = {
   diagram: {
     key: 'generic-flow',
     nodes: ['include/', 'src/', 'tests/', 'CMake'],
-    caption:
-      '典型專案佈局：公開標頭、實作與測試分離，並由 CMake 作為建置的單一入口統整。',
+    caption: '典型專案佈局：公開標頭、實作與測試分離，並由 CMake 作為建置的單一入口統整。',
   },
   tryIt: {
     code: `#include <iostream>
 
 // 想像這是 include/myproject/engine.hpp 的內容（自足標頭）
 struct Engine {
-    int rpm = 0;
-    void rev(int by) { rpm += by; }
+  int rpm = 0;
+  void rev(int by) { rpm += by; }
 };
 
 int main() {
-    Engine e;
-    e.rev(1500);
-    std::cout << "rpm = " << e.rpm << '\\n';
-    return 0;
+  Engine e;
+  e.rev(1500);
+  std::cout << "rpm = " << e.rpm << '\\n';
+  return 0;
 }`,
   },
   furtherReading: [

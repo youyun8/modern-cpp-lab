@@ -28,8 +28,7 @@ export function createStub(params: StubParams): ChapterContent {
     key: params.diagramKey ?? 'generic-flow',
     nodes: params.diagramNodes ?? ['概念', '範例', '練習', '應用'],
     caption:
-      params.diagramCaption ??
-      `「${params.topic}」的流程示意圖（佔位圖，待補充完整視覺化）。`,
+      params.diagramCaption ?? `「${params.topic}」的流程示意圖（佔位圖，待補充完整視覺化）。`,
   };
 
   // TODO: 撰寫本章的完整概念說明、標註程式碼、測驗與視覺化內容。
@@ -50,8 +49,8 @@ export function createStub(params: StubParams): ChapterContent {
 
 // TODO: Replace with an annotated example for "${params.topic}".
 int main() {
-    std::cout << "TODO: ${params.slug}\\n";
-    return 0;
+  std::cout << "TODO: ${params.slug}\\n";
+  return 0;
 }`,
       callouts: [{ n: 1, text: '佔位程式碼：待補充與本章主題相關的標註範例。' }],
     },
@@ -73,8 +72,8 @@ int main() {
 
 // TODO: Provide a runnable snippet for "${params.topic}".
 int main() {
-    std::cout << "Modern C++: ${params.title}\\n";
-    return 0;
+  std::cout << "Modern C++: ${params.title}\\n";
+  return 0;
 }`,
     },
     furtherReading: [

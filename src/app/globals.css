@@ -67,9 +67,9 @@ body {
    high-quality system monospace fonts if the JetBrains Mono webfont is
    unavailable, so code blocks are ALWAYS rendered in a monospace face. */
 :root {
-  --code-font: var(--font-jetbrains), ui-monospace, 'JetBrains Mono',
-    'SFMono-Regular', 'SF Mono', Menlo, Consolas, 'Liberation Mono',
-    'DejaVu Sans Mono', 'Courier New', monospace;
+  --code-font:
+    var(--font-jetbrains), ui-monospace, 'JetBrains Mono', 'SFMono-Regular', 'SF Mono', Menlo,
+    Consolas, 'Liberation Mono', 'DejaVu Sans Mono', 'Courier New', monospace;
 }
 
 /* shiki blocks: strip the inherited background and add breathing room. */

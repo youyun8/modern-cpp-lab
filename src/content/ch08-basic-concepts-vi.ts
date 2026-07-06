@@ -9,8 +9,7 @@ const ch08BasicConceptsVI: ChapterContent = {
     '函式、lambda 運算式與前置處理器的基礎：參數傳遞、多載、預設引數、閉包捕獲，以及巨集的風險。',
   concept: {
     standard: 'C++23',
-    body:
-      '函式是程式的基本抽象單位。參數傳遞選擇很關鍵：小型可複製型別以值傳遞，大型物件以 const 參考傳遞避免複製，需修改時以非 const 參考傳遞。函式可多載（依參數型別／數量區分）並可有預設引數。lambda 是就地定義的匿名函式物件，透過捕獲子句 [ ] 存取外部變數：[=] 以值捕獲、[&] 以參考捕獲、也可逐一列出；泛型 lambda 以 auto 參數運作。前置處理巨集（#define）在編譯前做文字替換，缺乏型別與作用域檢查，現代 C++ 多以 constexpr、inline 函式與樣板取代，僅在條件編譯與 include guard 等處保留。',
+    body: '函式是程式的基本抽象單位。參數傳遞選擇很關鍵：小型可複製型別以值傳遞，大型物件以 const 參考傳遞避免複製，需修改時以非 const 參考傳遞。函式可多載（依參數型別／數量區分）並可有預設引數。lambda 是就地定義的匿名函式物件，透過捕獲子句 [ ] 存取外部變數：[=] 以值捕獲、[&] 以參考捕獲、也可逐一列出；泛型 lambda 以 auto 參數運作。前置處理巨集（#define）在編譯前做文字替換，缺乏型別與作用域檢查，現代 C++ 多以 constexpr、inline 函式與樣板取代，僅在條件編譯與 include guard 等處保留。',
   },
   code: {
     lang: 'cpp',
@@ -21,25 +20,25 @@ const ch08BasicConceptsVI: ChapterContent = {
 
 // 大型物件以 const& 傳遞避免複製；小型以值傳遞即可。 [1]
 int countLongerThan(const std::vector<std::string>& words, std::size_t n) {
-    int threshold = static_cast<int>(n);
-    return static_cast<int>(std::count_if(  // [2] 演算法 + lambda
-        words.begin(), words.end(),
-        [threshold](const std::string& w) {  // [3] 以值捕獲 threshold
-            return static_cast<int>(w.size()) > threshold;
-        }));
+  int threshold = static_cast<int>(n);
+  return static_cast<int>(std::count_if(  // [2] 演算法 + lambda
+      words.begin(), words.end(),
+      [threshold](const std::string& w) {  // [3] 以值捕獲 threshold
+        return static_cast<int>(w.size()) > threshold;
+      }));
 }
 
 auto makeAdder(int base) {  // [4] 回傳捕獲狀態的閉包
-    return [base](int x) { return base + x; };
+  return [base](int x) { return base + x; };
 }
 
 int main() {
-    std::vector<std::string> words{"a", "bee", "programming", "cpp"};
-    std::println("長度 > 2 的字數：{}", countLongerThan(words, 2));
+  std::vector<std::string> words{"a", "bee", "programming", "cpp"};
+  std::println("長度 > 2 的字數：{}", countLongerThan(words, 2));
 
-    auto add10 = makeAdder(10);
-    std::println("add10(5) = {}", add10(5));  // [5]
-    return 0;
+  auto add10 = makeAdder(10);
+  std::println("add10(5) = {}", add10(5));  // [5]
+  return 0;
 }`,
     callouts: [
       { n: 1, text: '傳遞語意的黃金法則：大型或不可複製物件用 const&，小型可複製型別用值傳遞。' },
@@ -52,18 +51,15 @@ int main() {
   deepDive: [
     {
       heading: '參數傳遞策略與回傳值最佳化',
-      body:
-        '讀取用 `const&`；會被存下來的匯（sink）參數用「傳值 + `std::move`」，讓呼叫端可移動亦可複製；需輸出多值優先回傳結構（結構化繫結解構）而非輸出參數。\n\n回傳區域物件時編譯器多會套用 RVO／NRVO 省略複製，因此 `return local;` 不需手動 `std::move`（反而可能阻止 NRVO）。理解這些規則能在不犧牲可讀性下避免不必要的複製。',
+      body: '讀取用 `const&`；會被存下來的匯（sink）參數用「傳值 + `std::move`」，讓呼叫端可移動亦可複製；需輸出多值優先回傳結構（結構化繫結解構）而非輸出參數。\n\n回傳區域物件時編譯器多會套用 RVO／NRVO 省略複製，因此 `return local;` 不需手動 `std::move`（反而可能阻止 NRVO）。理解這些規則能在不犧牲可讀性下避免不必要的複製。',
     },
     {
       heading: 'Lambda 的閉包本質與捕獲陷阱',
-      body:
-        '每個 lambda 是一個獨特的閉包型別（函式物件）。`[=]`／`[&]` 隱式捕獲易導致懸置——尤其把 `[&]` 或捕獲 `this` 的 lambda 交給非同步任務時，原物件可能已銷毀。\n\nC++14 起可用初始化捕獲 `[p = std::move(ptr)]` 移入資源；捕獲物件狀態時可用 `[*this]`（C++17）複製整個物件。泛型 lambda 以 `auto` 參數運作，`mutable` 允許修改以值捕獲的副本。',
+      body: '每個 lambda 是一個獨特的閉包型別（函式物件）。`[=]`／`[&]` 隱式捕獲易導致懸置——尤其把 `[&]` 或捕獲 `this` 的 lambda 交給非同步任務時，原物件可能已銷毀。\n\nC++14 起可用初始化捕獲 `[p = std::move(ptr)]` 移入資源；捕獲物件狀態時可用 `[*this]`（C++17）複製整個物件。泛型 lambda 以 `auto` 參數運作，`mutable` 允許修改以值捕獲的副本。',
     },
     {
       heading: '多載解析與型別抹除的成本',
-      body:
-        '多載解析依引數型別選擇最佳候選；預設引數與隱式轉換易造成非預期的候選或歧義。ADL 會把型別所屬命名空間的多載納入考量。\n\n`std::function` 以型別抹除統一可呼叫物件，但有間接呼叫與可能的堆積配置成本，不宜放在熱路徑；改用樣板參數或 `function_ref`／樣板回呼可零成本內聯。',
+      body: '多載解析依引數型別選擇最佳候選；預設引數與隱式轉換易造成非預期的候選或歧義。ADL 會把型別所屬命名空間的多載納入考量。\n\n`std::function` 以型別抹除統一可呼叫物件，但有間接呼叫與可能的堆積配置成本，不宜放在熱路徑；改用樣板參數或 `function_ref`／樣板回呼可零成本內聯。',
     },
   ],
   pitfalls: [
@@ -132,15 +128,16 @@ int main() {
 #include <vector>
 
 int main() {
-    std::vector<std::string> words{"a", "bee", "programming", "cpp"};
-    int n = 2;
-    auto count = std::count_if(words.begin(), words.end(),
-                               [n](const std::string& w) { return (int)w.size() > n; });
-    std::cout << "longer than " << n << ": " << count << '\\n';
+  std::vector<std::string> words{"a", "bee", "programming", "cpp"};
+  int n = 2;
+  auto count =
+      std::count_if(words.begin(), words.end(),
+                    [n](const std::string& w) { return (int)w.size() > n; });
+  std::cout << "longer than " << n << ": " << count << '\\n';
 
-    auto makeAdder = [](int base) { return [base](int x) { return base + x; }; };
-    std::cout << "add10(5) = " << makeAdder(10)(5) << '\\n';
-    return 0;
+  auto makeAdder = [](int base) { return [base](int x) { return base + x; }; };
+  std::cout << "add10(5) = " << makeAdder(10)(5) << '\\n';
+  return 0;
 }`,
   },
   furtherReading: [

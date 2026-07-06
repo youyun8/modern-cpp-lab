@@ -9,8 +9,7 @@ const ch28BinarySize: ChapterContent = {
     'symbol visibility、LTO 與樣板膨脹（template bloat）的控制：如何診斷並縮減可執行檔與函式庫的體積。',
   concept: {
     standard: 'C++23',
-    body:
-      '二進位檔大小影響載入時間、記憶體足跡與快取效率，在嵌入式與函式庫發佈情境尤其關鍵。膨脹的主要來源包含：樣板為每組型別參數各生成一份程式碼（template bloat）、未移除的除錯符號、過度內聯，以及不必要的匯出符號。控制手段有：以 -fvisibility=hidden 預設隱藏符號、僅明確標記需匯出者，能縮小動態符號表並促成更多內聯與死碼移除；LTO 於連結期跨單元移除未用程式碼；-Os 以體積為最佳化目標；strip 移除符號；對樣板可將共通、與型別無關的部分抽到非樣板基底（減少實例化）。診斷工具包含 size、nm、bloaty 與 -Wl,--print-gc-sections。務必在縮減體積與維持效能、可除錯性之間取得平衡。',
+    body: '二進位檔大小影響載入時間、記憶體足跡與快取效率，在嵌入式與函式庫發佈情境尤其關鍵。膨脹的主要來源包含：樣板為每組型別參數各生成一份程式碼（template bloat）、未移除的除錯符號、過度內聯，以及不必要的匯出符號。控制手段有：以 -fvisibility=hidden 預設隱藏符號、僅明確標記需匯出者，能縮小動態符號表並促成更多內聯與死碼移除；LTO 於連結期跨單元移除未用程式碼；-Os 以體積為最佳化目標；strip 移除符號；對樣板可將共通、與型別無關的部分抽到非樣板基底（減少實例化）。診斷工具包含 size、nm、bloaty 與 -Wl,--print-gc-sections。務必在縮減體積與維持效能、可除錯性之間取得平衡。',
   },
   code: {
     lang: 'bash',
@@ -29,8 +28,14 @@ strip --strip-all small                                   # [4]
 # 診斷體積來源
 size app ; bloaty app                                      # [5]`,
     callouts: [
-      { n: 1, text: '-fvisibility=hidden 讓符號預設不匯出，僅明確標記者可見，縮小符號表並利於內聯／死碼移除。' },
-      { n: 2, text: '-ffunction-sections 搭配 --gc-sections 讓連結器移除未被參照的函式與資料區段。' },
+      {
+        n: 1,
+        text: '-fvisibility=hidden 讓符號預設不匯出，僅明確標記者可見，縮小符號表並利於內聯／死碼移除。',
+      },
+      {
+        n: 2,
+        text: '-ffunction-sections 搭配 --gc-sections 讓連結器移除未被參照的函式與資料區段。',
+      },
       { n: 3, text: '-Os 以縮小體積為最佳化目標，適合對大小敏感的嵌入式或發佈情境。' },
       { n: 4, text: 'strip 移除符號與除錯資訊，顯著縮小檔案，但會降低可除錯性。' },
       { n: 5, text: 'size 顯示各區段大小，bloaty 進一步歸因到符號／編譯單元，找出膨脹來源。' },
@@ -39,18 +44,15 @@ size app ; bloaty app                                      # [5]`,
   deepDive: [
     {
       heading: '膨脹來源的歸因',
-      body:
-        '二進位膨脹來自樣板實例化、RTTI 資訊、例外處理表、除錯資訊與靜態連結的函式庫。以 `bloaty` 可把體積歸因到符號與編譯單元，`nm --size-sort`、`size` 提供區段層級檢視。\n\n先量測再動手，避免憑感覺最佳化；很多時候最大宗其實是除錯資訊或某個被大量實例化的樣板。',
+      body: '二進位膨脹來自樣板實例化、RTTI 資訊、例外處理表、除錯資訊與靜態連結的函式庫。以 `bloaty` 可把體積歸因到符號與編譯單元，`nm --size-sort`、`size` 提供區段層級檢視。\n\n先量測再動手，避免憑感覺最佳化；很多時候最大宗其實是除錯資訊或某個被大量實例化的樣板。',
     },
     {
       heading: '縮減手段與其代價',
-      body:
-        '`-fvisibility=hidden` 縮小動態符號表並促成更多最佳化；`-ffunction-sections -fdata-sections` 搭配 `--gc-sections` 移除未用區段；LTO 跨單元去死碼；`-Os` 以體積為目標；`extern template` 減少重複實例化。\n\n`-fno-rtti`／`-fno-exceptions` 能顯著瘦身，但會破壞倚賴它們的函式庫（含部分標準庫設施），僅適合完全掌控的程式碼庫。',
+      body: '`-fvisibility=hidden` 縮小動態符號表並促成更多最佳化；`-ffunction-sections -fdata-sections` 搭配 `--gc-sections` 移除未用區段；LTO 跨單元去死碼；`-Os` 以體積為目標；`extern template` 減少重複實例化。\n\n`-fno-rtti`／`-fno-exceptions` 能顯著瘦身，但會破壞倚賴它們的函式庫（含部分標準庫設施），僅適合完全掌控的程式碼庫。',
     },
     {
       heading: '嵌入式與 freestanding 考量',
-      body:
-        '嵌入式環境常在 freestanding 模式下運作，關閉例外與 RTTI、限制動態配置與靜態初始化，並關注 ROM／RAM 佔用。此時樣板膨脹與靜態建構子的成本尤其敏感。\n\n跨共享函式庫時，符號可見性策略必須一致，否則會出現重複符號或非預期的介面暴露。',
+      body: '嵌入式環境常在 freestanding 模式下運作，關閉例外與 RTTI、限制動態配置與靜態初始化，並關注 ROM／RAM 佔用。此時樣板膨脹與靜態建構子的成本尤其敏感。\n\n跨共享函式庫時，符號可見性策略必須一致，否則會出現重複符號或非預期的介面暴露。',
     },
   ],
   pitfalls: [
@@ -109,8 +111,7 @@ size app ; bloaty app                                      # [5]`,
   diagram: {
     key: 'generic-flow',
     nodes: ['符號可見性', 'strip', 'LTO', 'template bloat'],
-    caption:
-      '縮減二進位體積的槓桿：控制符號可見性、strip 符號、以 LTO 移除死碼，並抑制樣板膨脹。',
+    caption: '縮減二進位體積的槓桿：控制符號可見性、strip 符號、以 LTO 移除死碼，並抑制樣板膨脹。',
   },
   tryIt: {
     code: `#include <iostream>
@@ -119,22 +120,22 @@ size app ; bloaty app                                      # [5]`,
 // 抽出與型別無關的共通實作到非樣板函式，減少樣板膨脹。
 namespace detail {
 std::size_t countPositive(const int* p, std::size_t n) {
-    std::size_t c = 0;
-    for (std::size_t i = 0; i < n; ++i)
-        if (p[i] > 0) ++c;
-    return c;
+  std::size_t c = 0;
+  for (std::size_t i = 0; i < n; ++i)
+    if (p[i] > 0) ++c;
+  return c;
 }
 }  // namespace detail
 
 template <class Container>
 std::size_t countPositive(const Container& c) {
-    return detail::countPositive(c.data(), c.size());  // 薄樣板包裝
+  return detail::countPositive(c.data(), c.size());  // 薄樣板包裝
 }
 
 int main() {
-    std::vector<int> v{-1, 2, -3, 4, 5};
-    std::cout << "positive = " << countPositive(v) << '\\n';
-    return 0;
+  std::vector<int> v{-1, 2, -3, 4, 5};
+  std::cout << "positive = " << countPositive(v) << '\\n';
+  return 0;
 }`,
   },
   furtherReading: [

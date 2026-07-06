@@ -10,10 +10,7 @@ import ExecutionPolicies from './ExecutionPolicies';
 import HappensBefore from './HappensBefore';
 import GenericFlow from './GenericFlow';
 
-export const kDiagramRegistry: Record<
-  DiagramKey,
-  ComponentType<DiagramComponentProps>
-> = {
+export const kDiagramRegistry: Record<DiagramKey, ComponentType<DiagramComponentProps>> = {
   'thread-timeline': ThreadTimeline,
   'memory-ladder': MemoryLadder,
   'cache-line': CacheLineVisualizer,

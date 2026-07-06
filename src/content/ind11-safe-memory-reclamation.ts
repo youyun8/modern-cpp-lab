@@ -9,8 +9,7 @@ const ind11SafeMemoryReclamation: ChapterContent = {
     'Hazard Pointers 與 RCU（C++26 標準化方向）、epoch-based reclamation，以及 shared_ptr 原子操作的真實代價。',
   concept: {
     standard: 'C++26',
-    body:
-      '無鎖資料結構把節點從結構「摘除」很容易，難的是「何時真正釋放」：其他執行緒可能仍持有指向該節點的原始指標，直接 delete 會造成釋放後使用（use-after-free）。安全記憶體回收（Safe Memory Reclamation, SMR）就是解決「延後釋放直到確定沒有人在看」的一族技術，主流做法有三：hazard pointers（每個執行緒公告自己正在存取的指標）、epoch-based reclamation（以全域世代計數器界定安全區間）、RCU（read-copy-update，讀路徑幾乎零開銷，寫路徑等待寬限期）。C++26 正朝著把 hazard pointer 與 RCU 風格 API 標準化的方向推進（P2530／P2545 等提案），但目前主流生產環境仍仰賴 folly::hazptr、libcds、URCU 等第三方函式庫。另一條「看似安全」的捷徑是 std::atomic<std::shared_ptr<T>>，它用控制區塊的原子引用計數換取記憶體安全，但代價往往讓熱路徑無鎖結構得不償失。',
+    body: '無鎖資料結構把節點從結構「摘除」很容易，難的是「何時真正釋放」：其他執行緒可能仍持有指向該節點的原始指標，直接 delete 會造成釋放後使用（use-after-free）。安全記憶體回收（Safe Memory Reclamation, SMR）就是解決「延後釋放直到確定沒有人在看」的一族技術，主流做法有三：hazard pointers（每個執行緒公告自己正在存取的指標）、epoch-based reclamation（以全域世代計數器界定安全區間）、RCU（read-copy-update，讀路徑幾乎零開銷，寫路徑等待寬限期）。C++26 正朝著把 hazard pointer 與 RCU 風格 API 標準化的方向推進（P2530／P2545 等提案），但目前主流生產環境仍仰賴 folly::hazptr、libcds、URCU 等第三方函式庫。另一條「看似安全」的捷徑是 std::atomic<std::shared_ptr<T>>，它用控制區塊的原子引用計數換取記憶體安全，但代價往往讓熱路徑無鎖結構得不償失。',
   },
   code: {
     lang: 'cpp',
@@ -21,49 +20,53 @@ const ind11SafeMemoryReclamation: ChapterContent = {
 // 極簡 hazard pointer：固定大小的公告陣列，每個執行緒一個槽。 [1]
 template <typename T, int MaxThreads = 64>
 class HazardPointerDomain {
-public:
-    T* protect(std::atomic<T*>& source) {
-        T* ptr;
-        do {
-            ptr = source.load(std::memory_order_acquire);
-            slot(hazard_slot()).store(ptr, std::memory_order_release);  // [2]
-            // 重讀一次，避免公告完成前 source 已被更新又被回收。 [3]
-        } while (ptr != source.load(std::memory_order_acquire));
-        return ptr;
+ public:
+  T* protect(std::atomic<T*>& source) {
+    T* ptr;
+    do {
+      ptr = source.load(std::memory_order_acquire);
+      slot(hazard_slot()).store(ptr, std::memory_order_release);  // [2]
+      // 重讀一次，避免公告完成前 source 已被更新又被回收。 [3]
+    } while (ptr != source.load(std::memory_order_acquire));
+    return ptr;
+  }
+
+  void clear() {
+    slot(hazard_slot()).store(nullptr, std::memory_order_release);  // [4]
+  }
+
+  bool is_protected(T* ptr) const {
+    for (auto& h : slots_) {
+      if (h.load(std::memory_order_acquire) == ptr) return true;  // [5]
     }
+    return false;
+  }
 
-    void clear() {
-        slot(hazard_slot()).store(nullptr, std::memory_order_release);  // [4]
-    }
+ private:
+  static int hazard_slot() {
+    static thread_local int id =
+        next_id_.fetch_add(1, std::memory_order_relaxed);
+    return id;
+  }
 
-    bool is_protected(T* ptr) const {
-        for (auto& h : slots_) {
-            if (h.load(std::memory_order_acquire) == ptr) return true;  // [5]
-        }
-        return false;
-    }
+  std::atomic<T*>& slot(int i) { return slots_[i]; }
 
-private:
-    static int hazard_slot() {
-        static thread_local int id = next_id_.fetch_add(1, std::memory_order_relaxed);
-        return id;
-    }
-
-    std::atomic<T*>& slot(int i) { return slots_[i]; }
-
-    std::array<std::atomic<T*>, MaxThreads> slots_{};
-    static inline std::atomic<int> next_id_{0};
+  std::array<std::atomic<T*>, MaxThreads> slots_{};
+  static inline std::atomic<int> next_id_{0};
 };
 
 // 使用範例：pop 前先「保護」節點，讀完再清除公告。 [6]
 template <typename T>
 struct Node {
-    T value;
-    Node* next;
+  T value;
+  Node* next;
 };`,
     callouts: [
       { n: 1, text: '每個執行緒對應公告陣列中的一個槽，用來宣告「目前我正指向哪個節點」。' },
-      { n: 2, text: '把讀到的指標寫入自己的槽，向其他執行緒（尤其是回收者）公告：這個節點正被使用。' },
+      {
+        n: 2,
+        text: '把讀到的指標寫入自己的槽，向其他執行緒（尤其是回收者）公告：這個節點正被使用。',
+      },
       { n: 3, text: '公告後必須重讀 source，確認節點在公告完成前沒有被別的執行緒搶先摘除並回收。' },
       { n: 4, text: '用完節點後清空自己的槽，讓回收者知道可以考慮釋放這個節點了。' },
       { n: 5, text: '回收者釋放某節點前，必須掃過所有槽確認沒有任何執行緒仍公告該指標。' },
@@ -73,23 +76,19 @@ struct Node {
   deepDive: [
     {
       heading: '回收問題回顧與 hazard pointers 機制',
-      body:
-        '`lab-lock-free` 範例的 push 從未真正釋放節點——這是刻意簡化，因為一旦支援 pop 並釋放節點，就必須回答「其他執行緒此刻是否仍持有指向這個節點的指標？」直接 `delete` 可能導致某執行緒正在讀取已被釋放的記憶體。\n\nHazard pointers 的做法是：每個執行緒維護一小組「公告槽」，在解參考某個共享指標之前，先把該指標寫入自己的槽（`publish`），並重新確認指標未變；用完之後清空槽（`clear`）。想回收某節點的執行緒（reclaimer）在真正 `delete` 前，必須掃描所有執行緒的公告槽，確認沒有人仍在使用該指標，否則就把它放進「待回收清單」延後處理。優點是回收延遲有界、不需要全域同步點；缺點是每次讀取都要付出一次額外的原子寫入與重讀。',
+      body: '`lab-lock-free` 範例的 push 從未真正釋放節點——這是刻意簡化，因為一旦支援 pop 並釋放節點，就必須回答「其他執行緒此刻是否仍持有指向這個節點的指標？」直接 `delete` 可能導致某執行緒正在讀取已被釋放的記憶體。\n\nHazard pointers 的做法是：每個執行緒維護一小組「公告槽」，在解參考某個共享指標之前，先把該指標寫入自己的槽（`publish`），並重新確認指標未變；用完之後清空槽（`clear`）。想回收某節點的執行緒（reclaimer）在真正 `delete` 前，必須掃描所有執行緒的公告槽，確認沒有人仍在使用該指標，否則就把它放進「待回收清單」延後處理。優點是回收延遲有界、不需要全域同步點；缺點是每次讀取都要付出一次額外的原子寫入與重讀。',
     },
     {
       heading: 'Epoch-based reclamation 機制',
-      body:
-        'Epoch-based reclamation（EBR，Crossbeam／RCU 系列設計常見手法）改用「世代計數器」取代逐指標公告。系統維護一個全域 epoch（通常只有幾個值，例如 0/1/2 循環），每個執行緒進入臨界區時記錄自己目前所在的全域 epoch 作為 local epoch；離開臨界區則清除。\n\n當節點被摘除時，會連同「當時的全域 epoch」一起放入待回收清單（retire）。回收者只需確認所有執行緒的 local epoch 都已經前進到超過該節點被摘除時的 epoch，就能安全釋放整批節點——不用逐一比對指標。優點是攤銷成本低、實作單純；代價是回收具有「批次延遲」（要等到 epoch 前進），且若某執行緒長時間停留在同一 epoch（例如被搶佔或掛住），會讓所有待回收節點無限期堆積。',
+      body: 'Epoch-based reclamation（EBR，Crossbeam／RCU 系列設計常見手法）改用「世代計數器」取代逐指標公告。系統維護一個全域 epoch（通常只有幾個值，例如 0/1/2 循環），每個執行緒進入臨界區時記錄自己目前所在的全域 epoch 作為 local epoch；離開臨界區則清除。\n\n當節點被摘除時，會連同「當時的全域 epoch」一起放入待回收清單（retire）。回收者只需確認所有執行緒的 local epoch 都已經前進到超過該節點被摘除時的 epoch，就能安全釋放整批節點——不用逐一比對指標。優點是攤銷成本低、實作單純；代價是回收具有「批次延遲」（要等到 epoch 前進），且若某執行緒長時間停留在同一 epoch（例如被搶佔或掛住），會讓所有待回收節點無限期堆積。',
     },
     {
       heading: 'RCU 概念與 C++26 標準化方向',
-      body:
-        'RCU（Read-Copy-Update）是 epoch 思路的極致優化版本，專為「讀多寫少」場景設計：讀者完全不需要任何同步原語（甚至連原子操作都省略，靠編譯器屏障即可），寫者則透過「先複製、修改副本、再原子性地切換指標」的方式更新資料，並等待一個「寬限期（grace period）」——確保所有在切換前就已經開始的讀取都已結束——才釋放舊版本。這使 RCU 在 Linux 核心等讀路徑極熱的場景中幾乎零開銷，但寫路徑成本較高，且不適合寫頻繁的場景。\n\nC++ 標準委員會的並行工作組已提出多項提案（如 P2530 Hazard Pointer for C++26、P2545 RCU 相關方向）希望把 hazard pointer 與 RCU 風格 API 納入標準庫，讓開發者不必依賴第三方函式庫即可取得經過驗證、可移植的安全記憶體回收機制。截至目前，這些仍在提案／實驗階段，生產程式碼仍普遍倚賴 folly::hazptr、libcds、liburcu 等成熟實作。',
+      body: 'RCU（Read-Copy-Update）是 epoch 思路的極致優化版本，專為「讀多寫少」場景設計：讀者完全不需要任何同步原語（甚至連原子操作都省略，靠編譯器屏障即可），寫者則透過「先複製、修改副本、再原子性地切換指標」的方式更新資料，並等待一個「寬限期（grace period）」——確保所有在切換前就已經開始的讀取都已結束——才釋放舊版本。這使 RCU 在 Linux 核心等讀路徑極熱的場景中幾乎零開銷，但寫路徑成本較高，且不適合寫頻繁的場景。\n\nC++ 標準委員會的並行工作組已提出多項提案（如 P2530 Hazard Pointer for C++26、P2545 RCU 相關方向）希望把 hazard pointer 與 RCU 風格 API 納入標準庫，讓開發者不必依賴第三方函式庫即可取得經過驗證、可移植的安全記憶體回收機制。截至目前，這些仍在提案／實驗階段，生產程式碼仍普遍倚賴 folly::hazptr、libcds、liburcu 等成熟實作。',
     },
     {
       heading: 'std::shared_ptr 原子操作的真實代價',
-      body:
-        'C++20 起可用 `std::atomic<std::shared_ptr<T>>`（或更早的 `std::atomic_load`/`atomic_store` 自由函式）讓多執行緒安全地讀寫同一個 shared_ptr，藉由控制區塊的原子引用計數自動延後釋放，直覺上正是「安全記憶體回收」的現成解法。\n\n但代價不小：每次複製 shared_ptr 都牽涉控制區塊的原子 increment，釋放則是原子 decrement 並在歸零時觸發刪除器；在高競爭的熱路徑上，這些原子 RMW 操作會造成快取行來回彈跳（cache-line ping-pong），且控制區塊本身往往落在與節點資料不同的快取行，進一步增加記憶體流量。相較之下，hazard pointers 或 epoch-based reclamation 把「公告成本」限制在讀取路徑的一次原子寫入，回收成本則攤銷到背景批次處理，通常比 shared_ptr 的逐次原子引用計數快上一個數量級。因此在效能敏感的無鎖資料結構中，shared_ptr 更適合作為「正確性優先、頻率不高」的兜底方案，而非熱路徑的預設選擇。',
+      body: 'C++20 起可用 `std::atomic<std::shared_ptr<T>>`（或更早的 `std::atomic_load`/`atomic_store` 自由函式）讓多執行緒安全地讀寫同一個 shared_ptr，藉由控制區塊的原子引用計數自動延後釋放，直覺上正是「安全記憶體回收」的現成解法。\n\n但代價不小：每次複製 shared_ptr 都牽涉控制區塊的原子 increment，釋放則是原子 decrement 並在歸零時觸發刪除器；在高競爭的熱路徑上，這些原子 RMW 操作會造成快取行來回彈跳（cache-line ping-pong），且控制區塊本身往往落在與節點資料不同的快取行，進一步增加記憶體流量。相較之下，hazard pointers 或 epoch-based reclamation 把「公告成本」限制在讀取路徑的一次原子寫入，回收成本則攤銷到背景批次處理，通常比 shared_ptr 的逐次原子引用計數快上一個數量級。因此在效能敏感的無鎖資料結構中，shared_ptr 更適合作為「正確性優先、頻率不高」的兜底方案，而非熱路徑的預設選擇。',
     },
   ],
   pitfalls: [
@@ -111,7 +110,10 @@ struct Node {
       id: 'q1',
       stem: 'Hazard pointers 主要透過什麼機制避免釋放後使用？',
       options: [
-        { id: 'a', text: '每個執行緒公告自己正在存取的指標，回收者釋放前確認沒有任何公告指向該節點' },
+        {
+          id: 'a',
+          text: '每個執行緒公告自己正在存取的指標，回收者釋放前確認沒有任何公告指向該節點',
+        },
         { id: 'b', text: '把所有記憶體配置改成靜態陣列，永不釋放' },
         { id: 'c', text: '用互斥鎖保護每一次指標讀取' },
         { id: 'd', text: '編譯器自動偵測並延後所有 delete 呼叫' },
@@ -138,7 +140,10 @@ struct Node {
       stem: '為什麼 std::atomic<std::shared_ptr<T>> 儘管記憶體安全，卻常常不適合熱路徑的無鎖資料結構？',
       options: [
         { id: 'a', text: '因為 shared_ptr 不支援多執行緒環境，會直接產生未定義行為' },
-        { id: 'b', text: '因為每次複製／釋放都牽涉控制區塊的原子引用計數操作，在高競爭下造成明顯的快取行彈跳與延遲' },
+        {
+          id: 'b',
+          text: '因為每次複製／釋放都牽涉控制區塊的原子引用計數操作，在高競爭下造成明顯的快取行彈跳與延遲',
+        },
         { id: 'c', text: '因為 shared_ptr 在 C++20 之前完全無法用於原子操作' },
         { id: 'd', text: '因為 shared_ptr 會強制使用互斥鎖而非原子操作' },
       ],
@@ -160,44 +165,47 @@ struct Node {
 #include <thread>
 #include <vector>
 
-// 簡化示範：用一個公告槽陣列模擬 hazard pointer 的「保護 -> 使用 -> 清除」流程。
+// 簡化示範：用一個公告槽陣列模擬 hazard pointer 的「保護 -> 使用 ->
+// 清除」流程。
 constexpr int kMaxThreads = 4;
 std::array<std::atomic<int*>, kMaxThreads> hazard_slots{};
 
 int* protect(std::atomic<int*>& source, int slot) {
-    int* ptr;
-    do {
-        ptr = source.load(std::memory_order_acquire);
-        hazard_slots[slot].store(ptr, std::memory_order_release);
-    } while (ptr != source.load(std::memory_order_acquire));
-    return ptr;
+  int* ptr;
+  do {
+    ptr = source.load(std::memory_order_acquire);
+    hazard_slots[slot].store(ptr, std::memory_order_release);
+  } while (ptr != source.load(std::memory_order_acquire));
+  return ptr;
 }
 
-void clear(int slot) { hazard_slots[slot].store(nullptr, std::memory_order_release); }
+void clear(int slot) {
+  hazard_slots[slot].store(nullptr, std::memory_order_release);
+}
 
 bool is_protected(int* ptr) {
-    for (auto& h : hazard_slots) {
-        if (h.load(std::memory_order_acquire) == ptr) return true;
-    }
-    return false;
+  for (auto& h : hazard_slots) {
+    if (h.load(std::memory_order_acquire) == ptr) return true;
+  }
+  return false;
 }
 
 int main() {
-    std::atomic<int*> shared_node{new int{42}};
+  std::atomic<int*> shared_node{new int{42}};
 
-    std::thread reader([&] {
-        int* p = protect(shared_node, /*slot=*/0);
-        std::cout << "reader sees value = " << *p << "\\n";
-        clear(0);
-    });
-    reader.join();
+  std::thread reader([&] {
+    int* p = protect(shared_node, /*slot=*/0);
+    std::cout << "reader sees value = " << *p << "\\n";
+    clear(0);
+  });
+  reader.join();
 
-    int* node = shared_node.load();
-    if (!is_protected(node)) {
-        delete node;  // 沒有任何執行緒公告該指標，可安全釋放。
-        std::cout << "node safely reclaimed\\n";
-    }
-    return 0;
+  int* node = shared_node.load();
+  if (!is_protected(node)) {
+    delete node;  // 沒有任何執行緒公告該指標，可安全釋放。
+    std::cout << "node safely reclaimed\\n";
+  }
+  return 0;
 }`,
   },
   furtherReading: [
@@ -209,7 +217,8 @@ int main() {
     {
       title: 'libcds — Concurrent Data Structures library',
       href: 'https://github.com/khizmax/libcds',
-      description: '涵蓋 hazard pointers、epoch-based (RCU-like) 回收策略的 C++ 無鎖資料結構函式庫。',
+      description:
+        '涵蓋 hazard pointers、epoch-based (RCU-like) 回收策略的 C++ 無鎖資料結構函式庫。',
     },
     {
       title: 'What is RCU, Fundamentally? — LWN.net',

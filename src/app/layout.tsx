@@ -36,11 +36,7 @@ export const metadata: Metadata = {
     '以 Federico Busato 的「Modern C++ Programming」課程為基礎，聚焦平行化、並行與效能最佳化的互動式繁體中文學習網站。',
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="zh-Hant"

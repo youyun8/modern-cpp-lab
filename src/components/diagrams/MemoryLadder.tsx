@@ -69,12 +69,7 @@ export default function MemoryLadder(_props: DiagramComponentProps) {
               className={isHover ? 'fill-accent' : 'fill-accent-soft stroke-accent'}
               strokeWidth={1}
             />
-            <text
-              x={kBarX + w + 8}
-              y={y + 26}
-              className="fill-content-muted"
-              fontSize={13}
-            >
+            <text x={kBarX + w + 8} y={y + 26} className="fill-content-muted" fontSize={13}>
               {lvl.ns < 1000 ? `${lvl.ns} ns` : `${lvl.ns / 1000} µs`}
             </text>
             {isHover && (

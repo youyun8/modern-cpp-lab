@@ -9,8 +9,7 @@ const ch03BasicConceptsI: ChapterContent = {
     'C++ 型別系統、基本型別與運算子的入門介紹，說明靜態型別、值類別與運算式如何構成程式的骨架。',
   concept: {
     standard: 'C++23',
-    body:
-      'C++ 是靜態強型別語言：每個運算式在編譯期都有確定的型別，編譯器據此檢查與生成程式碼。基本型別分為整數（含 bool、char）、浮點數與 void；由它們可組出指標、參考、陣列、列舉與類別等複合型別。宣告時優先使用固定寬度型別（如 std::int32_t）或 auto 讓編譯器推導，避免依賴平台相依的 int 大小。運算子有優先順序與結合性，並區分左值（有身分、可取址）與右值（暫時值）。理解 sizeof、隱式轉換與整數提升，是避免細微錯誤的第一步。',
+    body: 'C++ 是靜態強型別語言：每個運算式在編譯期都有確定的型別，編譯器據此檢查與生成程式碼。基本型別分為整數（含 bool、char）、浮點數與 void；由它們可組出指標、參考、陣列、列舉與類別等複合型別。宣告時優先使用固定寬度型別（如 std::int32_t）或 auto 讓編譯器推導，避免依賴平台相依的 int 大小。運算子有優先順序與結合性，並區分左值（有身分、可取址）與右值（暫時值）。理解 sizeof、隱式轉換與整數提升，是避免細微錯誤的第一步。',
   },
   code: {
     lang: 'cpp',
@@ -19,19 +18,23 @@ const ch03BasicConceptsI: ChapterContent = {
 #include <type_traits>
 
 int main() {
-    auto a = 42;                           // [1] 推導為 int
-    std::int64_t big = 1'000'000'000'000;  // [2] 固定寬度，數字分隔符
-    constexpr double pi = 3.14159;         // [3] 編譯期常數
-    bool flag = a > 10;                    // [4] 關係運算子產生 bool
+  auto a = 42;                           // [1] 推導為 int
+  std::int64_t big = 1'000'000'000'000;  // [2] 固定寬度，數字分隔符
+  constexpr double pi = 3.14159;         // [3] 編譯期常數
+  bool flag = a > 10;                    // [4] 關係運算子產生 bool
 
-    static_assert(std::is_same_v<decltype(a), int>);  // [5] 編譯期型別檢查
+  static_assert(std::is_same_v<decltype(a), int>);  // [5] 編譯期型別檢查
 
-    std::println("sizeof(int)={}, sizeof(int64)={}, flag={}", sizeof(a), sizeof(big), flag);
-    return 0;
+  std::println("sizeof(int)={}, sizeof(int64)={}, flag={}", sizeof(a),
+               sizeof(big), flag);
+  return 0;
 }`,
     callouts: [
       { n: 1, text: 'auto 讓編譯器由初始值推導型別；此處字面值 42 為 int。' },
-      { n: 2, text: 'std::int64_t 是固定 64 位元整數；數字中的單引號為數字分隔符，僅助讀不影響值。' },
+      {
+        n: 2,
+        text: 'std::int64_t 是固定 64 位元整數；數字中的單引號為數字分隔符，僅助讀不影響值。',
+      },
       { n: 3, text: 'constexpr 宣告編譯期常數，可用於陣列大小、樣板參數等常數運算式脈絡。' },
       { n: 4, text: '關係運算子（>、==）回傳 bool；C++ 的 bool 為獨立型別而非整數別名。' },
       { n: 5, text: 'static_assert 搭配 type traits 在編譯期驗證型別，錯誤會直接讓編譯失敗。' },
@@ -40,18 +43,15 @@ int main() {
   deepDive: [
     {
       heading: 'auto、decltype 與型別推導的細節',
-      body:
-        '`auto` 會捨棄頂層 const 與參考（`auto x = ref;` 得到值複本），需要保留時用 `auto&`、`const auto&` 或 `decltype(auto)`。`decltype(expr)` 保留運算式的完整型別與值類別，`decltype((x))`（多一層括號）會得到參考。\n\n泛型程式中，回傳轉發時常用 `decltype(auto)` 以精準保留 const／參考。理解這些規則能避免「不小心複製了大型物件」或「回傳懸置參考」等常見錯誤。',
+      body: '`auto` 會捨棄頂層 const 與參考（`auto x = ref;` 得到值複本），需要保留時用 `auto&`、`const auto&` 或 `decltype(auto)`。`decltype(expr)` 保留運算式的完整型別與值類別，`decltype((x))`（多一層括號）會得到參考。\n\n泛型程式中，回傳轉發時常用 `decltype(auto)` 以精準保留 const／參考。理解這些規則能避免「不小心複製了大型物件」或「回傳懸置參考」等常見錯誤。',
     },
     {
       heading: '隱式轉換、窄化與求值順序',
-      body:
-        '算術運算前會發生整數提升與 usual arithmetic conversions，可能悄悄改變型別與符號。大括號初始化 `{}` 會禁止窄化轉換（如 `int x{3.5}` 直接報錯），因此優先採用。\n\n運算元的求值順序在多數運算子上是未定序的（unsequenced）；`f(i++, i++)` 這類程式碼是未定義或未指定行為。C++17 收緊了部分順序規則，但仍不應依賴子運算式的相對求值順序。',
+      body: '算術運算前會發生整數提升與 usual arithmetic conversions，可能悄悄改變型別與符號。大括號初始化 `{}` 會禁止窄化轉換（如 `int x{3.5}` 直接報錯），因此優先採用。\n\n運算元的求值順序在多數運算子上是未定序的（unsequenced）；`f(i++, i++)` 這類程式碼是未定義或未指定行為。C++17 收緊了部分順序規則，但仍不應依賴子運算式的相對求值順序。',
     },
     {
       heading: 'sizeof、對齊與可攜性',
-      body:
-        '物件大小含對齊填充（padding），`sizeof`／`alignof` 反映此事實；重排成員可縮小結構體。在序列化、網路協定或與硬體暫存器互動時，應使用 `<cstdint>` 的固定寬度型別，並留意位元組序（endianness）。\n\n`char` 的符號性是實作定義；表示原始位元組應用 `std::byte` 或 `unsigned char`，而非 `char`。這些細節在跨平台 ABI 與二進位相容性上至關重要。',
+      body: '物件大小含對齊填充（padding），`sizeof`／`alignof` 反映此事實；重排成員可縮小結構體。在序列化、網路協定或與硬體暫存器互動時，應使用 `<cstdint>` 的固定寬度型別，並留意位元組序（endianness）。\n\n`char` 的符號性是實作定義；表示原始位元組應用 `std::byte` 或 `unsigned char`，而非 `char`。這些細節在跨平台 ABI 與二進位相容性上至關重要。',
     },
   ],
   pitfalls: [
@@ -110,19 +110,19 @@ int main() {
   diagram: {
     key: 'generic-flow',
     nodes: ['基本型別', '複合型別', '運算子', '運算式'],
-    caption:
-      '型別系統的層層堆疊：基本型別組成複合型別，再透過運算子構成有型別的運算式。',
+    caption: '型別系統的層層堆疊：基本型別組成複合型別，再透過運算子構成有型別的運算式。',
   },
   tryIt: {
     code: `#include <cstdint>
 #include <iostream>
 
 int main() {
-    auto a = 42;
-    std::int64_t big = 1'000'000'000'000;
-    constexpr double pi = 3.14159;
-    std::cout << "int=" << sizeof(a) << " int64=" << sizeof(big) << " pi=" << pi << '\\n';
-    return 0;
+  auto a = 42;
+  std::int64_t big = 1'000'000'000'000;
+  constexpr double pi = 3.14159;
+  std::cout << "int=" << sizeof(a) << " int64=" << sizeof(big) << " pi=" << pi
+            << '\\n';
+  return 0;
 }`,
   },
   furtherReading: [

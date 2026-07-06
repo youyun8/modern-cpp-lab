@@ -9,8 +9,7 @@ const ch17DebuggingTesting: ChapterContent = {
     'Sanitizers、valgrind、單元測試與測試驅動開發（TDD）：如何以工具與紀律及早發現記憶體錯誤與邏輯缺陷。',
   concept: {
     standard: 'C++23',
-    body:
-      '除錯與測試是可靠 C++ 的支柱。編譯期防線包含 -Wall -Wextra 警告與 static_assert；執行期則有 sanitizers：AddressSanitizer（ASan）偵測越界與釋放後使用、UndefinedBehaviorSanitizer（UBSan）偵測有號溢位與無效轉換、ThreadSanitizer（TSan）偵測資料競爭。它們以插樁換取執行速度，適合在測試與 CI 開啟。Valgrind（memcheck）不需重編譯即可偵測記憶體問題，但更慢。測試方面，單元測試框架（GoogleTest、Catch2、doctest）以 assert 式檢查行為；TDD 主張「先寫失敗測試 → 實作到通過 → 重構」的循環，讓設計與回歸防護同時成形。搭配 gdb／lldb 互動除錯可定位崩潰點。',
+    body: '除錯與測試是可靠 C++ 的支柱。編譯期防線包含 -Wall -Wextra 警告與 static_assert；執行期則有 sanitizers：AddressSanitizer（ASan）偵測越界與釋放後使用、UndefinedBehaviorSanitizer（UBSan）偵測有號溢位與無效轉換、ThreadSanitizer（TSan）偵測資料競爭。它們以插樁換取執行速度，適合在測試與 CI 開啟。Valgrind（memcheck）不需重編譯即可偵測記憶體問題，但更慢。測試方面，單元測試框架（GoogleTest、Catch2、doctest）以 assert 式檢查行為；TDD 主張「先寫失敗測試 → 實作到通過 → 重構」的循環，讓設計與回歸防護同時成形。搭配 gdb／lldb 互動除錯可定位崩潰點。',
   },
   code: {
     lang: 'bash',
@@ -27,7 +26,10 @@ valgrind --leak-check=full ./app                               # [4]
 # 執行單元測試（以 CTest 驅動，通常整合於 CMake）
 ctest --output-on-failure                                       # [5]`,
     callouts: [
-      { n: 1, text: 'ASan 偵測越界存取、釋放後使用；UBSan 偵測有號溢位等未定義行為，兩者可同時開啟。' },
+      {
+        n: 1,
+        text: 'ASan 偵測越界存取、釋放後使用；UBSan 偵測有號溢位等未定義行為，兩者可同時開啟。',
+      },
       { n: 2, text: '直接執行插樁後的程式，錯誤發生時會印出精確的位置與呼叫堆疊。' },
       { n: 3, text: 'ThreadSanitizer 偵測資料競爭；因插樁方式不同，不能與 ASan 同時編譯。' },
       { n: 4, text: 'valgrind 不需重新編譯即可分析記憶體，但執行速度顯著較慢，適合離線深入分析。' },
@@ -37,18 +39,15 @@ ctest --output-on-failure                                       # [5]`,
   deepDive: [
     {
       heading: 'Sanitizers 的分工與限制',
-      body:
-        'ASan 抓記憶體越界／釋放後使用／洩漏；UBSan 抓有號溢位、無效轉換等 UB；TSan 抓資料競爭；MSan 抓未初始化讀取。ASan 與 TSan 因插樁方式衝突不可同時使用，且各有 2–10 倍的執行負擔。\n\n實務上在 CI 分別跑 ASan+UBSan 與 TSan 兩種組態。Sanitizer 是動態工具，只能發現實際執行到的路徑上的錯誤，故需搭配良好的測試覆蓋。',
+      body: 'ASan 抓記憶體越界／釋放後使用／洩漏；UBSan 抓有號溢位、無效轉換等 UB；TSan 抓資料競爭；MSan 抓未初始化讀取。ASan 與 TSan 因插樁方式衝突不可同時使用，且各有 2–10 倍的執行負擔。\n\n實務上在 CI 分別跑 ASan+UBSan 與 TSan 兩種組態。Sanitizer 是動態工具，只能發現實際執行到的路徑上的錯誤，故需搭配良好的測試覆蓋。',
     },
     {
       heading: '測試策略與覆蓋率',
-      body:
-        '分層測試：單元測試隔離邏輯、整合測試驗證元件互動。善用 fixtures、參數化測試與 property-based testing 擴大輸入空間；以 mock／fake 隔離外部相依。以 `gcov`／`llvm-cov` 量測覆蓋率，但覆蓋率高不等於測得好。\n\n測試必須具決定性：固定亂數種子、避免相依於時間或執行緒排程，否則會產生難以重現的偶發失敗。',
+      body: '分層測試：單元測試隔離邏輯、整合測試驗證元件互動。善用 fixtures、參數化測試與 property-based testing 擴大輸入空間；以 mock／fake 隔離外部相依。以 `gcov`／`llvm-cov` 量測覆蓋率，但覆蓋率高不等於測得好。\n\n測試必須具決定性：固定亂數種子、避免相依於時間或執行緒排程，否則會產生難以重現的偶發失敗。',
     },
     {
       heading: '進階除錯技術',
-      body:
-        '`gdb`／`lldb` 提供斷點、watchpoint 與事後分析 core dump 的能力。對難以重現的 bug，`rr`（record-and-replay）可錄製一次執行並反覆回放、甚至反向執行。\n\n斷言（`assert`）在 `NDEBUG` 下會被移除，因此不可把有副作用的檢查放進 `assert`；關鍵不變量可用永遠啟用的檢查或日誌輔助定位。',
+      body: '`gdb`／`lldb` 提供斷點、watchpoint 與事後分析 core dump 的能力。對難以重現的 bug，`rr`（record-and-replay）可錄製一次執行並反覆回放、甚至反向執行。\n\n斷言（`assert`）在 `NDEBUG` 下會被移除，因此不可把有副作用的檢查放進 `assert`；關鍵不變量可用永遠啟用的檢查或日誌輔助定位。',
     },
   ],
   pitfalls: [
@@ -118,10 +117,10 @@ int add(int a, int b) { return a + b; }
 
 // 迷你單元測試：以 assert 驗證行為。以 -fsanitize=undefined 編譯更佳。
 int main() {
-    assert(add(2, 3) == 5);
-    assert(add(-1, 1) == 0);
-    std::cout << "all tests passed\\n";
-    return 0;
+  assert(add(2, 3) == 5);
+  assert(add(-1, 1) == 0);
+  std::cout << "all tests passed\\n";
+  return 0;
 }`,
   },
   furtherReading: [

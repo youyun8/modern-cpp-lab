@@ -8,8 +8,7 @@ const labCoroutines: ChapterContent = {
     'C++20 協程：co_await、co_yield、co_return，generator<T> 與 Task<T> 模式，以及與非同步 I/O 的關係。',
   concept: {
     standard: 'C++20',
-    body:
-      'C++20 協程是可暫停與恢復的函式：只要函式體出現 co_await、co_yield 或 co_return，它就是協程。呼叫時不立即執行完畢，而是在暫停點交還控制權，之後可從原處恢復，其狀態保存在一個協程框架（coroutine frame，通常在 heap，但可被最佳化省略）。co_yield 產生一個值並暫停，是實作惰性 generator<T> 的基礎；co_await 暫停直到某個 awaitable 就緒，是非同步 Task<T> 與 async I/O 的核心；co_return 結束協程並回傳結果。C++20 只提供底層機制（promise_type、awaiter 等），實際的 generator 與 task 型別多由函式庫（如 C++23 的 std::generator、cppcoro、asio）提供。協程讓非同步程式以近似同步的線性風格書寫，避免回呼地獄。',
+    body: 'C++20 協程是可暫停與恢復的函式：只要函式體出現 co_await、co_yield 或 co_return，它就是協程。呼叫時不立即執行完畢，而是在暫停點交還控制權，之後可從原處恢復，其狀態保存在一個協程框架（coroutine frame，通常在 heap，但可被最佳化省略）。co_yield 產生一個值並暫停，是實作惰性 generator<T> 的基礎；co_await 暫停直到某個 awaitable 就緒，是非同步 Task<T> 與 async I/O 的核心；co_return 結束協程並回傳結果。C++20 只提供底層機制（promise_type、awaiter 等），實際的 generator 與 task 型別多由函式庫（如 C++23 的 std::generator、cppcoro、asio）提供。協程讓非同步程式以近似同步的線性風格書寫，避免回呼地獄。',
   },
   code: {
     lang: 'cpp',
@@ -20,39 +19,49 @@ const labCoroutines: ChapterContent = {
 // 一個極簡的惰性 generator：co_yield 逐一產生值並暫停。 [1]
 template <typename T>
 struct Generator {
-    struct promise_type {  // [2] 協程的 promise 型別
-        T current;
-        Generator get_return_object() {
-            return Generator{std::coroutine_handle<promise_type>::from_promise(*this)};
-        }
-        std::suspend_always initial_suspend() { return {}; }  // [3] 一開始即暫停
-        std::suspend_always final_suspend() noexcept { return {}; }
-        std::suspend_always yield_value(T v) {  // [4] co_yield 進入此處
-            current = v;
-            return {};
-        }
-        void return_void() {}
-        void unhandled_exception() { std::terminate(); }
-    };
-
-    std::coroutine_handle<promise_type> h;
-    bool next() {
-        h.resume();
-        return !h.done();
-    }  // [5] 恢復到下一個 yield
-    T value() const { return h.promise().current; }
-    ~Generator() {
-        if (h) h.destroy();
+  struct promise_type {  // [2] 協程的 promise 型別
+    T current;
+    Generator get_return_object() {
+      return Generator{
+          std::coroutine_handle<promise_type>::from_promise(*this)};
     }
+    std::suspend_always initial_suspend() { return {}; }  // [3] 一開始即暫停
+    std::suspend_always final_suspend() noexcept { return {}; }
+    std::suspend_always yield_value(T v) {  // [4] co_yield 進入此處
+      current = v;
+      return {};
+    }
+    void return_void() {}
+    void unhandled_exception() { std::terminate(); }
+  };
+
+  std::coroutine_handle<promise_type> h;
+  bool next() {
+    h.resume();
+    return !h.done();
+  }  // [5] 恢復到下一個 yield
+  T value() const { return h.promise().current; }
+  ~Generator() {
+    if (h) h.destroy();
+  }
 };
 
 Generator<int> firstN(int n) {
-    for (int i = 0; i < n; ++i) co_yield i * i;  // 產生平方數，然後暫停
+  for (int i = 0; i < n; ++i) co_yield i* i;  // 產生平方數，然後暫停
 }`,
     callouts: [
-      { n: 1, text: '只要函式使用 co_yield／co_await／co_return，它就是協程，呼叫時不會一次執行到底。' },
-      { n: 2, text: 'promise_type 是協程的控制中樞，定義如何產生回傳物件、如何處理 yield／return 與例外。' },
-      { n: 3, text: 'initial_suspend 回傳 suspend_always，代表協程建立後先暫停，待呼叫端主動恢復。' },
+      {
+        n: 1,
+        text: '只要函式使用 co_yield／co_await／co_return，它就是協程，呼叫時不會一次執行到底。',
+      },
+      {
+        n: 2,
+        text: 'promise_type 是協程的控制中樞，定義如何產生回傳物件、如何處理 yield／return 與例外。',
+      },
+      {
+        n: 3,
+        text: 'initial_suspend 回傳 suspend_always，代表協程建立後先暫停，待呼叫端主動恢復。',
+      },
       { n: 4, text: 'co_yield v 會呼叫 yield_value，把值存入 current 並再次暫停，形成惰性序列。' },
       { n: 5, text: 'resume() 讓協程從上次暫停處繼續，直到下一個 yield 或結束（done()）。' },
     ],
@@ -60,18 +69,15 @@ Generator<int> firstN(int n) {
   deepDive: [
     {
       heading: '協程框架與配置省略',
-      body:
-        '協程的狀態（區域變數、暫停點、promise）存於協程框架，通常在堆積配置。當呼叫端的生命週期涵蓋協程且編譯器能證明時，可套用 HALO（堆積配置省略），把框架放到呼叫端堆疊以消除配置成本。\n\n熱路徑上大量短命協程若無法省略配置，成本可觀；這是設計協程式 API 時需留意的效能面向。',
+      body: '協程的狀態（區域變數、暫停點、promise）存於協程框架，通常在堆積配置。當呼叫端的生命週期涵蓋協程且編譯器能證明時，可套用 HALO（堆積配置省略），把框架放到呼叫端堆疊以消除配置成本。\n\n熱路徑上大量短命協程若無法省略配置，成本可觀；這是設計協程式 API 時需留意的效能面向。',
     },
     {
       heading: 'awaitable 與 awaiter 協定',
-      body:
-        '`co_await expr` 依序呼叫 `await_ready`（是否可略過暫停）、`await_suspend`（暫停時的動作，可回傳待恢復的 handle 以做對稱轉移 symmetric transfer）、`await_resume`（恢復後的回傳值）。\n\n對稱轉移讓協程間切換不增長呼叫堆疊，是實作高效 `Task<T>` 排程的關鍵。理解此協定才能自訂等待語意（如整合事件迴圈或 I/O）。',
+      body: '`co_await expr` 依序呼叫 `await_ready`（是否可略過暫停）、`await_suspend`（暫停時的動作，可回傳待恢復的 handle 以做對稱轉移 symmetric transfer）、`await_resume`（恢復後的回傳值）。\n\n對稱轉移讓協程間切換不增長呼叫堆疊，是實作高效 `Task<T>` 排程的關鍵。理解此協定才能自訂等待語意（如整合事件迴圈或 I/O）。',
     },
     {
       heading: '生命週期與常見陷阱',
-      body:
-        '協程以參考捕獲的參數若在暫停後才使用，而呼叫端的暫時物件已銷毀，會造成懸置——這是協程最惡名昭彰的陷阱。惰性協程（初始即暫停）需呼叫端主動恢復，用完前不可銷毀其 handle。\n\n協程不能是 `constexpr`；例外需在 `promise_type::unhandled_exception` 妥善處理。多數情況應直接使用函式庫型別（`std::generator`、cppcoro、asio）而非手寫。',
+      body: '協程以參考捕獲的參數若在暫停後才使用，而呼叫端的暫時物件已銷毀，會造成懸置——這是協程最惡名昭彰的陷阱。惰性協程（初始即暫停）需呼叫端主動恢復，用完前不可銷毀其 handle。\n\n協程不能是 `constexpr`；例外需在 `promise_type::unhandled_exception` 妥善處理。多數情況應直接使用函式庫型別（`std::generator`、cppcoro、asio）而非手寫。',
     },
   ],
   pitfalls: [
@@ -140,40 +146,41 @@ Generator<int> firstN(int n) {
 
 template <typename T>
 struct Generator {
-    struct promise_type {
-        T current;
-        Generator get_return_object() {
-            return Generator{std::coroutine_handle<promise_type>::from_promise(*this)};
-        }
-        std::suspend_always initial_suspend() { return {}; }
-        std::suspend_always final_suspend() noexcept { return {}; }
-        std::suspend_always yield_value(T v) {
-            current = v;
-            return {};
-        }
-        void return_void() {}
-        void unhandled_exception() { std::terminate(); }
-    };
-    std::coroutine_handle<promise_type> h;
-    bool next() {
-        h.resume();
-        return !h.done();
+  struct promise_type {
+    T current;
+    Generator get_return_object() {
+      return Generator{
+          std::coroutine_handle<promise_type>::from_promise(*this)};
     }
-    T value() const { return h.promise().current; }
-    ~Generator() {
-        if (h) h.destroy();
+    std::suspend_always initial_suspend() { return {}; }
+    std::suspend_always final_suspend() noexcept { return {}; }
+    std::suspend_always yield_value(T v) {
+      current = v;
+      return {};
     }
+    void return_void() {}
+    void unhandled_exception() { std::terminate(); }
+  };
+  std::coroutine_handle<promise_type> h;
+  bool next() {
+    h.resume();
+    return !h.done();
+  }
+  T value() const { return h.promise().current; }
+  ~Generator() {
+    if (h) h.destroy();
+  }
 };
 
 Generator<int> squares(int n) {
-    for (int i = 0; i < n; ++i) co_yield i * i;
+  for (int i = 0; i < n; ++i) co_yield i* i;
 }
 
 int main() {
-    auto g = squares(5);
-    while (g.next()) std::cout << g.value() << ' ';
-    std::cout << '\\n';
-    return 0;
+  auto g = squares(5);
+  while (g.next()) std::cout << g.value() << ' ';
+  std::cout << '\\n';
+  return 0;
 }`,
   },
   furtherReading: [

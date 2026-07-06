@@ -5,11 +5,11 @@ const appendixBToolCheatsheet: ChapterContent = {
   chapterLabel: '附錄 B',
   title: '工具速查',
   group: 'T · 附錄',
-  description: 'perf、LIKWID、rocprof、ThreadSanitizer、Google Benchmark、CppMem 等工具的速查與常用指令。',
+  description:
+    'perf、LIKWID、rocprof、ThreadSanitizer、Google Benchmark、CppMem 等工具的速查與常用指令。',
   concept: {
     standard: 'C++20',
-    body:
-      '寫出正確又快速的平行 C++ 程式，光靠語言本身不夠——需要一整套工具鏈驗證正確性與量測效能。剖析工具（perf、LIKWID、rocprof）回答「時間花在哪裡」；消毒器（ThreadSanitizer、AddressSanitizer）回答「有沒有資料競爭或記憶體錯誤」；微基準框架（Google Benchmark）回答「這段程式碼實際多快、多穩定」；CppMem 這類形式化工具則回答「在給定的記憶體序下，這段程式碼所有合法結果是什麼」。這些工具彼此互補，涵蓋開發生命週期的不同階段：先以消毒器確保正確性，再以剖析工具找出熱點，最後以微基準驗證優化成效，CppMem 則用於釐清記憶體模型的邊界情況。本附錄以 C++20 的工具鏈慣例整理各工具的核心指令。',
+    body: '寫出正確又快速的平行 C++ 程式，光靠語言本身不夠——需要一整套工具鏈驗證正確性與量測效能。剖析工具（perf、LIKWID、rocprof）回答「時間花在哪裡」；消毒器（ThreadSanitizer、AddressSanitizer）回答「有沒有資料競爭或記憶體錯誤」；微基準框架（Google Benchmark）回答「這段程式碼實際多快、多穩定」；CppMem 這類形式化工具則回答「在給定的記憶體序下，這段程式碼所有合法結果是什麼」。這些工具彼此互補，涵蓋開發生命週期的不同階段：先以消毒器確保正確性，再以剖析工具找出熱點，最後以微基準驗證優化成效，CppMem 則用於釐清記憶體模型的邊界情況。本附錄以 C++20 的工具鏈慣例整理各工具的核心指令。',
   },
   code: {
     lang: 'bash',
@@ -32,34 +32,48 @@ TSAN_OPTIONS="halt_on_error=1 second_deadlock_stack=1" ./race  # [5]
 ./bench --benchmark_min_time=1s --benchmark_repetitions=10 \\
         --benchmark_report_aggregates_only=true            # [6]`,
     callouts: [
-      { n: 1, text: 'perf stat 一次列出 IPC、快取未命中率、分支預測失誤率等硬體計數器，用於快速健檢。' },
-      { n: 2, text: 'perf record -g 以取樣方式記錄呼叫堆疊；開銷低，適合觀察熱點在整個呼叫鏈的分布。' },
-      { n: 3, text: 'likwid-perfctr -C 綁定核心、-g 指定計數器群組（如 CACHE、MEM），比 perf 更貼近硬體細節。' },
-      { n: 4, text: 'rocprof 是 AMD ROCm 平台的 GPU 剖析工具，--stats 產生每個 kernel 的耗時彙總。' },
-      { n: 5, text: 'TSAN_OPTIONS 可控制 TSan 行為，例如發現錯誤即中止、印出死鎖相關的第二條堆疊。' },
-      { n: 6, text: '--benchmark_min_time 確保每個基準跑滿足夠時間以降低雜訊；--benchmark_repetitions 重複多次取統計量。' },
+      {
+        n: 1,
+        text: 'perf stat 一次列出 IPC、快取未命中率、分支預測失誤率等硬體計數器，用於快速健檢。',
+      },
+      {
+        n: 2,
+        text: 'perf record -g 以取樣方式記錄呼叫堆疊；開銷低，適合觀察熱點在整個呼叫鏈的分布。',
+      },
+      {
+        n: 3,
+        text: 'likwid-perfctr -C 綁定核心、-g 指定計數器群組（如 CACHE、MEM），比 perf 更貼近硬體細節。',
+      },
+      {
+        n: 4,
+        text: 'rocprof 是 AMD ROCm 平台的 GPU 剖析工具，--stats 產生每個 kernel 的耗時彙總。',
+      },
+      {
+        n: 5,
+        text: 'TSAN_OPTIONS 可控制 TSan 行為，例如發現錯誤即中止、印出死鎖相關的第二條堆疊。',
+      },
+      {
+        n: 6,
+        text: '--benchmark_min_time 確保每個基準跑滿足夠時間以降低雜訊；--benchmark_repetitions 重複多次取統計量。',
+      },
     ],
   },
   deepDive: [
     {
       heading: '剖析三劍客：perf、LIKWID、rocprof',
-      body:
-        'perf 是 Linux 內建的通用取樣剖析工具，不需重新編譯即可用。`perf stat` 給出整體硬體計數器摘要（IPC、cache miss、分支預測失誤），`perf record` + `perf report` 則以低開銷取樣方式定位熱點函式與呼叫路徑，`-g` 旗標可加上呼叫堆疊。它的優勢是普適，幾乎任何 Linux 程式都能剖析。\n\nLIKWID 更貼近硬體，透過直接讀取 CPU 的效能計數器暫存器，提供比 perf 更細緻的計數器群組（如 `CACHE`、`MEM`、`FLOPS_DP`），並能以 `-C` 精準綁定特定核心，適合分析 NUMA 與快取行為等底層議題。\n\nrocprof 則是 AMD ROCm 生態系的 GPU 剖析工具，用於量測 HIP／OpenCL kernel 的執行時間、記憶體搬移與佔用率，是 GPU 平行程式優化不可或缺的工具，職責類似 NVIDIA 生態系的 nsight 系列。',
+      body: 'perf 是 Linux 內建的通用取樣剖析工具，不需重新編譯即可用。`perf stat` 給出整體硬體計數器摘要（IPC、cache miss、分支預測失誤），`perf record` + `perf report` 則以低開銷取樣方式定位熱點函式與呼叫路徑，`-g` 旗標可加上呼叫堆疊。它的優勢是普適，幾乎任何 Linux 程式都能剖析。\n\nLIKWID 更貼近硬體，透過直接讀取 CPU 的效能計數器暫存器，提供比 perf 更細緻的計數器群組（如 `CACHE`、`MEM`、`FLOPS_DP`），並能以 `-C` 精準綁定特定核心，適合分析 NUMA 與快取行為等底層議題。\n\nrocprof 則是 AMD ROCm 生態系的 GPU 剖析工具，用於量測 HIP／OpenCL kernel 的執行時間、記憶體搬移與佔用率，是 GPU 平行程式優化不可或缺的工具，職責類似 NVIDIA 生態系的 nsight 系列。',
     },
     {
       heading: '消毒器：ThreadSanitizer 與 AddressSanitizer',
-      body:
-        'ThreadSanitizer（TSan）以編譯旗標 `-fsanitize=thread` 插樁，動態偵測資料競爭與部分同步錯誤（如對已銷毀 mutex 上鎖）。執行期可用 `TSAN_OPTIONS` 環境變數調整行為，常用鍵值包括 `halt_on_error`（發現錯誤立即中止）、`second_deadlock_stack`（印出死鎖另一端的堆疊）與 `report_bugs`。\n\nAddressSanitizer（ASan，`-fsanitize=address`）則專注於記憶體錯誤：越界存取、釋放後使用、雙重釋放等，是 TSan 之外最常配對使用的消毒器。兩者插樁機制彼此衝突，不能編進同一個執行檔，需分開建置與執行。實務上會在 CI 分別跑 ASan+UBSan 與 TSan 兩種組態，交叉覆蓋不同類型的錯誤。',
+      body: 'ThreadSanitizer（TSan）以編譯旗標 `-fsanitize=thread` 插樁，動態偵測資料競爭與部分同步錯誤（如對已銷毀 mutex 上鎖）。執行期可用 `TSAN_OPTIONS` 環境變數調整行為，常用鍵值包括 `halt_on_error`（發現錯誤立即中止）、`second_deadlock_stack`（印出死鎖另一端的堆疊）與 `report_bugs`。\n\nAddressSanitizer（ASan，`-fsanitize=address`）則專注於記憶體錯誤：越界存取、釋放後使用、雙重釋放等，是 TSan 之外最常配對使用的消毒器。兩者插樁機制彼此衝突，不能編進同一個執行檔，需分開建置與執行。實務上會在 CI 分別跑 ASan+UBSan 與 TSan 兩種組態，交叉覆蓋不同類型的錯誤。',
     },
     {
       heading: 'Google Benchmark 的常用旗標與巨集',
-      body:
-        'Google Benchmark 以 `BENCHMARK(FunctionName)` 巨集註冊一個微基準函式，函式內用 `for (auto _ : state) { ... }` 迴圈包住待測程式碼，並以 `BENCHMARK_MAIN()` 產生進入點。命令列旗標中，`--benchmark_min_time=<duration>` 確保每個基準案例至少跑滿指定時間，避免因執行太短而讀數雜訊過大；`--benchmark_repetitions=<N>` 重複整個基準 N 次並回報平均值與變異數；`--benchmark_report_aggregates_only=true` 只顯示彙總統計、隱藏個別重複，方便閱讀。\n\n此外 `--benchmark_filter=<regex>` 可篩選只跑符合名稱的基準；`--benchmark_counters_tabular=true` 讓自訂計數器以表格呈現。這些旗標的組合能大幅降低雜訊、提升結果可信度。',
+      body: 'Google Benchmark 以 `BENCHMARK(FunctionName)` 巨集註冊一個微基準函式，函式內用 `for (auto _ : state) { ... }` 迴圈包住待測程式碼，並以 `BENCHMARK_MAIN()` 產生進入點。命令列旗標中，`--benchmark_min_time=<duration>` 確保每個基準案例至少跑滿指定時間，避免因執行太短而讀數雜訊過大；`--benchmark_repetitions=<N>` 重複整個基準 N 次並回報平均值與變異數；`--benchmark_report_aggregates_only=true` 只顯示彙總統計、隱藏個別重複，方便閱讀。\n\n此外 `--benchmark_filter=<regex>` 可篩選只跑符合名稱的基準；`--benchmark_counters_tabular=true` 讓自訂計數器以表格呈現。這些旗標的組合能大幅降低雜訊、提升結果可信度。',
     },
     {
       heading: 'CppMem：記憶體模型的形式驗證沙盒',
-      body:
-        'CppMem 是一個線上工具，讓使用者輸入一小段使用 C++11 起原子操作與各種記憶體序（`memory_order_relaxed`、`acquire`、`release`、`seq_cst` 等）的程式，然後窮舉列出在 C++ 記憶體模型下所有合法的執行結果（包含看似違反直覺的重排序結果）。它不是效能剖析工具，而是形式化分析沙盒，適合用來驗證「這段無鎖程式碼在最寬鬆的記憶體序下是否仍然正確」。\n\n這與教材中記憶體模型（happens-before、synchronizes-with）章節直接呼應：當口頭推理難以窮盡所有交錯情況時，CppMem 能給出詳盡、可信的列舉結果，是設計無鎖資料結構前的重要驗證手段，但僅適用於足夠小的程式片段，無法取代對真實系統的測試。',
+      body: 'CppMem 是一個線上工具，讓使用者輸入一小段使用 C++11 起原子操作與各種記憶體序（`memory_order_relaxed`、`acquire`、`release`、`seq_cst` 等）的程式，然後窮舉列出在 C++ 記憶體模型下所有合法的執行結果（包含看似違反直覺的重排序結果）。它不是效能剖析工具，而是形式化分析沙盒，適合用來驗證「這段無鎖程式碼在最寬鬆的記憶體序下是否仍然正確」。\n\n這與教材中記憶體模型（happens-before、synchronizes-with）章節直接呼應：當口頭推理難以窮盡所有交錯情況時，CppMem 能給出詳盡、可信的列舉結果，是設計無鎖資料結構前的重要驗證手段，但僅適用於足夠小的程式片段，無法取代對真實系統的測試。',
     },
   ],
   pitfalls: [
@@ -125,21 +139,21 @@ TSAN_OPTIONS="halt_on_error=1 second_deadlock_stack=1" ./race  # [5]
   },
   tryIt: {
     code: `#最小可執行的工具鏈範例：先消毒、再剖析、再微基準
-g++ - std =
-    c++ 20 - g - fsanitize =
-        thread race.cpp -
-        o race #1. 先確保沒有資料競爭./
-            race
+g++ - std = c++ 20 - g - fsanitize =
+                thread race.cpp -
+                o race #1. 先確保沒有資料競爭./
+                    race
 
-                perf stat./
-            race #2. 健檢整體效能計數器
+                        perf stat./
+                    race #2. 健檢整體效能計數器
 
 # 3. 針對關鍵函式撰寫 Google Benchmark 微基準（另編為 bench.cpp）
 #BENCHMARK(BM_MyFunction);
 #BENCHMARK_MAIN();
-                g++ -
-        std = c++ 20 - O2 bench.cpp - lbenchmark - lpthread - o bench./ bench-- benchmark_min_time =
-                  1s --benchmark_repetitions = 5`,
+                        g++ -
+                std = c++ 20 - O2 bench.cpp - lbenchmark - lpthread -
+                      o bench./ bench-- benchmark_min_time =
+                          1s --benchmark_repetitions = 5`,
   },
   furtherReading: [
     {

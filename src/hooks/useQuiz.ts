@@ -32,10 +32,8 @@ export function useQuiz(chapterSlug: string): UseQuizResult {
 
   return {
     getAttempt: (questionId) => chapter[questionId] ?? kEmptyAttempt,
-    select: (questionId, optionId) =>
-      selectAnswer(chapterSlug, questionId, optionId),
-    submit: (questionId, correctOptionId) =>
-      submitAnswer(chapterSlug, questionId, correctOptionId),
+    select: (questionId, optionId) => selectAnswer(chapterSlug, questionId, optionId),
+    submit: (questionId, correctOptionId) => submitAnswer(chapterSlug, questionId, correctOptionId),
     reveal: (questionId) => revealAnswer(chapterSlug, questionId),
     reset: () => resetChapterQuiz(chapterSlug),
     score: {
