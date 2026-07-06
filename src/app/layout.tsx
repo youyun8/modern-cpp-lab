@@ -48,6 +48,13 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="font-sans antialiased">
+        <script
+          // Apply saved preferences before paint to avoid a flash of the
+          // default theme / text size. Mirrors src/hooks/useDarkMode.ts.
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var d=document.documentElement;var p=JSON.parse(localStorage.getItem('cpp-parallel-lab-settings')||'{}');var t=p.theme||'dark';var dark=t==='dark'||(t==='auto'&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);d.classList.toggle('dark',dark);d.dataset.readingText=p.fontScale||'standard';d.dataset.readingWidth=p.contentWidth||'standard';d.dataset.codeWrap=String(!!p.codeWrap);}catch(e){}})();`,
+          }}
+        />
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-accent focus:px-3 focus:py-2 focus:text-white"

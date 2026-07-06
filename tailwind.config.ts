@@ -16,7 +16,16 @@ const config: Config = {
       },
       fontFamily: {
         sans: ['var(--font-inter)', 'var(--font-noto-tc)', 'sans-serif'],
-        mono: ['var(--font-jetbrains)', 'monospace'],
+        mono: [
+          'var(--font-jetbrains)',
+          'ui-monospace',
+          'JetBrains Mono',
+          'SFMono-Regular',
+          'Menlo',
+          'Consolas',
+          'Liberation Mono',
+          'monospace',
+        ],
       },
     },
   },

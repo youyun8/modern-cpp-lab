@@ -2,12 +2,26 @@
 
 import Link from 'next/link';
 import { useStore } from '@/store';
-import { useDarkMode } from '@/hooks/useDarkMode';
+import type { ThemeMode } from '@/store/uiSlice';
+
+const kThemeGlyph: Record<ThemeMode, string> = {
+  dark: '🌙',
+  light: '☀',
+  auto: '🖥',
+};
+
+const kThemeLabel: Record<ThemeMode, string> = {
+  dark: '深色',
+  light: '淺色',
+  auto: '系統',
+};
 
 export default function TopNav() {
   const toggleSidebar = useStore((s) => s.toggleSidebar);
   const setMobileMenuOpen = useStore((s) => s.setMobileMenuOpen);
-  const { theme, toggleTheme } = useDarkMode();
+  const setSettingsOpen = useStore((s) => s.setSettingsOpen);
+  const theme = useStore((s) => s.theme);
+  const toggleTheme = useStore((s) => s.toggleTheme);
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b border-border bg-surface-raised px-4">
@@ -35,14 +49,28 @@ export default function TopNav() {
           </span>
         </Link>
       </div>
-      <button
-        type="button"
-        onClick={toggleTheme}
-        className="rounded-md border border-border p-2 text-content hover:border-accent"
-        aria-label={theme === 'dark' ? '切換至淺色主題' : '切換至深色主題'}
-      >
-        <span aria-hidden="true">{theme === 'dark' ? '☀' : '🌙'}</span>
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-2 text-sm text-content hover:border-accent"
+          aria-label={`色彩主題：${kThemeLabel[theme]}（點擊循環切換）`}
+          title={`色彩主題：${kThemeLabel[theme]}`}
+        >
+          <span aria-hidden="true">{kThemeGlyph[theme]}</span>
+          <span className="hidden sm:inline">{kThemeLabel[theme]}</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setSettingsOpen(true)}
+          className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-2 text-sm text-content hover:border-accent"
+          aria-label="開啟偏好設定"
+          aria-haspopup="dialog"
+        >
+          <span aria-hidden="true">⚙</span>
+          <span className="hidden sm:inline">設定</span>
+        </button>
+      </div>
     </header>
   );
 }

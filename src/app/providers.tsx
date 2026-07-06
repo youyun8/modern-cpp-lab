@@ -6,6 +6,7 @@ import TopNav from '@/components/layout/TopNav';
 import Sidebar from '@/components/layout/Sidebar';
 import MobileMenu from '@/components/layout/MobileMenu';
 import BottomTabBar from '@/components/layout/BottomTabBar';
+import SettingsPanel from '@/components/layout/SettingsPanel';
 
 /**
  * Client shell: initialises theme syncing and mounts the persistent chrome
@@ -29,6 +30,7 @@ export default function Providers({ children }: { children: ReactNode }) {
       </div>
       <MobileMenu />
       <BottomTabBar />
+      <SettingsPanel />
     </div>
   );
 }

@@ -27,10 +27,49 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Reading text scale — drives every rem-based size across the site. */
+html[data-reading-text='small'] {
+  font-size: 15px;
+}
+html[data-reading-text='standard'] {
+  font-size: 16px;
+}
+html[data-reading-text='large'] {
+  font-size: 18px;
+}
+
+/* Reading column width — overrides the article's default max-width. */
+html[data-reading-width='wide'] #main-content > article {
+  max-width: 56rem;
+}
+html[data-reading-width='full'] #main-content > article {
+  max-width: none;
+}
+
+/* Optional soft-wrapping of code blocks to avoid horizontal scrolling. */
+html[data-code-wrap='true'] pre.shiki,
+html[data-code-wrap='true'] pre.shiki code {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+html[data-code-wrap='true'] .cm-editor .cm-line {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 body {
   background-color: rgb(var(--color-surface));
   color: rgb(var(--color-content));
   font-feature-settings: 'cv11', 'ss01';
+}
+
+/* Single monospace stack, reused everywhere code is shown. Falls back to
+   high-quality system monospace fonts if the JetBrains Mono webfont is
+   unavailable, so code blocks are ALWAYS rendered in a monospace face. */
+:root {
+  --code-font: var(--font-jetbrains), ui-monospace, 'JetBrains Mono',
+    'SFMono-Regular', 'SF Mono', Menlo, Consolas, 'Liberation Mono',
+    'DejaVu Sans Mono', 'Courier New', monospace;
 }
 
 /* shiki blocks: strip the inherited background and add breathing room. */
@@ -39,16 +78,38 @@ body {
   margin: 0;
   background-color: transparent !important;
   white-space: pre;
+  font-family: var(--code-font);
+  font-variant-ligatures: none;
+  tab-size: 2;
 }
 
 .shiki-dark pre.shiki code,
-.shiki-light pre.shiki code {
-  font-family: var(--font-jetbrains), monospace;
+.shiki-light pre.shiki code,
+.shiki-dark pre.shiki code span,
+.shiki-light pre.shiki code span {
+  font-family: var(--code-font);
+}
+
+/* Inline code inside prose / deep-dive sections. */
+code.inline-code {
+  font-family: var(--code-font);
+  font-size: 0.9em;
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background-color: rgb(var(--color-accent-soft));
+  color: rgb(var(--color-content));
+  white-space: nowrap;
 }
 
 /* CodeMirror should fill its bordered host and use the code font. */
+.cm-editor,
+.cm-editor .cm-content,
+.cm-editor .cm-line,
+.cm-editor .cm-gutters {
+  font-family: var(--code-font) !important;
+}
+
 .cm-editor {
-  font-family: var(--font-jetbrains), monospace;
   max-height: 420px;
 }
 
