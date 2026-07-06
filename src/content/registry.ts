@@ -61,6 +61,10 @@ import ind28PortableHeterogeneousConvergence from './ind28-portable-heterogeneou
 import ind29ParallelDesignPatterns from './ind29-parallel-design-patterns';
 import ind30OpenmpMpiInterop from './ind30-openmp-mpi-interop';
 import ind31CapstoneProject from './ind31-capstone-project';
+import ind32RangesViews from './ind32-ranges-views';
+import ind33ConceptsRequires from './ind33-concepts-requires';
+import ind34ThreeWayComparison from './ind34-three-way-comparison';
+import ind35Cpp20UtilityUpdates from './ind35-cpp20-utility-updates';
 import appendixAFeatureTimeline from './appendix-a-feature-timeline';
 import appendixBToolCheatsheet from './appendix-b-tool-cheatsheet';
 import appendixCUbAntipatterns from './appendix-c-ub-antipatterns';
@@ -138,6 +142,10 @@ const kAll: ChapterContent[] = [
   ind29ParallelDesignPatterns,
   ind30OpenmpMpiInterop,
   ind31CapstoneProject,
+  ind32RangesViews,
+  ind33ConceptsRequires,
+  ind34ThreeWayComparison,
+  ind35Cpp20UtilityUpdates,
   appendixAFeatureTimeline,
   appendixBToolCheatsheet,
   appendixCUbAntipatterns,

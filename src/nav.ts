@@ -498,6 +498,36 @@ export const kNavGroups: NavGroup[] = [
     ],
   },
   {
+    id: 'cpp20-features',
+    heading: '第 20 部：C++20 語言與工具庫新特性',
+    items: [
+      {
+        slug: 'ind32-ranges-views',
+        chapterLabel: '第 61 章',
+        title: 'Ranges 與 Views（C++20）',
+        href: '/ind32-ranges-views',
+      },
+      {
+        slug: 'ind33-concepts-requires',
+        chapterLabel: '第 62 章',
+        title: 'Concepts 與 requires（C++20）',
+        href: '/ind33-concepts-requires',
+      },
+      {
+        slug: 'ind34-three-way-comparison',
+        chapterLabel: '第 63 章',
+        title: '三向比較與預設比較（C++20）',
+        href: '/ind34-three-way-comparison',
+      },
+      {
+        slug: 'ind35-cpp20-utility-updates',
+        chapterLabel: '第 64 章',
+        title: 'C++20 工具庫更新：chrono、bit、source_location',
+        href: '/ind35-cpp20-utility-updates',
+      },
+    ],
+  },
+  {
     id: 'industrial-appendix',
     heading: '附錄',
     items: [
