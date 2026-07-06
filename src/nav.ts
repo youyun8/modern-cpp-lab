@@ -75,6 +75,24 @@ export const kNavGroups: NavGroup[] = [
         title: '基本概念 VI：函式與 Lambda',
         href: '/ch08-basic-concepts-vi',
       },
+      {
+        slug: 'ch08-user-defined-literals',
+        chapterLabel: '第 8.1 章',
+        title: '使用者自訂字面值 User-Defined Literals',
+        href: '/ch08-user-defined-literals',
+      },
+      {
+        slug: 'ch08.5-exceptions',
+        chapterLabel: '第 8.5 章',
+        title: '例外處理：try、catch、throw 與 noexcept',
+        href: '/ch08.5-exceptions',
+      },
+      {
+        slug: 'ch08.75-structured-bindings',
+        chapterLabel: '第 8.75 章',
+        title: '結構化綁定與解構式宣告',
+        href: '/ch08.75-structured-bindings',
+      },
     ],
   },
   {
@@ -86,6 +104,12 @@ export const kNavGroups: NavGroup[] = [
         chapterLabel: '第 9 章',
         title: 'OOP I：RAII 與建構子',
         href: '/ch09-oop-i',
+      },
+      {
+        slug: 'ch09.5-smart-pointers',
+        chapterLabel: '第 9.5 章',
+        title: '智慧指標：unique_ptr、shared_ptr 與 weak_ptr',
+        href: '/ch09.5-smart-pointers',
       },
       {
         slug: 'ch10-oop-ii',
@@ -104,6 +128,24 @@ export const kNavGroups: NavGroup[] = [
         chapterLabel: '第 12 章',
         title: '樣板 II：SFINAE 與可變參數',
         href: '/ch12-templates-ii',
+      },
+      {
+        slug: 'ch12-forwarding-references',
+        chapterLabel: '第 12.1 章',
+        title: '參考與完美轉發',
+        href: '/ch12-forwarding-references',
+      },
+      {
+        slug: 'ch12-compile-time-programming',
+        chapterLabel: '第 12.2 章',
+        title: '編譯期程式設計',
+        href: '/ch12-compile-time-programming',
+      },
+      {
+        slug: 'ch12-callable-utilities',
+        chapterLabel: '第 12.3 章',
+        title: 'Tuple、apply、invoke 與 Callable 工具',
+        href: '/ch12-callable-utilities',
       },
     ],
   },
@@ -136,6 +178,12 @@ export const kNavGroups: NavGroup[] = [
         href: '/ch16-code-conventions-ii',
       },
       {
+        slug: 'ch16-attributes',
+        chapterLabel: '第 16.1 章',
+        title: '標準屬性 Attributes',
+        href: '/ch16-attributes',
+      },
+      {
         slug: 'ch17-debugging-testing',
         chapterLabel: '第 17 章',
         title: '除錯與測試',
@@ -160,10 +208,52 @@ export const kNavGroups: NavGroup[] = [
         href: '/ch19-utilities',
       },
       {
+        slug: 'ch19-string-view',
+        chapterLabel: '第 19.1 章',
+        title: 'std::string_view：非擁有字串檢視',
+        href: '/ch19-string-view',
+      },
+      {
+        slug: 'ch19-filesystem-io',
+        chapterLabel: '第 19.2 章',
+        title: 'Filesystem 與檔案 I/O',
+        href: '/ch19-filesystem-io',
+      },
+      {
+        slug: 'ch19-text-unicode',
+        chapterLabel: '第 19.3 章',
+        title: '文字、Unicode 與編碼',
+        href: '/ch19-text-unicode',
+      },
+      {
+        slug: 'ch19-allocators-pmr',
+        chapterLabel: '第 19.4 章',
+        title: 'Allocators 與 std::pmr',
+        href: '/ch19-allocators-pmr',
+      },
+      {
+        slug: 'ch19.5-chrono-core',
+        chapterLabel: '第 19.5 章',
+        title: 'Chrono 核心：duration、time_point、clock 與 ratio',
+        href: '/ch19.5-chrono-core',
+      },
+      {
         slug: 'ch20-containers-algorithms',
         chapterLabel: '第 20 章',
         title: '容器與演算法',
         href: '/ch20-containers-algorithms',
+      },
+      {
+        slug: 'ch20-random',
+        chapterLabel: '第 20.1 章',
+        title: '亂數程式庫 <random>',
+        href: '/ch20-random',
+      },
+      {
+        slug: 'ch20-regex',
+        chapterLabel: '第 20.2 章',
+        title: '正規表示式 <regex>',
+        href: '/ch20-regex',
       },
     ],
   },
@@ -176,6 +266,12 @@ export const kNavGroups: NavGroup[] = [
         chapterLabel: '第 21 章',
         title: '進階主題 I：Move 語意',
         href: '/ch21-advanced-i',
+      },
+      {
+        slug: 'ch21-object-lifetime',
+        chapterLabel: '第 21.1 章',
+        title: '物件生命週期與低階記憶體',
+        href: '/ch21-object-lifetime',
       },
       {
         slug: 'ch22-advanced-ii',
@@ -224,6 +320,12 @@ export const kNavGroups: NavGroup[] = [
         chapterLabel: '第 27 章',
         title: '軟體設計 II：CRTP 與 PIMPL',
         href: '/ch27-software-design-ii',
+      },
+      {
+        slug: 'ch27-type-erasure-rtti',
+        chapterLabel: '第 27.1 章',
+        title: 'Type Erasure 與 RTTI',
+        href: '/ch27-type-erasure-rtti',
       },
       {
         slug: 'ch28-binary-size',
@@ -499,7 +601,7 @@ export const kNavGroups: NavGroup[] = [
   },
   {
     id: 'cpp20-features',
-    heading: '第 20 部：C++20 語言與工具庫新特性',
+    heading: '第 20 部：C++20~26 語言與工具庫新特性',
     items: [
       {
         slug: 'ind32-ranges-views',
@@ -524,6 +626,30 @@ export const kNavGroups: NavGroup[] = [
         chapterLabel: '第 64 章',
         title: 'C++20 工具庫更新：chrono、bit、source_location',
         href: '/ind35-cpp20-utility-updates',
+      },
+      {
+        slug: 'ind36-designated-initializers',
+        chapterLabel: '第 65 章',
+        title: '指定初始化 Designated Initializers（C++20）',
+        href: '/ind36-designated-initializers',
+      },
+      {
+        slug: 'ind37-constexpr-allocation',
+        chapterLabel: '第 66 章',
+        title: 'constexpr 動態記憶體與容器（C++20）',
+        href: '/ind37-constexpr-allocation',
+      },
+      {
+        slug: 'ind38-deducing-this',
+        chapterLabel: '第 67 章',
+        title: 'Deducing this 與 Explicit Object Parameters（C++23）',
+        href: '/ind38-deducing-this',
+      },
+      {
+        slug: 'ind39-cpp26-outlook',
+        chapterLabel: '第 68 章',
+        title: 'C++26 展望：反射、模式匹配與合約',
+        href: '/ind39-cpp26-outlook',
       },
     ],
   },

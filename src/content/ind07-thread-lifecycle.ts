@@ -25,6 +25,10 @@ const ind07ThreadLifecycle: ChapterContent = {
       body: '執行緒函式若丟出未捕捉的例外，會直接呼叫 `std::terminate()` 終止整個程式，而不是像單執行緒那樣被外層 `catch` 捕捉——因為例外堆疊展開無法跨越執行緒邊界。正確做法是在執行緒函式內部用 `try/catch` 攔截例外，透過 `std::current_exception()` 取得 `std::exception_ptr`，存放到共享狀態（例如 `std::promise`），再由等待端呼叫 `future.get()` 時讓例外在原執行緒重新拋出。`std::async` 與 `std::packaged_task` 已內建這套機制。\n\n`thread_local` 儲存期則賦予每個執行緒獨立的一份物件，常用於避免鎖競爭的計數器、每執行緒快取或隨機數引擎狀態。它的初始化在該執行緒首次使用該變數時（或執行緒啟動時，視實作與是否有動態初始化而定）進行，解構則在執行緒結束時發生；務必注意初始化順序在跨編譯單元時與一般靜態變數同樣不保證順序，且執行緒本地物件的建構/解構成本不可忽視，不適合超高頻建立/銷毀執行緒的場景。',
     },
     {
+      heading: 'std::this_thread 工具：sleep、yield、get_id',
+      body: 'std::this_thread 命名空間提供與「當前執行緒」互動的工具，不需要持有 std::thread 物件就能使用。sleep_for(duration) 會阻塞當前執行緒至少指定的時間長度（受系統排程器精度限制）；sleep_until(time_point) 阻塞到指定的 steady_clock 或 system_clock 時刻。兩者差異在於：sleep_for 是「等多久」，sleep_until 是「等到什麼時候」；若 wall-clock 在後退（NTP 校正），sleep_until(system_clock) 可能等更久或提前結束。std::this_thread::yield() 提示排程器當前執行緒願意讓出 CPU，其它執行緒可優先執行；它不等於 sleep，不保證當前執行緒真的暫停，因此只應用在自旋鎖（spinlock）等極短等待場景，而非一般同步。std::this_thread::get_id() 回傳當前執行緒的唯一識別碼（std::thread::id），可用於 logging、分片（sharding）或排除同執行緒重入。',
+    },
+    {
       heading: '與 pthread 的對照：affinity、堆疊大小等標準未覆蓋處',
       body: 'C++ 標準刻意不規範執行緒的排程策略、CPU affinity、堆疊大小或優先權，因為這些高度依賴作業系統。要控制這些屬性，需透過 `std::thread::native_handle()`（`std::jthread` 也有同名成員）取得底層原生控制代碼，在 Linux 上型別即為 `pthread_t`，再交給 POSIX API 如 `pthread_setaffinity_np()`（綁定 CPU 核心）、`pthread_attr_setstacksize()`（需在建立執行緒「之前」透過 `pthread_attr_t` 設定，`native_handle` 拿到的是建立後的控制代碼，故堆疊大小通常要改用 `pthread_create` 自行建立再包裝，或在 Windows 上使用 `SetThreadAffinityMask`／`_beginthreadex` 等對應 API）。\n\n這種「標準介面 + 原生控制代碼逃生艙」的設計，讓可攜程式碼寫起來簡單，同時保留高效能運算場景（NUMA 綁定、即時排程）所需的底層控制。HPC 專案常見做法是包一層平台抽象層，內部依編譯目標分派到 pthread 或 Win32 API，對外仍暴露 `std::jthread` 相容介面。',
     },
@@ -96,6 +100,8 @@ int main() {
     '在執行緒函式內以 `try/catch` 攔截例外，透過 `std::exception_ptr`（或 `std::promise`／`std::async`）安全地傳回呼叫端。',
     '只有在確實需要 affinity、堆疊大小等平台特性時才使用 `native_handle()`，並將平台相依程式碼封裝成一層抽象。',
     '避免對短生命週期任務頻繁建立執行緒；改用執行緒池並重用 `thread_local` 狀態。',
+    '自旋等待中使用 std::this_thread::yield() 減少 CPU 空轉；長等待則改用條件變數或 sleep_for。',
+    '以 std::this_thread::get_id() 取得執行緒識別碼，用於日誌、分片計算或排除同執行緒重入。',
   ],
   quiz: [
     {

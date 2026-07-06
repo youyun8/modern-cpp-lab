@@ -37,6 +37,12 @@ struct PaddedCounters {
     alignas(64) std::atomic<long> b{0};
 };
 
+// C++17 可攜寫法：以 std::hardware_destructive_interference_size 取代硬編碼 64。 [4.5]
+struct PaddedCountersPortable {
+    alignas(std::hardware_destructive_interference_size) std::atomic<long> a{0};
+    alignas(std::hardware_destructive_interference_size) std::atomic<long> b{0};
+};
+
 template <typename Counters>
 double benchmarkIncrements(Counters& counters, std::size_t iterations) {
     auto start = std::chrono::steady_clock::now();
@@ -65,6 +71,10 @@ double benchmarkIncrements(Counters& counters, std::size_t iterations) {
       {
         n: 6,
         text: '量測方法：分別對 FalseSharingCounters 與 PaddedCounters 執行本函式並比較耗時，即可觀察 false sharing 造成的 scaling 崩潰。',
+      },
+      {
+        n: 7,
+        text: 'std::hardware_destructive_interference_size 是 C++17 引入的標準常數，反映編譯目標平台的快取行大小，取代硬編碼的 alignas(64)。',
       },
     ],
   },

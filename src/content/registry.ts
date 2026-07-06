@@ -8,25 +8,42 @@ import ch05 from './ch05-basic-concepts-iii';
 import ch06 from './ch06-basic-concepts-iv';
 import ch07 from './ch07-basic-concepts-v';
 import ch08 from './ch08-basic-concepts-vi';
+import ch08UserDefinedLiterals from './ch08-user-defined-literals';
+import ch08Exceptions from './ch08.5-exceptions';
+import ch08StructuredBindings from './ch08.75-structured-bindings';
 import ch09 from './ch09-oop-i';
+import ch09SmartPointers from './ch09.5-smart-pointers';
 import ch10 from './ch10-oop-ii';
 import ch11 from './ch11-templates-i';
 import ch12 from './ch12-templates-ii';
+import ch12ForwardingReferences from './ch12-forwarding-references';
+import ch12CompileTimeProgramming from './ch12-compile-time-programming';
+import ch12CallableUtilities from './ch12-callable-utilities';
 import ch13 from './ch13-translation-units-i';
 import ch14 from './ch14-translation-units-ii';
 import ch15 from './ch15-code-conventions-i';
 import ch16 from './ch16-code-conventions-ii';
+import ch16Attributes from './ch16-attributes';
 import ch17 from './ch17-debugging-testing';
 import ch18 from './ch18-ecosystem';
 import ch19 from './ch19-utilities';
+import ch19StringView from './ch19-string-view';
+import ch19FilesystemIo from './ch19-filesystem-io';
+import ch19TextUnicode from './ch19-text-unicode';
+import ch19AllocatorsPmr from './ch19-allocators-pmr';
+import ch19ChronoCore from './ch19.5-chrono-core';
 import ch20 from './ch20-containers-algorithms';
+import ch20Random from './ch20-random';
+import ch20Regex from './ch20-regex';
 import ch21 from './ch21-advanced-i';
+import ch21ObjectLifetime from './ch21-object-lifetime';
 import ch22 from './ch22-advanced-ii';
 import ch23 from './ch23-optimization-i';
 import ch24 from './ch24-optimization-ii';
 import ch25 from './ch25-optimization-iii';
 import ch26 from './ch26-software-design-i';
 import ch27 from './ch27-software-design-ii';
+import ch27TypeErasureRtti from './ch27-type-erasure-rtti';
 import ch28 from './ch28-binary-size';
 import ch29 from './ch29-build-time';
 
@@ -65,6 +82,10 @@ import ind32RangesViews from './ind32-ranges-views';
 import ind33ConceptsRequires from './ind33-concepts-requires';
 import ind34ThreeWayComparison from './ind34-three-way-comparison';
 import ind35Cpp20UtilityUpdates from './ind35-cpp20-utility-updates';
+import ind36DesignatedInitializers from './ind36-designated-initializers';
+import ind37ConstexprAllocation from './ind37-constexpr-allocation';
+import ind38DeducingThis from './ind38-deducing-this';
+import ind39Cpp26Outlook from './ind39-cpp26-outlook';
 import appendixAFeatureTimeline from './appendix-a-feature-timeline';
 import appendixBToolCheatsheet from './appendix-b-tool-cheatsheet';
 import appendixCUbAntipatterns from './appendix-c-ub-antipatterns';
@@ -85,25 +106,42 @@ const kAll: ChapterContent[] = [
   ch06,
   ch07,
   ch08,
+  ch08UserDefinedLiterals,
+  ch08Exceptions,
+  ch08StructuredBindings,
   ch09,
+  ch09SmartPointers,
   ch10,
   ch11,
   ch12,
+  ch12ForwardingReferences,
+  ch12CompileTimeProgramming,
+  ch12CallableUtilities,
   ch13,
   ch14,
   ch15,
   ch16,
+  ch16Attributes,
   ch17,
   ch18,
   ch19,
+  ch19StringView,
+  ch19FilesystemIo,
+  ch19TextUnicode,
+  ch19AllocatorsPmr,
+  ch19ChronoCore,
   ch20,
+  ch20Random,
+  ch20Regex,
   ch21,
+  ch21ObjectLifetime,
   ch22,
   ch23,
   ch24,
   ch25,
   ch26,
   ch27,
+  ch27TypeErasureRtti,
   ch28,
   ch29,
   labMemoryModel,
@@ -146,6 +184,10 @@ const kAll: ChapterContent[] = [
   ind33ConceptsRequires,
   ind34ThreeWayComparison,
   ind35Cpp20UtilityUpdates,
+  ind36DesignatedInitializers,
+  ind37ConstexprAllocation,
+  ind38DeducingThis,
+  ind39Cpp26Outlook,
   appendixAFeatureTimeline,
   appendixBToolCheatsheet,
   appendixCUbAntipatterns,

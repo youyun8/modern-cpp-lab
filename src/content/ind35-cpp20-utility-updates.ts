@@ -9,7 +9,7 @@ const ind35Cpp20UtilityUpdates: ChapterContent = {
     'C++20 的 calendar chrono、`<bit>` 位元工具與 `std::source_location`：把常見平台技巧標準化，降低手寫巨集與位元 hack。',
   concept: {
     standard: 'C++20',
-    body: '除了大型語言特性，C++20 也補齊許多日常工具。`std::chrono` 加入 calendar/date 型別，能用 `2026y / July / 6` 建立日期，避免手寫年月日結構；`<bit>` 提供 `has_single_bit`、`bit_width`、`bit_floor`、`popcount`、`endian` 等位元操作，取代不可攜的 compiler intrinsic 或容易寫錯的 bit hack；`std::source_location` 則讓 logging/assertion API 取得呼叫端檔名、行號與函式名稱，不必再用 `__FILE__`、`__LINE__` 巨集包裝。這些更新不一定醒目，但能讓基礎設施程式碼更安全、更可攜。',
+    body: '除了大型語言特性，C++20／23 也補齊許多日常工具。`std::chrono`（C++20）加入 calendar/date 型別，能用 `2026y / July / 6` 建立日期，避免手寫年月日結構；`<bit>` 提供 `has_single_bit`、`bit_width`、`bit_floor`、`popcount`、`endian` 等位元操作，取代不可攜的 compiler intrinsic 或容易寫錯的 bit hack；`std::source_location` 則讓 logging/assertion API 取得呼叫端檔名、行號與函式名稱，不必再用 `__FILE__`、`__LINE__` 巨集包裝。這些更新不一定醒目，但能讓基礎設施程式碼更安全、更可攜。',
   },
   deepDive: [
     {
@@ -85,6 +85,9 @@ int main() {
     '常見位元操作用 `<bit>` 標準函式，讓意圖與邊界情況都更明確。',
     'logging API 將 `std::source_location` 放在最後一個預設參數，呼叫端不必手動傳入。',
     '跨平台專案針對 chrono time zone 與 `<bit>` intrinsic 效能做工具鏈驗證。',
+    'enum class 轉底層整數一律用 std::to_underlying(C++23)，取代容易寫錯型別的 static_cast。',
+    '在邏輯上不可能到達的分支使用 std::unreachable() 幫助編譯器優化，但切勿在可能執行的路徑上使用。',
+    '跨平台位元組序轉換用 std::byteswap 配合 std::endian，取代手寫的位元組反轉邏輯。',
   ],
   quiz: [
     {
@@ -115,6 +118,19 @@ int main() {
     },
     {
       id: 'q3',
+      stem: '下列哪個工具在 C++23 才被標準化？',
+      options: [
+        { id: 'a', text: 'std::to_underlying' },
+        { id: 'b', text: 'std::source_location' },
+        { id: 'c', text: 'std::has_single_bit' },
+        { id: 'd', text: 'std::chrono::year_month_day' },
+      ],
+      correctOptionId: 'a',
+      explanation:
+        'std::to_underlying 是 C++23 新增的工具，用於把 enum class 安全轉換為底層整數值；其餘皆為 C++20 特性。',
+    },
+    {
+      id: 'q4',
       stem: 'C++20 chrono calendar 型別的主要好處是什麼？',
       options: [
         { id: 'a', text: '用具名型別表達年月日，並可檢查日期組合是否有效' },
