@@ -11,8 +11,12 @@ export default function DiagramFrame({ spec }: { spec: DiagramSpec }) {
       <h2 id="diagram-heading" className="text-lg font-semibold text-content">
         視覺圖表
       </h2>
-      <figure className="mx-auto max-w-xl rounded-xl border border-border bg-surface-raised p-4">
-        <Diagram spec={spec} />
+      <figure className="w-full rounded-xl border border-border bg-surface-raised p-4 sm:p-5">
+        <div className="-mx-1 overflow-x-auto px-1 pb-1">
+          <div className="min-w-[640px]">
+            <Diagram spec={spec} />
+          </div>
+        </div>
         {spec.caption && (
           <figcaption className="mt-3 text-sm text-content-muted">{spec.caption}</figcaption>
         )}

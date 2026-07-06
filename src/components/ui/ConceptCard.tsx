@@ -1,4 +1,5 @@
 import type { ConceptCard as ConceptCardData } from '@/types/ChapterContent';
+import RichText from './RichText';
 import StandardBadge from './StandardBadge';
 
 export default function ConceptCard({ concept }: { concept: ConceptCardData }) {
@@ -13,7 +14,9 @@ export default function ConceptCard({ concept }: { concept: ConceptCardData }) {
         </h2>
         <StandardBadge standard={concept.standard} />
       </div>
-      <p className="text-[15px] leading-7 text-content">{concept.body}</p>
+      <div className="space-y-3 text-[15px] leading-7 text-content">
+        <RichText text={concept.body} />
+      </div>
     </section>
   );
 }

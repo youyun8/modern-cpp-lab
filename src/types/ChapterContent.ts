@@ -27,7 +27,7 @@ export interface FurtherReadingLink {
 
 export interface ConceptCard {
   standard: CppStandard;
-  /** Core idea in <= 120 words of Traditional Chinese. */
+  /** Core idea in <= 120 words of Traditional Chinese; may use `inline code`. */
   body: string;
 }
 
