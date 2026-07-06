@@ -2,7 +2,7 @@
 
 // GitHub Pages serves the site under a repository sub-path. Override with
 // NEXT_PUBLIC_BASE_PATH when deploying under a different repo name.
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/cpp-parallel-lab';
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/modern-cpp-lab';
 
 const nextConfig = {
   output: 'export',

@@ -45,7 +45,7 @@ npm run build    # 產生靜態網站至 out/
 
 建置產物位於 `out/`。若要在本機預覽，可用任意靜態伺服器（例如 `npx serve out`）。
 
-> 網站預設以 GitHub Pages 的子路徑 `/cpp-parallel-lab` 為 `basePath`。
+> 網站預設以 GitHub Pages 的子路徑 `/modern-cpp-lab` 為 `basePath`。
 > 若部署到不同的儲存庫名稱，請以環境變數覆寫：
 >
 > ```bash
@@ -57,12 +57,12 @@ npm run build    # 產生靜態網站至 out/
 ## 部署至 GitHub Pages
 
 本專案內附 GitHub Actions 工作流程 `.github/workflows/deploy.yml`，
-於推送至 `main` 分支時自動執行「安裝 → 驗證連結 → 建置 → 部署至 `gh-pages` 分支」。
+於推送至 `main` 分支時自動執行「安裝 → 驗證連結 → 建置 → 透過 GitHub Actions 部署至 GitHub Pages」。
 
 首次啟用步驟：
 
-1. 於 GitHub 儲存庫 **Settings → Pages** 將來源設定為 `gh-pages` 分支。
-2. 確認 `NEXT_PUBLIC_BASE_PATH` 與儲存庫名稱一致（預設 `/cpp-parallel-lab`）。
+1. 於 GitHub 儲存庫 **Settings → Pages** 將來源（Source）設定為 **GitHub Actions**。
+2. 確認 `NEXT_PUBLIC_BASE_PATH` 與儲存庫名稱一致（預設 `/modern-cpp-lab`）。
 3. 推送到 `main`，等待 Actions 完成後即可透過 `https://<帳號>.github.io/<儲存庫>/` 瀏覽。
 
 也可在本機手動建置：
