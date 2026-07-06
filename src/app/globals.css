@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Design tokens. Dark is the default; `.dark` class is applied on <html>. */
+:root {
+  --color-surface: 248 250 252;
+  --color-surface-raised: 255 255 255;
+  --color-border: 203 213 225;
+  --color-content: 15 23 42;
+  --color-content-muted: 71 85 105;
+  --color-accent: 37 99 235;
+  --color-accent-soft: 219 234 254;
+}
+
+.dark {
+  --color-surface: 15 23 42;
+  --color-surface-raised: 30 41 59;
+  --color-border: 51 65 85;
+  --color-content: 226 232 240;
+  --color-content-muted: 148 163 184;
+  --color-accent: 96 165 250;
+  --color-accent-soft: 30 58 95;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: rgb(var(--color-surface));
+  color: rgb(var(--color-content));
+  font-feature-settings: 'cv11', 'ss01';
+}
+
+/* shiki blocks: strip the inherited background and add breathing room. */
+.shiki-dark pre.shiki,
+.shiki-light pre.shiki {
+  margin: 0;
+  background-color: transparent !important;
+  white-space: pre;
+}
+
+.shiki-dark pre.shiki code,
+.shiki-light pre.shiki code {
+  font-family: var(--font-jetbrains), monospace;
+}
+
+/* CodeMirror should fill its bordered host and use the code font. */
+.cm-editor {
+  font-family: var(--font-jetbrains), monospace;
+  max-height: 420px;
+}
+
+.cm-editor .cm-scroller {
+  overflow: auto;
+}
+
+/* Respect users who prefer reduced motion for our SVG animations. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Keyboard focus visibility across all interactive elements. */
+:focus-visible {
+  outline: 2px solid rgb(var(--color-accent));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
