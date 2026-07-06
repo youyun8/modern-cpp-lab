@@ -30,36 +30,37 @@ const appendixDReferences: ChapterContent = {
   ],
   code: {
     lang: 'cpp',
-    code: `// 本附錄的程式碼並非可執行範例，而是一份「建構於哪份提案之上」的
-// 速查表：把全書用到的標準函式庫構造對應回其 WG21 提案編號。
+    code: `// The code in this appendix is not a runnable example but a
+// lookup table: it maps standard library constructs used throughout the book
+// back to their WG21 proposal numbers.
 #include <atomic>
-// #include <execution>   // std::execution（senders/receivers）
-// #include <linalg>      // std::linalg（矩陣/線性代數）
-// #include <simd>        // std::simd（資料平行型別）
+// #include <execution>   // std::execution (senders/receivers)
+// #include <linalg>      // std::linalg (matrix/linear algebra)
+// #include <simd>        // std::simd (data-parallel types)
 
 void referenceLookupTable() {
     // [1] std::execution::sender / receiver / schedule / then / when_all
-    //     see: P2300 — std::execution（第 45 章）
-    //     截至本書寫作時仍在修訂，建議以 wg21.link/p2300 的最新版本為準。
+    //     see: P2300 -- std::execution (Chapter 45)
+    //     Still under revision as of this writing; check wg21.link/p2300 for the latest version.
 
-    // [2] std::linalg::matrix_product 等稠密矩陣運算
-    //     see: P1673 — std::linalg（第 55 章）
-    //     提案文件本身含大量與傳統 BLAS 介面對照的範例。
+    // [2] std::linalg::matrix_product and other dense matrix operations
+    //     see: P1673 -- std::linalg (Chapter 55)
+    //     The proposal document itself contains many examples compared against the traditional BLAS interface.
 
-    // [3] std::simd<T, N> 資料平行型別與 simd_mask
-    //     see: P1928 — std::simd（第 46 章）
-    //     前身為 Parallelism TS2 的 std::experimental::simd。
+    // [3] std::simd<T, N> data-parallel type and simd_mask
+    //     see: P1928 -- std::simd (Chapter 46)
+    //     Formerly std::experimental::simd from Parallelism TS2.
 
-    // [4] std::atomic_ref<T>：對既有（非 atomic）物件做原子存取
-    //     see: P0019 — Atomic Ref（涉及原子操作與記憶體順序的章節）
-    std::atomic_ref<int> counter_ref(*(new int(0)));  // 僅示意，非完整範例
+    // [4] std::atomic_ref<T>: atomic access to an existing (non-atomic) object
+    //     see: P0019 -- Atomic Ref (chapters covering atomic operations and memory order)
+    std::atomic_ref<int> counter_ref(*(new int(0)));  // illustrative only, not a complete example
     counter_ref.fetch_add(1, std::memory_order_relaxed);
 
-    // [5] 提案編號會隨審議進度修訂版本號（如 P2300R10），
-    //     引用時務必連同版本號一併查證，避免依賴已過時的段落內容。
+    // [5] Proposal numbers get revised with new revision suffixes as review progresses (e.g. P2300R10);
+    //     always check the revision number alongside the proposal number to avoid relying on outdated content.
 
-    // [6] 若不確定某構造的確切提案編號，優先查 wg21.link 論文索引，
-    //     不要憑印象或轉述文章給出未經查證的編號。
+    // [6] If unsure of the exact proposal number for a construct, check the wg21.link paper index first,
+    //     rather than citing an unverified number from memory or secondhand articles.
 }`,
     callouts: [
       {
@@ -159,7 +160,7 @@ void referenceLookupTable() {
       '四類參考資料互為補充：標準提案定義精確語意與狀態，經典書籍打基礎與補理論，線上參考追蹤最新支援狀況，延伸閱讀連回全書各章節對應主題。',
   },
   tryIt: {
-    code: `// 簡化版查詢表：把構造名稱對應到提案編號的小工具函式。
+    code: `// A simplified lookup table: a small utility function that maps construct names to proposal numbers.
 #include <iostream>
 #include <string>
 #include <unordered_map>

@@ -13,19 +13,19 @@ const ch01Introduction: ChapterContent = {
   },
   code: {
     lang: 'cpp',
-    code: `#include <print>  // C++23：型別安全、格式化的輸出 [1]
+    code: `#include <print>  // C++23: type-safe, formatted output [1]
 #include <string>
 #include <vector>
 
-// 一支「現代」的 Hello World：善用標準函式庫的高階抽象，
-// 而非手動管理記憶體或使用 C 風格 I/O。
+// A "modern" Hello World: leverage the standard library's high-level
+// abstractions instead of manually managing memory or using C-style I/O.
 int main() {
-    std::vector<std::string> langs{"C", "C++98", "C++11", "現代 C++"};  // [2]
+    std::vector<std::string> langs{"C", "C++98", "C++11", "Modern C++"};  // [2]
 
     for (const auto& lang : langs) {           // [3] range-based for + auto
-        std::println("Hello from {}!", lang);  // [4] std::format 風格
+        std::println("Hello from {}!", lang);  // [4] std::format style
     }
-    return 0;  // [5] 回傳 0 代表成功
+    return 0;  // [5] returning 0 means success
 }`,
     callouts: [
       {
@@ -122,10 +122,12 @@ int main() {
 #include <string>
 #include <vector>
 
-// 若你的編譯器尚未支援 C++23 的 <print>，可退回 iostream 版本。
+// If your compiler doesn't yet support C++23's <print>, fall back to iostream.
 int main() {
     std::vector<std::string> langs{"C", "C++98", "C++11", "Modern C++"};
-    for (const auto& lang : langs) std::cout << "Hello from " << lang << "!\\n";
+    for (const auto& lang : langs) {
+        std::cout << "Hello from " << lang << "!\\n";
+    }
     return 0;
 }`,
   },

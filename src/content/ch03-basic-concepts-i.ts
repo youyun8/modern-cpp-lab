@@ -18,12 +18,12 @@ const ch03BasicConceptsI: ChapterContent = {
 #include <type_traits>
 
 int main() {
-    auto a = 42;                           // [1] 推導為 int
-    std::int64_t big = 1'000'000'000'000;  // [2] 固定寬度，數字分隔符
-    constexpr double pi = 3.14159;         // [3] 編譯期常數
-    bool flag = a > 10;                    // [4] 關係運算子產生 bool
+    auto a = 42;                           // [1] deduced as int
+    std::int64_t big = 1'000'000'000'000;  // [2] fixed width, digit separators
+    constexpr double pi = 3.14159;         // [3] compile-time constant
+    bool flag = a > 10;                    // [4] relational operator yields bool
 
-    static_assert(std::is_same_v<decltype(a), int>);  // [5] 編譯期型別檢查
+    static_assert(std::is_same_v<decltype(a), int>);  // [5] compile-time type check
 
     std::println("sizeof(int)={}, sizeof(int64)={}, flag={}", sizeof(a), sizeof(big), flag);
     return 0;

@@ -37,33 +37,39 @@ const ind18VectorizationFriendlyCode: ChapterContent = {
     lang: 'cpp',
     code: `#include <cstddef>
 
-// 未加 __restrict：編譯器必須假設 y 與 x 可能重疊，
-// 因而無法安全地向量化這個迴圈（除非插入執行期別名檢查）。
+// Without __restrict: the compiler must assume y and x may overlap,
+// so it cannot safely vectorize this loop (unless it inserts a runtime alias check).
 void axpy_unsafe(float* y, const float* x, float a, int n) {
-    for (int i = 0; i < n; ++i) y[i] = a * x[i] + y[i];
+    for (int i = 0; i < n; ++i) {
+        y[i] = a * x[i] + y[i];
+    }
 }
 
-// 加上 __restrict：向編譯器承諾 y 與 x 指向不重疊的記憶體，
-// 讓自動向量化器可以放心地一次處理多個元素。 [1]
+// With __restrict: promise the compiler that y and x point to non-overlapping memory,
+// letting the auto-vectorizer safely process multiple elements at once. [1]
 void axpy(float* __restrict y, const float* __restrict x, float a, int n) {
-    // [2] const 修飾唯讀指標，進一步協助別名分析。
-    for (int i = 0; i < n; ++i) y[i] = a * x[i] + y[i];  // [3] 無分支、連續存取，SIMD 友善
+    // [2] const qualifies the read-only pointer, further aiding alias analysis.
+    for (int i = 0; i < n; ++i) {
+        y[i] = a * x[i] + y[i];  // [3] Branch-free, contiguous access, SIMD-friendly
+    }
 }
 
-// alignas 讓緩衝區對齊到常見 SIMD 寬度（32 位元組 = AVX2）， [4]
-// 避免編譯器插入未對齊 load/store 或邊界處理的 peel loop。
+// alignas aligns the buffer to a common SIMD width (32 bytes = AVX2), [4]
+// avoiding compiler-inserted unaligned load/store or boundary peel loops.
 alignas(32) float buffer_x[1024];
 alignas(32) float buffer_y[1024];
 
-// 分塊（tiling）示例：以固定大小的區塊走訪，讓每個區塊 [5]
-// 的資料在被逐出快取前被重複使用，改善記憶體受限核心的效能。
+// Tiling example: walk fixed-size blocks so each block's data [5]
+// is reused before being evicted from cache, improving memory-bound kernel performance.
 void scale_tiled(float* __restrict data, std::size_t n, float factor) {
-    constexpr std::size_t kTile = 256;  // 依實際快取大小調整
+    constexpr std::size_t kTile = 256;  // Tune according to actual cache size
     for (std::size_t base = 0; base < n; base += kTile) {
         const std::size_t end = base + kTile < n ? base + kTile : n;
-        // [6] 預取下一個區塊的起點，隱藏記憶體延遲
+        // [6] Prefetch the start of the next block, hiding memory latency
         __builtin_prefetch(&data[end], 0, 1);
-        for (std::size_t i = base; i < end; ++i) data[i] *= factor;
+        for (std::size_t i = base; i < end; ++i) {
+            data[i] *= factor;
+        }
     }
 }`,
     callouts: [
@@ -162,13 +168,17 @@ void scale_tiled(float* __restrict data, std::size_t n, float factor) {
 #include <iostream>
 #include <vector>
 
-// 對照 __restrict 是否存在時，編譯器能否有效向量化 AXPY。
+// Compare whether the compiler can effectively vectorize AXPY with and without __restrict.
 void axpy_unsafe(float* y, const float* x, float a, int n) {
-    for (int i = 0; i < n; ++i) y[i] = a * x[i] + y[i];
+    for (int i = 0; i < n; ++i) {
+        y[i] = a * x[i] + y[i];
+    }
 }
 
 void axpy_restrict(float* __restrict y, const float* __restrict x, float a, int n) {
-    for (int i = 0; i < n; ++i) y[i] = a * x[i] + y[i];
+    for (int i = 0; i < n; ++i) {
+        y[i] = a * x[i] + y[i];
+    }
 }
 
 int main() {

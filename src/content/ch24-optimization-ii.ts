@@ -17,26 +17,29 @@ const ch24OptimizationII: ChapterContent = {
 #include <new>
 #include <vector>
 
-// 偽共享：兩執行緒各自寫入相鄰計數器，卻共用同一快取行。 [1]
+// False sharing: two threads each write an adjacent counter, but they share one cache line. [1]
 struct BadCounters {
-    std::int64_t a;  // 與 b 極可能落在同一 64B 快取行
+    std::int64_t a;  // very likely to land on the same 64B cache line as b
     std::int64_t b;
 };
 
-// 以對齊到快取行大小的填充消除偽共享。 [2]
+// Eliminate false sharing with padding aligned to the cache line size. [2]
 struct alignas(std::hardware_destructive_interference_size) Padded {
     std::int64_t value{0};
 };
 struct GoodCounters {
-    Padded a;  // [3] 各自獨佔一條快取行
+    Padded a;  // [3] each occupies its own cache line
     Padded b;
 };
 
-// 分支可預測性：已排序資料讓分支預測器命中率大增。 [4]
+// Branch predictability: sorted data greatly improves branch predictor hit rate. [4]
 long long sumAboveThreshold(const std::vector<int>& v, int t) {
     long long s = 0;
-    for (int x : v)
-        if (x >= t) s += x;  // [5] 資料若已排序，此分支高度可預測
+    for (int x : v) {
+        if (x >= t) {
+            s += x;  // [5] once the data is sorted, this branch is highly predictable
+        }
+    }
     return s;
 }`,
     callouts: [
@@ -134,17 +137,22 @@ long long sumAboveThreshold(const std::vector<int>& v, int t) {
 #include <numeric>
 #include <vector>
 
-// 觀察分支可預測性的影響：已排序 vs. 未排序輸入。
+// Observe the effect of branch predictability: sorted vs. unsorted input.
 int main() {
     constexpr int kN = 1 << 20;
     std::vector<int> v(kN);
-    for (int i = 0; i < kN; ++i) v[i] = (i * 1103515245 + 12345) & 255;
+    for (int i = 0; i < kN; ++i) {
+        v[i] = (i * 1103515245 + 12345) & 255;
+    }
 
     auto run = [&]() {
         auto t0 = std::chrono::steady_clock::now();
         long long s = 0;
-        for (int x : v)
-            if (x >= 128) s += x;
+        for (int x : v) {
+            if (x >= 128) {
+                s += x;
+            }
+        }
         auto t1 = std::chrono::steady_clock::now();
         return std::pair{s, std::chrono::duration<double, std::milli>(t1 - t0).count()};
     };
@@ -153,7 +161,7 @@ int main() {
     std::sort(v.begin(), v.end());
     auto [s2, ms2] = run();
     std::cout << "unsorted: " << ms1 << " ms\\n";
-    std::cout << "sorted:   " << ms2 << " ms (分支更可預測)\\n";
+    std::cout << "sorted:   " << ms2 << " ms (branch is more predictable)\\n";
     return (int)((s1 ^ s2) & 0);
 }`,
   },

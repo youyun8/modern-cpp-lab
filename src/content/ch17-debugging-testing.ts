@@ -13,17 +13,17 @@ const ch17DebuggingTesting: ChapterContent = {
   },
   code: {
     lang: 'bash',
-    code: `# 以 AddressSanitizer + UBSan 編譯，及早抓出記憶體與 UB 問題
+    code: `# Compile with AddressSanitizer + UBSan to catch memory and UB issues early
 g++ -std=c++23 -g -fsanitize=address,undefined app.cpp -o app  # [1]
 ./app                                                           # [2]
 
-# 偵測資料競爭（不可與 ASan 同時使用）
+# Detect data races (cannot be used together with ASan)
 g++ -std=c++23 -g -fsanitize=thread race.cpp -o race           # [3]
 
-# 不需重編譯的替代方案：valgrind memcheck（較慢）
+# An alternative that needs no recompilation: valgrind memcheck (slower)
 valgrind --leak-check=full ./app                               # [4]
 
-# 執行單元測試（以 CTest 驅動，通常整合於 CMake）
+# Run unit tests (driven by CTest, usually integrated with CMake)
 ctest --output-on-failure                                       # [5]`,
     callouts: [
       {
@@ -115,7 +115,7 @@ ctest --output-on-failure                                       # [5]`,
 
 int add(int a, int b) { return a + b; }
 
-// 迷你單元測試：以 assert 驗證行為。以 -fsanitize=undefined 編譯更佳。
+// Mini unit test: verify behavior with assert. Better yet, compile with -fsanitize=undefined.
 int main() {
     assert(add(2, 3) == 5);
     assert(add(-1, 1) == 0);

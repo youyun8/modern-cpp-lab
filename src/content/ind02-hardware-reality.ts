@@ -37,7 +37,7 @@ struct PaddedCounters {
     alignas(64) std::atomic<long> b{0};
 };
 
-// C++17 可攜寫法：以 std::hardware_destructive_interference_size 取代硬編碼 64。 [4.5]
+// Portable C++17 approach: use std::hardware_destructive_interference_size instead of a hardcoded 64. [4.5]
 struct PaddedCountersPortable {
     alignas(std::hardware_destructive_interference_size) std::atomic<long> a{0};
     alignas(std::hardware_destructive_interference_size) std::atomic<long> b{0};
@@ -47,12 +47,14 @@ template <typename Counters>
 double benchmarkIncrements(Counters& counters, std::size_t iterations) {
     auto start = std::chrono::steady_clock::now();
     std::thread t1([&] {
-        for (std::size_t i = 0; i < iterations; ++i)
+        for (std::size_t i = 0; i < iterations; ++i) {
             counters.a.fetch_add(1, std::memory_order_relaxed);  // [5]
+        }
     });
     std::thread t2([&] {
-        for (std::size_t i = 0; i < iterations; ++i)
+        for (std::size_t i = 0; i < iterations; ++i) {
             counters.b.fetch_add(1, std::memory_order_relaxed);
+        }
     });
     t1.join();
     t2.join();
@@ -185,10 +187,14 @@ template <typename T>
 double run(T& counters, long iterations) {
     auto start = std::chrono::steady_clock::now();
     std::thread t1([&] {
-        for (long i = 0; i < iterations; ++i) counters.a.fetch_add(1, std::memory_order_relaxed);
+        for (long i = 0; i < iterations; ++i) {
+            counters.a.fetch_add(1, std::memory_order_relaxed);
+        }
     });
     std::thread t2([&] {
-        for (long i = 0; i < iterations; ++i) counters.b.fetch_add(1, std::memory_order_relaxed);
+        for (long i = 0; i < iterations; ++i) {
+            counters.b.fetch_add(1, std::memory_order_relaxed);
+        }
     });
     t1.join();
     t2.join();

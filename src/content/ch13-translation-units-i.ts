@@ -13,20 +13,20 @@ const ch13TranslationUnitsI: ChapterContent = {
   },
   code: {
     lang: 'cpp',
-    code: `// ---- math.hpp（標頭：只放宣告與 inline 定義）----
+    code: `// ---- math.hpp (header: only declarations and inline definitions) ----
 #pragma once
-int add(int a, int b);      // [1] 宣告：無函式本體
-inline int square(int x) {  // [2] inline 允許出現在多個單元
+int add(int a, int b);      // [1] declaration: no function body
+inline int square(int x) {  // [2] inline is allowed to appear in multiple units
     return x * x;
 }
-constexpr double kPi = 3.141592653589793;  // [3] constexpr 隱含 inline
+constexpr double kPi = 3.141592653589793;  // [3] constexpr implies inline
 
-// ---- math.cpp（唯一定義處）----
+// ---- math.cpp (the single place with the definition) ----
 // #include "math.hpp"
-int add(int a, int b) { return a + b; }  // [4] 定義只出現一次
+int add(int a, int b) { return a + b; }  // [4] the definition appears only once
 
-// ---- util.cpp（本檔專用符號）----
-namespace {  // [5] 匿名 namespace：internal linkage
+// ---- util.cpp (symbol private to this file) ----
+namespace {  // [5] anonymous namespace: internal linkage
 int secret() { return 42; }
 }  // namespace`,
     callouts: [
@@ -116,7 +116,7 @@ int secret() { return 42; }
   tryIt: {
     code: `#include <iostream>
 
-inline int square(int x) { return x * x; }  // inline 可安全共用
+inline int square(int x) { return x * x; }  // inline can be safely shared
 constexpr double kPi = 3.14159265358979;
 
 namespace {

@@ -19,18 +19,18 @@ const ind03ConcurrencyVsParallelism: ChapterContent = {
 #include <thread>
 #include <vector>
 
-// 任務平行：兩個「不同」工作同時進行，彼此邏輯獨立。 [1]
+// Task parallelism: two "different" jobs proceed at the same time, logically independent of each other. [1]
 void loadConfigAndWarmCache(const std::string& path) {
     std::future<Config> configFut =
         std::async(std::launch::async, [path] { return parseConfig(path); });  // [2]
     std::future<void> warmFut = std::async(std::launch::async, [] { warmDiskCache(); });
 
-    Config cfg = configFut.get();  // [3] 兩個future在此處匯合，屬於fork-join的join
+    Config cfg = configFut.get();  // [3] The two futures join here, i.e. the "join" of fork-join
     warmFut.get();
     applyConfig(cfg);
 }
 
-// 資料平行：同一運算套用到資料的不同切片，工作內容完全相同。 [4]
+// Data parallelism: the same computation is applied to different slices of data; the work is identical. [4]
 void scaleInPlace(std::vector<double>& data, double factor, unsigned numWorkers) {
     const std::size_t n = data.size();
     const std::size_t chunk = (n + numWorkers - 1) / numWorkers;
@@ -39,29 +39,39 @@ void scaleInPlace(std::vector<double>& data, double factor, unsigned numWorkers)
     for (unsigned w = 0; w < numWorkers; ++w) {  // [5] fork
         std::size_t begin = w * chunk;
         std::size_t end = std::min(n, begin + chunk);
-        if (begin >= end) break;
+        if (begin >= end) {
+            break;
+        }
         workers.emplace_back([&data, factor, begin, end] {
-            for (std::size_t i = begin; i < end; ++i) data[i] *= factor;
+            for (std::size_t i = begin; i < end; ++i) {
+                data[i] *= factor;
+            }
         });
     }
-    for (auto& t : workers) t.join();  // [6] join：所有worker必須完成才能往下走
+    for (auto& t : workers) {
+        t.join();  // [6] join: every worker must finish before we can proceed
+    }
 }
 
-// BSP 超步：std::barrier 讓所有執行緒在每一輪的邊界同步。
+// BSP superstep: std::barrier synchronizes all threads at the boundary of each round.
 void bspRelaxationStep(std::vector<double>& grid, int iterations) {
     const unsigned p = std::thread::hardware_concurrency();
-    std::barrier sync_point(p, [] { /* 選擇性：每輪結束時的協調動作 */ });
+    std::barrier sync_point(p, [] { /* Optional: coordination action performed at the end of each round */ });
 
     auto worker = [&](unsigned id) {
         for (int iter = 0; iter < iterations; ++iter) {
-            // 本地運算階段：只碰自己的資料切片，不與其他執行緒溝通。
+            // Local computation phase: touches only its own data slice, no communication with other threads.
             localRelax(grid, id, p);
-            sync_point.arrive_and_wait();  // 等待所有執行緒完成這一輪
+            sync_point.arrive_and_wait();  // Wait for all threads to finish this round
         }
     };
     std::vector<std::thread> threads;
-    for (unsigned id = 0; id < p; ++id) threads.emplace_back(worker, id);
-    for (auto& t : threads) t.join();
+    for (unsigned id = 0; id < p; ++id) {
+        threads.emplace_back(worker, id);
+    }
+    for (auto& t : threads) {
+        t.join();
+    }
 }`,
     callouts: [
       {
@@ -168,25 +178,29 @@ void bspRelaxationStep(std::vector<double>& grid, int iterations) {
 #include <thread>
 #include <vector>
 
-// 用 std::barrier 示範一個最小的 BSP 風格迴圈：
-// 每一輪所有執行緒各自遞增自己的計數器，然後在屏障處等待彼此。
+// Demonstrate a minimal BSP-style loop using std::barrier:
+// each round, every thread increments its own counter, then waits for the others at the barrier.
 int main() {
     constexpr unsigned kWorkers = 4;
     constexpr int kSupersteps = 3;
     std::vector<int> counters(kWorkers, 0);
 
-    std::barrier sync_point(kWorkers, [] { std::cout << "-- superstep 完成 --\\n"; });
+    std::barrier sync_point(kWorkers, [] { std::cout << "-- superstep complete --\\n"; });
 
     auto worker = [&](unsigned id) {
         for (int step = 0; step < kSupersteps; ++step) {
-            counters[id] += 1;             // 本地運算，不碰其他執行緒的資料
-            sync_point.arrive_and_wait();  // 等待這一輪所有執行緒完成
+            counters[id] += 1;             // Local computation, does not touch other threads' data
+            sync_point.arrive_and_wait();  // Wait for all threads to finish this round
         }
     };
 
     std::vector<std::thread> threads;
-    for (unsigned id = 0; id < kWorkers; ++id) threads.emplace_back(worker, id);
-    for (auto& t : threads) t.join();
+    for (unsigned id = 0; id < kWorkers; ++id) {
+        threads.emplace_back(worker, id);
+    }
+    for (auto& t : threads) {
+        t.join();
+    }
 
     for (unsigned id = 0; id < kWorkers; ++id) {
         std::cout << "worker " << id << " -> " << counters[id] << '\\n';

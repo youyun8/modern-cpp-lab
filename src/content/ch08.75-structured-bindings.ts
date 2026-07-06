@@ -19,35 +19,35 @@ const ch08StructuredBindings: ChapterContent = {
 #include <tuple>
 #include <utility>
 
-// 回傳多個值時，優先回傳 tuple 或 struct 而非傳遞 out-parameter。 [1]
+// When returning multiple values, prefer returning a tuple or struct instead of using out-parameters. [1]
 std::pair<int, std::string> findItem(int key) {
     return {key, std::string{"item#"} + std::to_string(key)};
 }
 
-// 使用結構化綁定一次接收兩個回傳值，命名清楚。 [2]
+// Use structured bindings to receive both return values at once, with clear names. [2]
 auto [id, name] = findItem(42);
 
-// 也可以綁定到引用，避免複製大型物件。 [3]
+// Can also bind to references to avoid copying large objects. [3]
 auto& [ref_id, ref_name] = findItem(100);
 
-// 在迴圈中 walk map：key 與 value 直接命名。 [4]
+// Walk a map in a loop: name key and value directly. [4]
 void printMap(const std::map<int, std::string>& items) {
     for (const auto& [key, value] : items) {  // [5]
         std::cout << key << " -> " << value << "\\n";
     }
 }
 
-// 結構化綁定也可解構 array。 [6]
+// Structured bindings can also destructure arrays. [6]
 std::tuple<int, double, std::string> getMetrics() {
     return {7, 3.14, "ok"};
 }
 
-// C++20 允許在 for 中使用初始化子句。 [7]
+// C++20 allows an init-statement inside for. [7]
 struct Point { int x; int y; };
 Point center{10, 20};
-auto [cx, cy] = center;  // [8] 聚合型別的結構化綁定
+auto [cx, cy] = center;  // [8] Structured binding of an aggregate type
 
-// 配合 if-init 舉例。 [9]
+// Example combined with if-init. [9]
 int main() {
     auto [status, payload] = findItem(7);  // [10]
     std::cout << status << ": " << payload << "\\n";
@@ -58,7 +58,7 @@ int main() {
     std::map<int, std::string> m{{1, "one"}, {2, "two"}};
     printMap(m);
 
-    // 檢查 insert 回傳值，pair<bool, iterator> 一次拆開命名。 [12]
+    // Check the insert return value, unpacking pair<bool, iterator> at once. [12]
     auto [iter, inserted] = m.insert({3, "three"});
     std::cout << "inserted=" << inserted << " value=" << iter->second << "\\n";
     return 0;

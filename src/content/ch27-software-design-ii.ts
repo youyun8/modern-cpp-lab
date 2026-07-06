@@ -15,7 +15,7 @@ const ch27SoftwareDesignII: ChapterContent = {
     lang: 'cpp',
     code: `#include <print>
 
-// CRTP：基底以衍生型別為樣板參數，達成可內聯的靜態多型。 [1]
+// CRTP: the base takes the derived type as a template parameter, enabling inlinable static polymorphism. [1]
 template <typename Derived>
 struct Shape {
     double area() const {
@@ -29,10 +29,10 @@ struct Circle : Shape<Circle> {
     double areaImpl() const { return 3.14159265 * r * r; }  // [3]
 };
 
-// PIMPL 骨架：標頭只見前置宣告與一個指標。 [4]
+// PIMPL skeleton: the header only shows a forward declaration and a pointer. [4]
 class Widget {
-    struct Impl;   // 前置宣告，實作藏於 .cpp
-    Impl* pimpl_;  // [5] 僅暴露一個指標，隱藏細節與相依
+    struct Impl;   // forward declaration; implementation hidden in .cpp
+    Impl* pimpl_;  // [5] exposes only a pointer, hiding details and dependencies
    public:
     Widget();
     ~Widget();
@@ -41,7 +41,7 @@ class Widget {
 
 int main() {
     Circle c{2.0};
-    std::println("area = {:.3f}", c.area());  // 靜態多型，可完全內聯
+    std::println("area = {:.3f}", c.area());  // static polymorphism, fully inlinable
     return 0;
 }`,
     callouts: [

@@ -12,26 +12,26 @@ const labGpuBridge: ChapterContent = {
   },
   code: {
     lang: 'cpp',
-    code: `// 概念示意（省略錯誤檢查）：以多條 stream 重疊傳輸與計算。 [1]
-// 需以 nvcc（CUDA）或 hipcc（HIP）編譯，非一般 g++。
+    code: `// Conceptual sketch (error checking omitted): overlap transfer and compute with multiple streams. [1]
+// Must be compiled with nvcc (CUDA) or hipcc (HIP), not a plain g++.
 #include <vector>
 
-// __global__ void scale(float* d, float k, int n); // GPU 核心宣告
+// __global__ void scale(float* d, float k, int n); // GPU kernel declaration
 
 void pipeline(float* h_in, float* d_buf, int n /*, cudaStream_t s */) {
     // cudaMemcpyAsync(d_buf, h_in, n*sizeof(float),
-    //                 cudaMemcpyHostToDevice, s);        // [2] 非同步 H2D
-    // scale<<<(n+255)/256, 256, 0, s>>>(d_buf, 2.0f, n); // [3] 發射即返回
+    //                 cudaMemcpyHostToDevice, s);        // [2] Asynchronous H2D
+    // scale<<<(n+255)/256, 256, 0, s>>>(d_buf, 2.0f, n); // [3] Launch-and-return
     // cudaMemcpyAsync(h_in, d_buf, n*sizeof(float),
-    //                 cudaMemcpyDeviceToHost, s);        // [4] 非同步 D2H
-    // host 此時可繼續做別的事；稍後再同步。               [5]
+    //                 cudaMemcpyDeviceToHost, s);        // [4] Asynchronous D2H
+    // The host can keep doing other work now; synchronize later.  [5]
 }
 
-// 心智模型：cudaStream 之於 GPU，類似 std::future 之於 CPU 非同步工作。
+// Mental model: cudaStream is to the GPU what std::future is to CPU async work.
 #include <future>
 int cpuAnalog() {
     std::future<int> f = std::async(std::launch::async, [] { return 42; });
-    return f.get();  // 對應 cudaStreamSynchronize：等待非同步工作完成
+    return f.get();  // Corresponds to cudaStreamSynchronize: wait for async work to finish
 }`,
     callouts: [
       {
@@ -124,23 +124,23 @@ int cpuAnalog() {
       'CPU–GPU 非同步橋接：host 發射核心與傳輸到 stream（發射即返回），工作在 GPU 排隊執行，最後於同步點會合。',
   },
   tryIt: {
-    code: `// GPU 需以 nvcc/hipcc 編譯。以下用 std::async/std::future 展示
-// 對應的「非同步、稍後同步」心智模型，可在一般編譯器執行。
+    code: `// GPU code must be compiled with nvcc/hipcc. The following uses std::async/std::future
+// to demonstrate the corresponding "async, sync later" mental model, runnable on any compiler.
 #include <chrono>
 #include <future>
 #include <iostream>
 #include <thread>
 
 int main() {
-    // 類比：把「核心」排入非同步佇列，host 立即返回。
+    // Analogy: enqueue the "kernel" into an async queue, host returns immediately.
     auto stream = std::async(std::launch::async, [] {
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        return 21 * 2;  // 假裝這是 GPU 算出的結果
+        return 21 * 2;  // Pretend this is the result computed by the GPU
     });
 
-    std::cout << "host 在 GPU 工作時繼續做別的事...\\n";
-    int result = stream.get();  // 對應 cudaStreamSynchronize
-    std::cout << "GPU 結果 = " << result << '\\n';
+    std::cout << "Host keeps doing other work while the GPU works...\\n";
+    int result = stream.get();  // Corresponds to cudaStreamSynchronize
+    std::cout << "GPU result = " << result << '\\n';
     return 0;
 }`,
   },

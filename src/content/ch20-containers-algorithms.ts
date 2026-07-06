@@ -22,16 +22,18 @@ const ch20ContainersAlgorithms: ChapterContent = {
 int main() {
     std::vector<int> v{5, 3, 8, 1, 9, 2, 7};
 
-    std::ranges::sort(v);                      // [1] ranges 版直接吃容器
-    auto it = std::ranges::lower_bound(v, 7);  // [2] 有序區間二分搜尋
+    std::ranges::sort(v);                      // [1] ranges version takes the container directly
+    auto it = std::ranges::lower_bound(v, 7);  // [2] binary search over a sorted range
     std::println("first >= 7 at index {}", it - v.begin());
 
-    int big = std::ranges::count_if(v,  // [3] 宣告式計數
+    int big = std::ranges::count_if(v,  // [3] declarative counting
                                     [](int x) { return x > 4; });
     std::println("count > 4 = {}", big);
 
-    std::unordered_map<std::string, int> freq;                  // [4] 平均 O(1) 查找
-    for (std::string w : {"a", "b", "a", "c", "a"}) ++freq[w];  // [5] operator[] 自動插入
+    std::unordered_map<std::string, int> freq;                  // [4] average O(1) lookup
+    for (std::string w : {"a", "b", "a", "c", "a"}) {
+        ++freq[w];  // [5] operator[] inserts automatically
+    }
     std::println("freq[a] = {}", freq["a"]);
     return 0;
 }`,
@@ -126,7 +128,9 @@ int main() {
 int main() {
     std::vector<int> v{5, 3, 8, 1, 9, 2, 7};
     std::ranges::sort(v);
-    for (int x : v) std::cout << x << ' ';
+    for (int x : v) {
+        std::cout << x << ' ';
+    }
     std::cout << '\\n';
     auto big = std::ranges::count_if(v, [](int x) { return x > 4; });
     std::cout << "count > 4 = " << big << '\\n';

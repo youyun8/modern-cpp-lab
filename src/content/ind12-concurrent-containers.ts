@@ -35,27 +35,27 @@ const ind12ConcurrentContainers: ChapterContent = {
 #include <cstddef>
 #include <optional>
 
-// 固定容量的 SPSC（single-producer-single-consumer）環形佇列。 [1]
+// Fixed-capacity SPSC (single-producer-single-consumer) ring buffer. [1]
 template <typename T, std::size_t Capacity>
 class SpscRingBuffer {
    public:
-    // push 僅由唯一的生產者執行緒呼叫。
+    // push is only ever called by the single producer thread.
     bool push(T value) {
         const std::size_t tail = tail_.load(std::memory_order_relaxed);  // [2]
         const std::size_t next = (tail + 1) % Capacity;
         if (next == head_.load(std::memory_order_acquire)) {  // [3]
-            return false;                                     // 佇列已滿。
+            return false;                                     // Queue is full.
         }
         buffer_[tail] = std::move(value);
         tail_.store(next, std::memory_order_release);  // [4]
         return true;
     }
 
-    // try_pop 僅由唯一的消費者執行緒呼叫。
+    // try_pop is only ever called by the single consumer thread.
     std::optional<T> try_pop() {
         const std::size_t head = head_.load(std::memory_order_relaxed);  // [5]
         if (head == tail_.load(std::memory_order_acquire)) {
-            return std::nullopt;  // 佇列是空的。
+            return std::nullopt;  // Queue is empty.
         }
         T value = std::move(buffer_[head]);
         head_.store((head + 1) % Capacity, std::memory_order_release);  // [6]
@@ -64,8 +64,8 @@ class SpscRingBuffer {
 
    private:
     T buffer_[Capacity]{};
-    alignas(64) std::atomic<std::size_t> head_{0};  // 消費者專屬寫入。
-    alignas(64) std::atomic<std::size_t> tail_{0};  // 生產者專屬寫入，各佔一條快取行。
+    alignas(64) std::atomic<std::size_t> head_{0};  // Written only by the consumer.
+    alignas(64) std::atomic<std::size_t> tail_{0};  // Written only by the producer; each gets its own cache line.
 };`,
     callouts: [
       {
@@ -171,14 +171,16 @@ class SpscRingBuffer {
 #include <optional>
 #include <thread>
 
-// 簡化版 SPSC 環形佇列，用來示範 relaxed／acquire／release 的最小同步。
+// Simplified SPSC ring buffer, demonstrating the minimal relaxed/acquire/release synchronization.
 template <typename T, std::size_t Capacity>
 class SpscRingBuffer {
    public:
     bool push(T value) {
         const std::size_t tail = tail_.load(std::memory_order_relaxed);
         const std::size_t next = (tail + 1) % Capacity;
-        if (next == head_.load(std::memory_order_acquire)) return false;
+        if (next == head_.load(std::memory_order_acquire)) {
+            return false;
+        }
         buffer_[tail] = value;
         tail_.store(next, std::memory_order_release);
         return true;
@@ -186,7 +188,9 @@ class SpscRingBuffer {
 
     std::optional<T> try_pop() {
         const std::size_t head = head_.load(std::memory_order_relaxed);
-        if (head == tail_.load(std::memory_order_acquire)) return std::nullopt;
+        if (head == tail_.load(std::memory_order_acquire)) {
+            return std::nullopt;
+        }
         T value = buffer_[head];
         head_.store((head + 1) % Capacity, std::memory_order_release);
         return value;
@@ -204,7 +208,7 @@ int main() {
     std::thread producer([&queue]() {
         for (int i = 0; i < 100000; ++i) {
             while (!queue.push(i)) {
-                // 佇列已滿，忙等重試。
+                // Queue is full; busy-wait and retry.
             }
         }
     });
@@ -214,7 +218,7 @@ int main() {
         for (int i = 0; i < 100000; ++i) {
             std::optional<int> value;
             while (!(value = queue.try_pop())) {
-                // 佇列是空的，忙等重試。
+                // Queue is empty; busy-wait and retry.
             }
             sum += *value;
         }
@@ -222,7 +226,7 @@ int main() {
 
     producer.join();
     consumer.join();
-    std::cout << "sum = " << sum << " (應為 4999950000)\\n";
+    std::cout << "sum = " << sum << " (should be 4999950000)\\n";
     return 0;
 }`,
   },

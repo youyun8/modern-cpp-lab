@@ -27,12 +27,12 @@ const ind39Cpp26Outlook: ChapterContent = {
   ],
   code: {
     lang: 'cpp',
-    code: `// 注意：以下為 C++26 提案中的概念性語法，尚未由主流編譯器正式實作
+    code: `// Note: The following is illustrative syntax from C++26 proposals, not yet implemented by mainstream compilers
 
 #include <iostream>
 #include <variant>
 
-// 1. 靜態反射 (P2996) 的想像寫法
+// 1. Imagined syntax for static reflection (P2996)
 struct User {
     int id;
     std::string name;
@@ -42,7 +42,7 @@ struct User {
 template <typename T>
 void print_json(const T& obj) {
     std::cout << "{ ";
-    // 使用反射走訪類別的所有成員
+    // Use reflection to walk through all members of the class
     constexpr auto members = std::meta::members_of(^T);
     template for (constexpr auto member : members) {
         std::cout << "\\"" << std::meta::name_of(member) << "\\": " 
@@ -52,7 +52,7 @@ void print_json(const T& obj) {
 }
 */
 
-// 2. 模式匹配 (P2688) 的想像寫法
+// 2. Imagined syntax for pattern matching (P2688)
 using Result = std::variant<int, std::string>;
 
 void handle_result(const Result& res) {
@@ -65,7 +65,7 @@ void handle_result(const Result& res) {
     */
 }
 
-// 3. 合約 (Contracts) 的想像寫法
+// 3. Imagined syntax for contracts
 /*
 double safe_divide(double a, double b)
   pre (b != 0.0)
@@ -126,7 +126,7 @@ int main() {
     code: `#include <iostream>
 
 int main() {
-    std::cout << "等待 C++26 的到來...\\n";
+    std::cout << "Waiting for C++26 to arrive...\\n";
     return 0;
 }`,
   },

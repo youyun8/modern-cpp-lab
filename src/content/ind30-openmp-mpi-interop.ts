@@ -39,13 +39,13 @@ const ind30OpenmpMpiInterop: ChapterContent = {
 #include <vector>
 
 int main(int argc, char** argv) {
-    // 要求 MPI_THREAD_FUNNELED：只有呼叫 MPI_Init_thread 的這個
-    // （主）執行緒之後可以呼叫任何 MPI 函式，OpenMP 平行區塊內的
-    // worker 執行緒完全不可呼叫 MPI。 [1]
+    // Request MPI_THREAD_FUNNELED: only the (main) thread that called
+    // MPI_Init_thread may call any MPI function afterward; worker threads
+    // inside OpenMP parallel regions must never call MPI. [1]
     int provided = MPI_THREAD_SINGLE;
     MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided);
     if (provided < MPI_THREAD_FUNNELED) {
-        // 必須檢查實際獲得的等級，不能假設 required 一定被滿足。 [2]
+        // Must check the actually provided level; never assume "required" is guaranteed. [2]
         std::fprintf(stderr,
                      "MPI implementation does not provide "
                      "MPI_THREAD_FUNNELED\\n");
@@ -60,27 +60,27 @@ int main(int argc, char** argv) {
     constexpr int kLocalSize = 1'000'000;
     std::vector<double> local_data(kLocalSize, static_cast<double>(rank));
 
-    // 用 std::atomic 取代原本可能是 #pragma omp critical 的累加器：
-    // 這是「漸進遷移」中最低風險的一步，不改動外層 OpenMP 迴圈結構。 [3]
+    // Replace what might otherwise be a #pragma omp critical accumulator with std::atomic:
+    // this is the lowest-risk step of "incremental migration" and does not change the outer OpenMP loop structure. [3]
     std::atomic<long long> processed_count{0};
 
     double local_sum = 0.0;
 #pragma omp parallel for reduction(+ : local_sum) schedule(static)
     for (int i = 0; i < kLocalSize; ++i) {
-        // 熱路徑：純本地運算，完全不呼叫任何 MPI 函式。 [4]
+        // Hot path: pure local computation, never calls any MPI function. [4]
         local_data[static_cast<std::size_t>(i)] *= 2.0;
         local_sum += local_data[static_cast<std::size_t>(i)];
         processed_count.fetch_add(1, std::memory_order_relaxed);
     }
 
-    // 離開 OpenMP 平行區塊後，回到單一（主）執行緒的序列部分，
-    // 才是唯一允許呼叫 MPI 的地方（滿足 MPI_THREAD_FUNNELED 的要求）。 [5]
+    // After leaving the OpenMP parallel region, back in the sequential part of the single
+    // (main) thread is the only place allowed to call MPI (satisfying MPI_THREAD_FUNNELED). [5]
     double global_sum = 0.0;
     MPI_Reduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
-    // 注意：MPI_Reduce 完成後 global_sum 在 rank 0 上有效，這個保證
-    // 來自 MPI 標準自身的語意，與 C++ 的 happens-before／std::atomic
-    // 無關——它們是兩套獨立的同步網域。 [6]
+    // Note: after MPI_Reduce completes, global_sum is valid on rank 0; this guarantee
+    // comes from the MPI standard's own semantics and is unrelated to C++'s
+    // happens-before / std::atomic -- they are two independent synchronization domains. [6]
     if (rank == 0) {
         std::printf("global_sum = %f across %d ranks\\n", global_sum, world_size);
     }
@@ -188,9 +188,9 @@ int main(int argc, char** argv) {
       'MPI 負責跨行程通訊、OpenMP 負責節點內平行迴圈，兩者是獨立的既有 HPC 工具鏈；C++ 標準並行工具先進入非熱路徑與新程式碼，再視量測結果逐步、謹慎地擴大到既有熱路徑。',
   },
   tryIt: {
-    code: `// 簡化示意：本地端無需 MPI runtime 也能觀察的部分——
-// 用 std::atomic 取代假想的 OpenMP critical 計數器。
-// 完整的 MPI + OpenMP 版本請見本章 code 區塊，需要 mpicxx 編譯與多行程執行。
+    code: `// Simplified illustration: the part that can be observed locally without an MPI runtime --
+// replaces a hypothetical OpenMP critical counter with std::atomic.
+// See this chapter's code block for the full MPI + OpenMP version, which needs mpicxx and multiple processes.
 #include <atomic>
 #include <cstdio>
 
@@ -202,7 +202,7 @@ int main() {
 #pragma omp parallel for reduction(+ : sum) schedule(static)
     for (int i = 0; i < kSize; ++i) {
         sum += static_cast<double>(i);
-        // 取代 #pragma omp critical { ++processed_count; } 的低風險改動。
+        // A low-risk change replacing #pragma omp critical { ++processed_count; }.
         processed_count.fetch_add(1, std::memory_order_relaxed);
     }
 

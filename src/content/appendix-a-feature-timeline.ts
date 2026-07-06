@@ -37,31 +37,32 @@ const appendixAFeatureTimeline: ChapterContent = {
     lang: 'cpp',
     code: `#include <mutex>
 #include <thread>
-#include <version>  // [1] 取得所有 __cpp_lib_* / __cpp_* 功能測試巨集
+#include <version>  // [1] Get all __cpp_lib_* / __cpp_* feature test macros
 
-// 以功能測試巨集撰寫跨標準版本皆可編譯的可攜程式碼。
-// 這是業界推薦的做法：不要用 __cplusplus 猜測函式庫是否齊全，
-// 因為「語言標準版本」與「函式庫實作進度」經常不同步。
+// Use feature test macros to write portable code that compiles across standard versions.
+// This is the industry-recommended approach: don't use __cplusplus to guess whether a
+// library feature is available, because "language standard version" and "library
+// implementation progress" are often out of sync.
 
-#if defined(__cpp_lib_jthread)  // [2] C++20：可自動 join、可取消的執行緒
+#if defined(__cpp_lib_jthread)  // [2] C++20: auto-joining, cancellable thread
 using WorkerThread = std::jthread;
 #else
-using WorkerThread = std::thread;  // 退回 C++11 的 std::thread，需自行 join
+using WorkerThread = std::thread;  // Fall back to C++11's std::thread; must join manually
 #endif
 
-#if defined(__cpp_lib_barrier)  // [3] C++20：可重複使用的集合點
+#if defined(__cpp_lib_barrier)  // [3] C++20: reusable rendezvous point
 #include <barrier>
 void sync_phase(std::barrier<>& sync_point) { sync_point.arrive_and_wait(); }
 #endif
 
-#if defined(__cpp_lib_shared_mutex)  // [4] C++17：讀寫鎖
+#if defined(__cpp_lib_shared_mutex)  // [4] C++17: reader-writer lock
 #include <shared_mutex>
 using ReadWriteLock = std::shared_mutex;
 #else
-using ReadWriteLock = std::mutex;  // 退回一般互斥鎖，犧牲讀取平行度
+using ReadWriteLock = std::mutex;  // Fall back to a plain mutex, sacrificing read parallelism
 #endif
 
-#if __has_include(<execution>)  // [5] C++17：平行演算法執行策略
+#if __has_include(<execution>)  // [5] C++17: parallel algorithm execution policies
 #include <execution>
 constexpr bool kHasExecutionPolicies = true;
 #else
@@ -70,12 +71,13 @@ constexpr bool kHasExecutionPolicies = false;
 
 int main() {
     WorkerThread worker([] {
-        // 若底層是 std::jthread，離開作用域時會自動請求停止並 join；
-        // 若退回 std::thread，呼叫端必須自行負責 join，否則會 std::terminate。
+        // If the underlying type is std::jthread, leaving scope automatically requests
+        // a stop and joins; if it falls back to std::thread, the caller must join
+        // manually, or std::terminate will be called.
     });
 
     if constexpr (!std::is_same_v<WorkerThread, std::jthread>) {
-        worker.join();  // [6] 僅在退回 std::thread 時才需要手動 join
+        worker.join();  // [6] Manual join is only needed when falling back to std::thread
     }
 
     return kHasExecutionPolicies ? 0 : 1;
@@ -176,7 +178,7 @@ int main() {
 #include <thread>
 #include <version>
 
-// 用功能測試巨集判斷目前工具鏈支援到哪個並行特性等級。
+// Use feature test macros to determine which level of concurrency features the current toolchain supports.
 #if defined(__cpp_lib_jthread)
 using WorkerThread = std::jthread;
 #else
@@ -192,11 +194,11 @@ using ReadWriteLock = std::mutex;
 
 int main() {
     WorkerThread worker([] {
-        // 空工作項目，僅示範型別選擇邏輯。
+        // Empty work item, only demonstrates the type-selection logic.
     });
 
     if constexpr (!std::is_same_v<WorkerThread, std::jthread>) {
-        worker.join();  // 退回 std::thread 時必須手動 join
+        worker.join();  // Must join manually when falling back to std::thread
     }
 
     return 0;

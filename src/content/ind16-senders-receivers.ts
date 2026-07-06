@@ -31,33 +31,33 @@ const ind16SendersReceivers: ChapterContent = {
   ],
   code: {
     lang: 'cpp',
-    code: `// 以下語法代表 P2300 提案／stdexec 參考實作的典型用法，
-// 部分編譯器尚未完整支援 C++26 std::execution，
-// 實驗時建議使用 NVIDIA/Meta 的 stdexec 函式庫。
+    code: `// The following syntax represents typical usage of the P2300 proposal / stdexec reference implementation,
+// since some compilers do not yet fully support C++26 std::execution,
+// it is recommended to use NVIDIA/Meta's stdexec library for experimentation.
 #include <exec/static_thread_pool.hpp>
 #include <stdexec/execution.hpp>
 
 int main() {
-    // 建立一個小型執行緒池，並取得其 scheduler。 [1]
+    // Create a small thread pool and get its scheduler. [1]
     exec::static_thread_pool pool(4);
     stdexec::scheduler auto sch = pool.get_scheduler();
 
-    // schedule() 回傳一個 sender：描述「排入這個執行環境」的懶惰計算。 [2]
+    // schedule() returns a sender: a lazy computation describing "scheduling onto this execution context". [2]
     auto work = stdexec::schedule(sch) | stdexec::then([] { return 21; })  // [3]
                 | stdexec::then([](int x) { return x * 2; });
 
-    // when_all 把兩個獨立分支匯合成一個 tuple 結果。 [4]
+    // when_all joins two independent branches into a single tuple result. [4]
     auto combined =
         stdexec::when_all(work, stdexec::schedule(sch) | stdexec::then([] { return 100; }));
 
-    // bulk 對索引範圍 [0, 4) 做資料平行展開，仍然回傳一個 sender。 [5]
+    // bulk fans out data-parallel work over the index range [0, 4), still returning a sender. [5]
     auto fanned_out = stdexec::schedule(sch) | stdexec::bulk(4, [](std::size_t index) {
-                          // 每個索引平行處理各自的一份工作。
+                          // Each index processes its own piece of work in parallel.
                           (void)index;
                       });
 
-    // 在此之前，上面所有變數都只是「描述」，尚未執行任何一行使用者程式碼。
-    // sync_wait 才會真正 start 整張計算圖並阻塞等待完成。 [6]
+    // Up to this point, all the variables above are merely "descriptions"; no user code has executed yet.
+    // Only sync_wait actually starts the whole computation graph and blocks until it completes. [6]
     auto [sum_tuple] = stdexec::sync_wait(combined).value();
     auto [a, b] = sum_tuple;
 
@@ -163,7 +163,7 @@ int main() {
       'sender 由 scheduler 產生，經 then／when_all／bulk 組合成計算圖，最終啟動時把結果交給 receiver 的 set_value／set_error／set_stopped 之一。',
   },
   tryIt: {
-    code: `// 簡化示意：P2300 風格的 sender 組合，實際執行需要 stdexec 函式庫。
+    code: `// Simplified illustration: P2300-style sender composition; actually running this requires the stdexec library.
 #include <exec/static_thread_pool.hpp>
 #include <iostream>
 #include <stdexec/execution.hpp>
@@ -172,13 +172,13 @@ int main() {
     exec::static_thread_pool pool(2);
     auto sch = pool.get_scheduler();
 
-    // 描述「排入執行緒池 -> 算出 21 -> 乘以 2」的計算圖，此刻尚未執行。
+    // Describes the computation graph "schedule onto the thread pool -> compute 21 -> multiply by 2"; not executed yet.
     auto pipeline = stdexec::schedule(sch) | stdexec::then([] { return 21; }) |
                     stdexec::then([](int x) { return x * 2; });
 
-    // sync_wait 才會真正啟動整張圖並阻塞取得結果。
+    // Only sync_wait actually starts the whole graph and blocks to get the result.
     auto [result] = stdexec::sync_wait(pipeline).value();
-    std::cout << "result = " << result << "\\n";  // 預期輸出 42
+    std::cout << "result = " << result << "\\n";  // Expected output: 42
     return 0;
 }`,
   },

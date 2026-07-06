@@ -38,7 +38,7 @@ const ind21ThreadPoolsScheduling: ChapterContent = {
 #include <thread>
 #include <vector>
 
-// 最小可用的執行緒池：共享任務佇列 + mutex/condition_variable。 [1]
+// Minimal usable thread pool: a shared task queue + mutex/condition_variable. [1]
 class ThreadPool {
    public:
     explicit ThreadPool(std::size_t thread_count) {
@@ -59,7 +59,8 @@ class ThreadPool {
         }
     }
 
-    // 提交任務；同一把鎖保護佇列，因此在高核心數下鎖競爭會隨執行緒數上升。
+    // Submit a task; the same lock protects the queue, so lock contention grows
+    // with the number of threads on high-core-count machines.
     void Submit(std::function<void()> task) {
         {
             std::lock_guard<std::mutex> lock(mutex_);
@@ -74,7 +75,7 @@ class ThreadPool {
             std::function<void()> task;
             {
                 std::unique_lock<std::mutex> lock(mutex_);
-                // 等待直到有任務或收到停止訊號，避免忙等（busy-wait）。 [5]
+                // Wait until there is a task or a stop signal, avoiding a busy-wait. [5]
                 cv_.wait(lock, [this] { return stopping_ || !tasks_.empty(); });
                 if (stopping_ && tasks_.empty()) {
                     return;
@@ -82,7 +83,7 @@ class ThreadPool {
                 task = std::move(tasks_.front());
                 tasks_.pop();
             }
-            task();  // 鎖已釋放才執行任務本體，避免任務內再次呼叫 Submit 時死鎖。 [6]
+            task();  // Run the task after unlocking, so a nested Submit call inside it can't deadlock. [6]
         }
     }
 
@@ -93,17 +94,17 @@ class ThreadPool {
     bool stopping_ = false;
 };
 
-// 概念草圖：每執行緒一條 deque 的 work-stealing 介面（非完整實作）。
-// 真正的無鎖版本需要對頭尾各自的 CAS 協定與 ABA 防範，這裡只示意介面切分。
+// Conceptual sketch: a per-thread deque work-stealing interface (not a full implementation).
+// A real lock-free version needs CAS protocols and ABA protection at each end; this only shows the interface split.
 class WorkStealingDeque {
    public:
-    // 只有擁有者執行緒呼叫：從頭部推入，屬本地端。
+    // Called only by the owning thread: push onto the front (local side).
     void PushFront(std::function<void()> task);
 
-    // 只有擁有者執行緒呼叫：從頭部彈出（LIFO，延續快取局部性）。
+    // Called only by the owning thread: pop from the front (LIFO, preserves cache locality).
     bool PopFront(std::function<void()>& out);
 
-    // 其他執行緒呼叫：從尾部偷（FIFO，與本地端相反，降低爭用）。
+    // Called by other threads: steal from the back (FIFO, opposite of the local side, reduces contention).
     bool StealBack(std::function<void()>& out);
 };`,
     callouts: [
@@ -271,7 +272,8 @@ int main() {
         });
     }
 
-    // 解構子會等待所有已提交任務完成後才結束，這裡先睡一下讓輸出更好觀察。
+    // The destructor waits for all submitted tasks to finish before returning; sleep briefly here
+    // so the output is easier to observe.
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
     std::cout << "completed so far: " << completed.load() << "\\n";
     return 0;

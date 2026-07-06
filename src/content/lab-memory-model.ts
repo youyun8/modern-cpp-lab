@@ -25,8 +25,9 @@ void producer() {
 }
 
 void consumer() {
-    while (!ready.load(std::memory_order_acquire))  // [4]
-        ;                                           // spin until published
+    while (!ready.load(std::memory_order_acquire)) {
+        ;  // [4] spin until published
+    }
     assert(payload == 42);                          // [5] guaranteed to hold
 }
 

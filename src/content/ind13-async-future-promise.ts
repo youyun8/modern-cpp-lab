@@ -36,13 +36,13 @@ const ind13AsyncFuturePromise: ChapterContent = {
 #include <stdexcept>
 #include <thread>
 
-// 模擬第一階段：從「感測器」讀值，可能失敗。
+// Simulate stage one: read a value from a "sensor", which may fail.
 int read_sensor() {
     std::this_thread::sleep_for(std::chrono::milliseconds(20));
     return 21;
 }
 
-// 模擬第二階段：依賴第一階段的結果做進一步運算。
+// Simulate stage two: further computation depending on stage one's result.
 int scale_and_check(int raw) {
     std::this_thread::sleep_for(std::chrono::milliseconds(20));
     if (raw < 0) {
@@ -52,29 +52,32 @@ int scale_and_check(int raw) {
 }
 
 int main() {
-    // 顯式指定 launch::async，避免落入預設策略可能延後執行的陷阱。 [2]
+    // Explicitly specify launch::async to avoid the trap where the default
+    // policy might defer execution. [2]
     std::future<int> stage1 = std::async(std::launch::async, read_sensor);
 
-    // 沒有 .then()：想在 stage1 完成後接著跑 stage2，
-    // 唯一辦法是在這裡阻塞呼叫 get()，白白佔用目前這個執行緒空等。 [3]
-    int raw = stage1.get();  // 一次性操作：這個 future 之後不能再 get()
+    // No .then(): to run stage2 after stage1 completes,
+    // the only option is to block here calling get(), wasting this thread. [3]
+    int raw = stage1.get();  // One-shot operation: this future cannot be get() again
 
-    // 手動把結果餵給下一個非同步工作，形成「偽管線」。
+    // Manually feed the result into the next asynchronous task, forming a "fake pipeline".
     std::future<int> stage2 = std::async(std::launch::async, scale_and_check, raw);
 
     try {
-        // 例外要到這裡才會浮現；若中途忘了呼叫 get()，
-        // scale_and_check 丟出的例外將隨 future 解構被靜默吞掉。 [4]
+        // The exception only surfaces here; if get() is forgotten,
+        // the exception thrown by scale_and_check would be silently dropped
+        // when the future is destroyed. [4]
         int result = stage2.get();
         std::cout << "result = " << result << '\\n';
     } catch (const std::exception& e) {
-        // 若改用 senders/receivers，錯誤會沿著 pipeline 傳遞給
-        // 對應的 error channel，而不必集中在單一同步點處理。 [5]
+        // With senders/receivers, the error would instead propagate along the
+        // pipeline to the corresponding error channel, rather than being
+        // handled at a single synchronization point. [5]
         std::cerr << "stage2 failed: " << e.what() << '\\n';
     }
 
-    // 再次呼叫 stage1.get() 會丟出 std::future_error（no_state）。 [6]
-    // int again = stage1.get();  // 未定義前提下的合法錯誤，勿嘗試。
+    // Calling stage1.get() again would throw std::future_error (no_state). [6]
+    // int again = stage1.get();  // Legal but undefined-precondition error, do not try.
 
     return 0;
 }`,
@@ -178,21 +181,21 @@ int main() {
 #include <thread>
 
 int main() {
-    // launch::async：保證立即在新執行緒上執行。
+    // launch::async: guarantees immediate execution on a new thread.
     std::future<int> f1 = std::async(std::launch::async, [] {
         std::this_thread::sleep_for(std::chrono::milliseconds(30));
         return 10;
     });
 
-    // 沒有 .then()：必須阻塞在這裡取值，才能把結果餵給下一步。
+    // No .then(): must block here to retrieve the value before feeding it to the next step.
     int a = f1.get();
 
     std::future<int> f2 = std::async(std::launch::async, [a] { return a * 4; });
 
     std::cout << "final = " << f2.get() << '\\n';
 
-    // 再次呼叫 f1.get() 會丟出 std::future_error（示範一次性語意，
-    // 實際執行請勿真的呼叫，以下僅為註解）：
+    // Calling f1.get() again would throw std::future_error (demonstrating the
+    // one-shot semantics; do not actually call it, this is just a comment):
     // f1.get();
 
     return 0;

@@ -35,27 +35,28 @@ const ind15Coroutines: ChapterContent = {
 #include <exception>
 #include <utility>
 
-// 一個支援對稱轉移的極簡 Task<T>，示範 await_suspend 回傳
-// coroutine_handle 以達成保證尾呼叫，避免鏈式協程造成堆疊成長。 [1]
+// A minimal Task<T> supporting symmetric transfer, demonstrating await_suspend returning a
+// coroutine_handle to achieve a guaranteed tail call, avoiding stack growth from chained coroutines. [1]
 template <typename T>
 struct Task {
     struct promise_type {
         T result{};
-        std::coroutine_handle<> continuation;  // [2] 完成後要恢復的呼叫端協程
+        std::coroutine_handle<> continuation;  // [2] The caller coroutine to resume upon completion
 
         Task get_return_object() {
             return Task{std::coroutine_handle<promise_type>::from_promise(*this)};
         }
         std::suspend_always initial_suspend() noexcept { return {}; }
 
-        // final_suspend 回傳的 awaiter 之 await_suspend 會回傳 continuation，
-        // 這就是「對稱轉移」：不呼叫 continuation.resume()，而是交給編譯器
-        // 以尾呼叫方式直接跳轉，堆疊深度不因鏈長增加而增加。 [3]
+        // The awaiter returned by final_suspend has an await_suspend that returns continuation,
+        // which is exactly "symmetric transfer": instead of calling continuation.resume(), it
+        // hands off to the compiler to jump directly via a tail call, so stack depth does not
+        // grow with chain length. [3]
         struct FinalAwaiter {
             bool await_ready() noexcept { return false; }
             std::coroutine_handle<> await_suspend(std::coroutine_handle<promise_type> h) noexcept {
                 auto& promise = h.promise();
-                return promise.continuation ? promise.continuation : std::noop_coroutine();  // [4]
+                return promise.continuation ? promise.continuation : std::noop_coroutine();  // [4] No continuation means this is the outermost coroutine
             }
             void await_resume() noexcept {}
         };
@@ -67,8 +68,8 @@ struct Task {
 
     std::coroutine_handle<promise_type> h;
 
-    // Task 本身可被 co_await：把呼叫端 handle 存為 continuation，
-    // 再回傳自己的 handle 交由編譯器做尾呼叫式恢復。 [5]
+    // Task itself is co_await-able: store the caller's handle as continuation,
+    // then return its own handle so the compiler performs a tail-call-style resume. [5]
     bool await_ready() noexcept { return false; }
     std::coroutine_handle<> await_suspend(std::coroutine_handle<> caller) noexcept {
         h.promise().continuation = caller;
@@ -77,20 +78,24 @@ struct Task {
     T await_resume() { return std::move(h.promise().result); }
 
     ~Task() {
-        if (h) h.destroy();
+        if (h) {
+            h.destroy();
+        }
     }
 };
 
-// 模擬非同步通訊：實務上 await_suspend 會把 handle 註冊給
-// 事件迴圈／通訊完成回呼，此處僅示範介面形狀。 [6]
+// Simulates asynchronous communication: in practice, await_suspend would register the handle
+// with an event loop or communication-completion callback; here we only demonstrate the interface shape. [6]
 Task<int> async_partial_sum(int n) {
     int total = 0;
-    for (int i = 0; i < n; ++i) total += i;
+    for (int i = 0; i < n; ++i) {
+        total += i;
+    }
     co_return total;
 }
 
 Task<int> overlap_comm_and_compute(int n) {
-    // co_await 另一個 Task：以對稱轉移串接，不論鏈多長皆不增加堆疊深度。
+    // co_await another Task: chained via symmetric transfer, stack depth stays constant regardless of chain length.
     int partial = co_await async_partial_sum(n);
     co_return partial * 2;
 }`,
@@ -229,13 +234,17 @@ struct Task {
     T await_resume() { return std::move(h.promise().result); }
 
     ~Task() {
-        if (h) h.destroy();
+        if (h) {
+            h.destroy();
+        }
     }
 };
 
 Task<int> compute_partial(int n) {
     int total = 0;
-    for (int i = 0; i < n; ++i) total += i;
+    for (int i = 0; i < n; ++i) {
+        total += i;
+    }
     co_return total;
 }
 

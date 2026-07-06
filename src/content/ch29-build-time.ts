@@ -13,17 +13,17 @@ const ch29BuildTime: ChapterContent = {
   },
   code: {
     lang: 'bash',
-    code: `# 預先編譯標頭（PCH）：把穩定的重量級標頭編譯一次
+    code: `# Precompiled header (PCH): compile a stable, heavyweight header once
 g++ -std=c++23 -x c++-header pch.hpp -o pch.hpp.gch       # [1]
 g++ -std=c++23 -include pch.hpp -c a.cpp -o a.o           # [2]
 
-# 以 ccache 快取編譯結果，避免重複編譯相同輸入
+# Use ccache to cache compilation results and avoid recompiling identical input
 export CXX="ccache g++"                                    # [3]
 
-# ThinLTO：可平行、增量的連結期最佳化
+# ThinLTO: a parallelizable, incremental link-time optimization
 clang++ -std=c++23 -O2 -flto=thin a.cpp b.cpp -o app      # [4]
 
-# 量測編譯時間分佈，找出真正的瓶頸（Clang）
+# Measure compile-time distribution to find the real bottleneck (Clang)
 clang++ -std=c++23 -ftime-trace -c heavy.cpp              # [5]`,
     callouts: [
       { n: 1, text: 'PCH 把常用且穩定的標頭預先編譯成 .gch，後續單元重用其結果，省去重複解析。' },
@@ -112,9 +112,9 @@ clang++ -std=c++23 -ftime-trace -c heavy.cpp              # [5]`,
   tryIt: {
     code: `#include <iostream>
 
-// 前置宣告可切斷不必要的 #include 相依，加快編譯。
-struct HeavyType;                  // 只宣告，不需完整定義
-void process(const HeavyType& h);  // 介面只需前置宣告
+// A forward declaration cuts unnecessary #include dependencies, speeding up compilation.
+struct HeavyType;                  // Only declared, no full definition needed
+void process(const HeavyType& h);  // The interface only needs a forward declaration
 
 struct HeavyType {
     int data = 7;

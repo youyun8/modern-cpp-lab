@@ -43,30 +43,34 @@ const ind07ThreadLifecycle: ChapterContent = {
 
 using namespace std::chrono_literals;
 
-// 協作式取消：worker 定期檢查 stop_token，收到請求就自行收尾離開。 [1]
+// Cooperative cancellation: the worker periodically checks the stop_token
+// and cleans up and exits on its own once a stop is requested. [1]
 void pollingWorker(std::stop_token token, std::atomic<int>& ticks) {
     while (!token.stop_requested()) {  // [2]
         ++ticks;
         std::this_thread::sleep_for(20ms);
     }
-    std::println("worker: 收到停止請求，離開迴圈");
+    std::println("worker: stop requested, exiting loop");
 }
 
 int main() {
     std::atomic<int> ticks{0};
 
-    // jthread 建構子偵測到第一參數接受 stop_token，自動注入。 [3]
+    // The jthread constructor detects that the first parameter accepts a
+    // stop_token and injects it automatically. [3]
     std::jthread worker(pollingWorker, std::ref(ticks));
 
-    // stop_callback 可在 request_stop() 當下同步執行，適合喚醒阻塞等待。 [4]
+    // stop_callback runs synchronously the moment request_stop() is called,
+    // which is useful for waking up a blocked wait. [4]
     std::stop_callback on_stop(worker.get_stop_token(),
-                               [] { std::println("main: 停止回呼被觸發"); });
+                               [] { std::println("main: stop callback triggered"); });
 
     std::this_thread::sleep_for(100ms);
-    worker.request_stop();  // [5] 明確請求取消；也可省略，交給解構子處理
+    worker.request_stop();  // [5] Explicitly request cancellation; this could also be omitted and left to the destructor
 
-    // 未呼叫 join()：jthread 的解構子會自動 request_stop() + join()。 [6]
-    std::println("main: 完成，ticks = {}", ticks.load());
+    // No join() called: jthread's destructor automatically does
+    // request_stop() + join(). [6]
+    std::println("main: done, ticks = {}", ticks.load());
     return 0;
 }`,
     callouts: [

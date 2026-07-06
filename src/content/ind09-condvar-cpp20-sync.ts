@@ -68,9 +68,13 @@ int main() {
             }
         });
     }
-    for (auto& w : workers) w.join();
+    for (auto& w : workers) {
+        w.join();
+    }
 
-    for (double v : current) std::cout << v << ' ';
+    for (double v : current) {
+        std::cout << v << ' ';
+    }
     std::cout << '\\n';
     return 0;
 }`,
@@ -186,7 +190,9 @@ int main() {
             }
         });
     }
-    for (auto& w : workers) w.join();
+    for (auto& w : workers) {
+        w.join();
+    }
 
     std::cout << "rounds completed = " << round_counter.load() << '\\n';
     return 0;

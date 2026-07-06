@@ -35,25 +35,25 @@ class DataBox {
     std::string data_ = "Secret";
 
 public:
-    // 傳統寫法：需要 const 與 non-const 兩個版本
+    // Traditional approach: needs both a const and a non-const version
     // std::string& get() { return data_; }
     // const std::string& get() const { return data_; }
 
-    // C++23 顯式物件參數寫法：一個打天下
+    // C++23 explicit object parameter approach: one version handles all cases
     template <typename Self>
     auto&& get(this Self&& self) {                         // [1]
-        // std::forward-like 轉發內部成員
-        return std::forward<Self>(self).data_; 
+        // Forward the internal member, std::forward-style
+        return std::forward<Self>(self).data_;
     }
 };
 
-// C++23 取代 CRTP 的靜態多型
+// C++23 static polymorphism replacing CRTP
 struct Base {
     template <typename Self>
     void interface(this Self&& self) {                     // [2]
         std::cout << "Base pre-hook\\n";
-        // 直接存取衍生物件的實作
-        self.implementation(); 
+        // Directly access the derived object's implementation
+        self.implementation();
         std::cout << "Base post-hook\\n";
     }
 };
@@ -68,8 +68,8 @@ int main() {
     DataBox box;
     const DataBox cbox;
 
-    // 根據物件本身是否 const，自動回傳 string& 或 const string&
-    box.get() = "Changed"; 
+    // Automatically returns string& or const string& based on whether the object itself is const
+    box.get() = "Changed";
     std::cout << cbox.get() << '\\n';                       // [3]
 
     Derived d;
@@ -129,9 +129,11 @@ int main() {
     code: `#include <iostream>
 
 int main() {
-    // C++23 遞迴 Lambda
+    // C++23 recursive lambda
     auto fib = [](this auto const& self, int n) -> int {
-        if (n <= 1) return n;
+        if (n <= 1) {
+            return n;
+        }
         return self(n - 1) + self(n - 2);
     };
 

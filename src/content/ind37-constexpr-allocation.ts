@@ -29,7 +29,7 @@ const ind37ConstexprAllocation: ChapterContent = {
 #include <algorithm>
 #include <iostream>
 
-// 一個使用 std::vector 在編譯期進行過濾與計算的函式
+// A function that uses std::vector for filtering and computation at compile time
 consteval auto filter_even_numbers(const int* input, std::size_t size) {
     std::vector<int> temp; // [1]
     
@@ -41,22 +41,22 @@ consteval auto filter_even_numbers(const int* input, std::size_t size) {
     
     std::sort(temp.begin(), temp.end());
     
-    // 把結果轉回固定長度的 std::array 才能回傳為 constexpr 常數 [2]
+    // Convert the result back to a fixed-size std::array so it can be returned as a constexpr constant [2]
     std::array<int, 3> result{}; 
     std::copy(temp.begin(), temp.end(), result.begin());
     
-    return result; 
-    // temp 離開作用域，動態記憶體被釋放，符合 Transient Allocation 規則 [3]
+    return result;
+    // temp goes out of scope and its dynamic memory is freed, satisfying the Transient Allocation rule [3]
 }
 
 int main() {
     constexpr int raw_data[] = { 7, 2, 9, 4, 8, 1, 6 };
     
-    // 計算過程發生在編譯期
+    // The computation happens at compile time
     constexpr auto evens = filter_even_numbers(raw_data, 7);
-    
+
     for (int n : evens) {
-        std::cout << n << " "; // 輸出: 2 4 6 
+        std::cout << n << " "; // Output: 2 4 6
     }
     return 0;
 }`,

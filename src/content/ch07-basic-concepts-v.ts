@@ -20,22 +20,22 @@ struct Widget {
     int id;
 };
 
-constexpr int square(int x) { return x * x; }  // [1] 可於編譯期求值
+constexpr int square(int x) { return x * x; }  // [1] Can be evaluated at compile time
 
 int main() {
-    int on_stack = 42;                                   // [2] 自動儲存期，離開即銷毀
-    auto on_heap = std::make_unique<Widget>(Widget{7});  // [3] 動態儲存期
+    int on_stack = 42;                                   // [2] Automatic storage duration, destroyed on scope exit
+    auto on_heap = std::make_unique<Widget>(Widget{7});  // [3] Dynamic storage duration
 
-    const int limit = 100;           // [4] 常數正確性：不可再修改
-    constexpr int nine = square(3);  // [5] 編譯期常數
+    const int limit = 100;           // [4] Const correctness: cannot be modified
+    constexpr int nine = square(3);  // [5] Compile-time constant
     static_assert(nine == 9);
 
     double d = 3.9;
-    int truncated = static_cast<int>(d);  // [6] 明確的具名轉換
+    int truncated = static_cast<int>(d);  // [6] Explicit named cast
 
     std::println("stack={}, heap id={}, limit={}, nine={}, trunc={}", on_stack, on_heap->id, limit,
                  nine, truncated);
-    return 0;  // on_heap 於此自動釋放
+    return 0;  // on_heap is automatically freed here
 }`,
     callouts: [
       {

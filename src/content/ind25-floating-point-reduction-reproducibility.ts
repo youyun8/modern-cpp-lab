@@ -36,7 +36,7 @@ const ind25FloatingPointReductionReproducibility: ChapterContent = {
 #include <print>
 #include <vector>
 
-// 樸素循序求和：誤差隨元素個數 n 線性累積，O(n * eps)。 [1]
+// Naive sequential summation: error accumulates linearly with element count n, O(n * eps). [1]
 double naiveSum(const std::vector<double>& xs) {
     double total = 0.0;
     for (double x : xs) {
@@ -45,26 +45,26 @@ double naiveSum(const std::vector<double>& xs) {
     return total;
 }
 
-// Neumaier（Kahan-Babuska）補償求和：維護補償項 c 追蹤遺失的低位元。 [2]
+// Neumaier (Kahan-Babuska) compensated summation: maintains a compensation term c to track lost low-order bits. [2]
 double neumaierSum(const std::vector<double>& xs) {
     double sum = 0.0;
-    double c = 0.0;  // 目前為止遺失的低位元總和
+    double c = 0.0;  // running total of low-order bits lost so far
 
     for (double x : xs) {
         double t = sum + x;
         if (std::fabs(sum) >= std::fabs(x)) {
-            // sum 量級較大：x 的低位元在對齊時被吃掉，補償量來自 x。 [3]
+            // sum has larger magnitude: x's low-order bits are absorbed during alignment, so compute the loss from x. [3]
             c += (sum - t) + x;
         } else {
-            // x 量級較大（原始 Kahan 未處理的情況）：改由 sum 端計算遺失量。 [4]
+            // x has larger magnitude (the case the original Kahan algorithm mishandles): compute the loss from sum instead. [4]
             c += (x - t) + sum;
         }
         sum = t;
     }
-    return sum + c;  // [5] 最後把累積的補償加回，得到修正後的和
+    return sum + c;  // [5] add the accumulated compensation back in to get the corrected sum
 }
 
-// 兩兩配對（pairwise / cascade）求和：誤差上界為 O(log n * eps)。 [6]
+// Pairwise (cascade) summation: error upper bound is O(log n * eps). [6]
 double pairwiseSum(const std::vector<double>& xs, std::size_t lo, std::size_t hi) {
     std::size_t n = hi - lo;
     if (n <= 8) {
@@ -79,7 +79,7 @@ double pairwiseSum(const std::vector<double>& xs, std::size_t lo, std::size_t hi
 }
 
 int main() {
-    // 刻意混入量級懸殊的數字：大量小值加總後再加一個大值，凸顯捨入誤差。
+    // Deliberately mix wildly different magnitudes: sum many small values, then add one large value, to highlight rounding error.
     std::vector<double> data(1'000'000, 1e-8);
     data.push_back(1.0);
 
@@ -183,7 +183,7 @@ int main() {
 #include <iostream>
 #include <vector>
 
-// Neumaier 補償求和：比原始 Kahan 更穩健地處理新元素量級較大的情況。
+// Neumaier compensated summation: more robust than the original Kahan algorithm when a new element has larger magnitude.
 double neumaierSum(const std::vector<double>& xs) {
     double sum = 0.0;
     double c = 0.0;

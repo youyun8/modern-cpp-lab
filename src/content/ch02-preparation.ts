@@ -13,19 +13,19 @@ const ch02Preparation: ChapterContent = {
   },
   code: {
     lang: 'bash',
-    code: `# 直接以 g++ 編譯單一檔案，明確指定標準與警告等級
+    code: `# Compile a single file directly with g++, explicitly specifying the standard and warning level
 g++ -std=c++23 -Wall -Wextra -O2 hello.cpp -o hello   # [1]
 
-# 只做前置處理，觀察 #include 展開後的內容
+# Preprocess only, to observe the expanded #include content
 g++ -std=c++23 -E hello.cpp -o hello.i                 # [2]
 
-# 只編譯不連結，產生目的檔
+# Compile only without linking, producing an object file
 g++ -std=c++23 -c hello.cpp -o hello.o                 # [3]
 
-# 連結目的檔成為最終可執行檔
+# Link the object file into the final executable
 g++ hello.o -o hello                                   # [4]
 
-# 執行並印出結束狀態碼（0 代表成功）
+# Run and print the exit status code (0 means success)
 ./hello ; echo "exit code = $?"                        # [5]`,
     callouts: [
       { n: 1, text: '-std=c++23 指定語言標準；-Wall -Wextra 開啟常見警告；-O2 啟用最佳化。' },
@@ -111,9 +111,9 @@ g++ hello.o -o hello                                   # [4]
   tryIt: {
     code: `#include <iostream>
 
-// 最小可編譯範例。以 g++ -std=c++23 -Wall try.cpp -o try 編譯。
+// Minimal compilable example. Compile with g++ -std=c++23 -Wall try.cpp -o try.
 int main() {
-    std::cout << "工具鏈已就緒！\\n";
+    std::cout << "Toolchain is ready!\\n";
     return 0;
 }`,
   },

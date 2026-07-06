@@ -35,25 +35,27 @@ const ind05AtomicsMemoryOrder: ChapterContent = {
 #include <thread>
 #include <vector>
 
-// 平行直方圖：多執行緒對共享陣列的桶（bucket）做原子累加。 [1]
+// Parallel histogram: multiple threads atomically accumulate into buckets of a shared array. [1]
 constexpr int kNumBuckets = 16;
 
 void accumulateHistogram(const int* data, int begin, int end,
                          long long* histogram) {  // [2]
     for (int i = begin; i < end; ++i) {
         int bucket = data[i] % kNumBuckets;
-        // 用 atomic_ref 包裹既有的 long long 元素，陣列本身仍是普通記憶體。 [3]
+        // Wrap an existing long long element with atomic_ref; the array itself remains plain memory. [3]
         std::atomic_ref<long long> slot(histogram[bucket]);
-        slot.fetch_add(1, std::memory_order_relaxed);  // [4] 純計數，不需跨變數排序
+        slot.fetch_add(1, std::memory_order_relaxed);  // [4] Pure counting, no cross-variable ordering needed
     }
 }
 
 int main() {
     constexpr int kN = 1'000'000;
     std::vector<int> data(kN);
-    for (int i = 0; i < kN; ++i) data[i] = i * 7 + 3;
+    for (int i = 0; i < kN; ++i) {
+        data[i] = i * 7 + 3;
+    }
 
-    long long histogram[kNumBuckets] = {};  // [5] 一般陣列，非 atomic<long long>[]
+    long long histogram[kNumBuckets] = {};  // [5] Plain array, not atomic<long long>[]
 
     constexpr int kThreads = 4;
     std::vector<std::thread> pool;
@@ -62,10 +64,14 @@ int main() {
         int end = (t + 1) * (kN / kThreads);
         pool.emplace_back(accumulateHistogram, data.data(), begin, end, histogram);
     }
-    for (auto& th : pool) th.join();  // [6] join 之後才能安全讀取 histogram
+    for (auto& th : pool) {
+        th.join();  // [6] Safe to read histogram only after join
+    }
 
     long long total = 0;
-    for (int b = 0; b < kNumBuckets; ++b) total += histogram[b];
+    for (int b = 0; b < kNumBuckets; ++b) {
+        total += histogram[b];
+    }
     return total == kN ? 0 : 1;
 }`,
     callouts: [
@@ -161,15 +167,15 @@ int shared_data = 0;
 std::atomic<bool> ready{false};
 
 void producer() {
-    shared_data = 42;                              // 一般（非原子）寫入
-    ready.store(true, std::memory_order_release);  // 發佈
+    shared_data = 42;                              // Plain (non-atomic) write
+    ready.store(true, std::memory_order_release);  // Publish
 }
 
 void consumer() {
     while (!ready.load(std::memory_order_acquire)) {
-        // 忙等直到旗標被設定
+        // Busy-wait until the flag is set
     }
-    // release-acquire 配對保證這裡一定看得到 shared_data == 42
+    // The release-acquire pairing guarantees shared_data == 42 is visible here
     std::cout << "shared_data = " << shared_data << '\\n';
 }
 

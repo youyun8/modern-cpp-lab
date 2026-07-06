@@ -14,15 +14,15 @@ const ch15CodeConventionsI: ChapterContent = {
   code: {
     lang: 'bash',
     code: `myproject/
-├── include/myproject/       # [1] 公開標頭，對外 API
+├── include/myproject/       # [1] public headers, the external API
 │   └── engine.hpp
-├── src/                     # [2] 實作檔（.cpp）
+├── src/                     # [2] implementation files (.cpp)
 │   ├── engine.cpp
 │   └── main.cpp
-├── tests/                   # [3] 單元測試
+├── tests/                   # [3] unit tests
 │   └── engine_test.cpp
-├── third_party/             # [4] 外部相依（或用套件管理器）
-└── CMakeLists.txt           # [5] 建置設定的單一入口`,
+├── third_party/             # [4] external dependencies (or use a package manager)
+└── CMakeLists.txt           # [5] single entry point for the build configuration`,
     callouts: [
       {
         n: 1,
@@ -109,7 +109,7 @@ const ch15CodeConventionsI: ChapterContent = {
   tryIt: {
     code: `#include <iostream>
 
-// 想像這是 include/myproject/engine.hpp 的內容（自足標頭）
+// Imagine this is the content of include/myproject/engine.hpp (a self-contained header)
 struct Engine {
     int rpm = 0;
     void rev(int by) { rpm += by; }

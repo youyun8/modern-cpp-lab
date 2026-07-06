@@ -55,10 +55,14 @@ void firstTouchInit(NumaBuffer& buf, unsigned num_threads) {
             // [4] The write below is the "first touch": the OS backs
             // these virtual addresses with physical pages on whichever
             // NUMA node this thread is currently scheduled on.
-            for (std::size_t i = begin; i < end; ++i) buf.data[i] = 0.0;
+            for (std::size_t i = begin; i < end; ++i) {
+                buf.data[i] = 0.0;
+            }
         });
     }
-    for (auto& w : workers) w.join();
+    for (auto& w : workers) {
+        w.join();
+    }
 }
 
 // Compute phase that reuses the *same* chunking as firstTouchInit, so
@@ -76,14 +80,20 @@ double parallelSum(NumaBuffer& buf, unsigned num_threads) {
         const std::size_t end = std::min(n, begin + chunk);
         workers.emplace_back([&buf, &partial, t, begin, end] {
             double local = 0.0;
-            for (std::size_t i = begin; i < end; ++i) local += buf.data[i];
+            for (std::size_t i = begin; i < end; ++i) {
+                local += buf.data[i];
+            }
             partial[t].sum = local;  // [6] Padded slot: no cross-core invalidation here.
         });
     }
-    for (auto& w : workers) w.join();
+    for (auto& w : workers) {
+        w.join();
+    }
 
     double total = 0.0;
-    for (auto& p : partial) total += p.sum;
+    for (auto& p : partial) {
+        total += p.sum;
+    }
     return total;
 }`,
     callouts: [
@@ -230,10 +240,14 @@ int main() {
         std::size_t begin, end;
         chunk_of(t, begin, end);
         init_workers.emplace_back([&data, begin, end, t] {
-            for (std::size_t i = begin; i < end; ++i) data[i] = static_cast<double>(t);
+            for (std::size_t i = begin; i < end; ++i) {
+                data[i] = static_cast<double>(t);
+            }
         });
     }
-    for (auto& w : init_workers) w.join();
+    for (auto& w : init_workers) {
+        w.join();
+    }
 
     // Compute phase reuses the same chunk boundaries.
     std::vector<Partial> partial(kThreads);
@@ -243,14 +257,20 @@ int main() {
         chunk_of(t, begin, end);
         compute_workers.emplace_back([&data, &partial, t, begin, end] {
             double local = 0.0;
-            for (std::size_t i = begin; i < end; ++i) local += data[i];
+            for (std::size_t i = begin; i < end; ++i) {
+                local += data[i];
+            }
             partial[t].sum = local;
         });
     }
-    for (auto& w : compute_workers) w.join();
+    for (auto& w : compute_workers) {
+        w.join();
+    }
 
     double total = 0.0;
-    for (auto& p : partial) total += p.sum;
+    for (auto& p : partial) {
+        total += p.sum;
+    }
     std::cout << "total: " << total << "\\n";
     return 0;
 }`,

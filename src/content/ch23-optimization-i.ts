@@ -20,8 +20,11 @@ const ch23OptimizationI: ChapterContent = {
 // consecutive addresses, maximising spatial locality. [1]
 double sumRowMajor(const std::vector<double>& matrix, std::size_t rows, std::size_t cols) {
     double acc = 0.0;
-    for (std::size_t r = 0; r < rows; ++r)  // [2]
-        for (std::size_t c = 0; c < cols; ++c) acc += matrix[r * cols + c];
+    for (std::size_t r = 0; r < rows; ++r) {  // [2]
+        for (std::size_t c = 0; c < cols; ++c) {
+            acc += matrix[r * cols + c];
+        }
+    }
     return acc;
 }
 
@@ -29,8 +32,11 @@ double sumRowMajor(const std::vector<double>& matrix, std::size_t rows, std::siz
 // and causing frequent DRAM misses. [3]
 double sumColMajor(const std::vector<double>& matrix, std::size_t rows, std::size_t cols) {
     double acc = 0.0;
-    for (std::size_t c = 0; c < cols; ++c)
-        for (std::size_t r = 0; r < rows; ++r) acc += matrix[r * cols + c];  // [4]
+    for (std::size_t c = 0; c < cols; ++c) {
+        for (std::size_t r = 0; r < rows; ++r) {
+            acc += matrix[r * cols + c];  // [4]
+        }
+    }
     return acc;
 }
 
@@ -131,11 +137,17 @@ int main() {
         auto start = std::chrono::steady_clock::now();
         double acc = 0.0;
         if (row_major) {
-            for (std::size_t r = 0; r < kN; ++r)
-                for (std::size_t c = 0; c < kN; ++c) acc += matrix[r * kN + c];
+            for (std::size_t r = 0; r < kN; ++r) {
+                for (std::size_t c = 0; c < kN; ++c) {
+                    acc += matrix[r * kN + c];
+                }
+            }
         } else {
-            for (std::size_t c = 0; c < kN; ++c)
-                for (std::size_t r = 0; r < kN; ++r) acc += matrix[r * kN + c];
+            for (std::size_t c = 0; c < kN; ++c) {
+                for (std::size_t r = 0; r < kN; ++r) {
+                    acc += matrix[r * kN + c];
+                }
+            }
         }
         auto end = std::chrono::steady_clock::now();
         return std::pair{acc, std::chrono::duration<double, std::milli>(end - start).count()};

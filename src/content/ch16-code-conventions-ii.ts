@@ -22,20 +22,24 @@ const ch16CodeConventionsII: ChapterContent = {
 int main() {
     std::map<std::string, int> scores{{"amy", 90}, {"ben", 75}, {"cy", 60}};
 
-    for (const auto& [name, score] : scores)  // [1] 結構化繫結
+    for (const auto& [name, score] : scores) {  // [1] structured binding
         std::println("{}: {}", name, score);
+    }
 
     std::vector<int> v{1, 2, 3, 4, 5, 6};
-    auto evens = v  // [2] ranges 管線
+    auto evens = v  // [2] ranges pipeline
                  | std::views::filter([](int x) { return x % 2 == 0; }) |
                  std::views::transform([](int x) { return x * x; });  // [3]
 
-    for (int x : evens)  // [4] 惰性求值
+    for (int x : evens) {  // [4] lazy evaluation
         std::print("{} ", x);
+    }
     std::println("");
 
-    int total{0};  // [5] 一致初始化，防止窄化
-    for (int x : evens) total += x;
+    int total{0};  // [5] uniform initialization, prevents narrowing
+    for (int x : evens) {
+        total += x;
+    }
     std::println("sum of squared evens = {}", total);
     return 0;
 }`,

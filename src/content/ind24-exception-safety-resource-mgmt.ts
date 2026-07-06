@@ -37,7 +37,7 @@ const ind24ExceptionSafetyResourceMgmt: ChapterContent = {
 #include <string>
 #include <vector>
 
-// 平行任務：可能成功回傳 int，也可能失敗並攜帶說明字串。 [1]
+// A parallel task: may succeed and return an int, or fail carrying an explanatory string. [1]
 std::expected<int, std::string> riskyTask(int id) {
     if (id % 3 == 0) {
         return std::unexpected("task " + std::to_string(id) + ": simulated failure");
@@ -47,25 +47,25 @@ std::expected<int, std::string> riskyTask(int id) {
 
 struct AggregateReport {
     std::vector<int> succeeded;
-    std::vector<std::string> failures;  // [2] 收集「全部」失敗原因，而非只留第一個
+    std::vector<std::string> failures;  // [2] Collect ALL failure reasons, not just the first one
 };
 
-// 啟動 N 個任務並聚合每一個 std::expected 結果。 [3]
+// Launch N tasks and aggregate every std::expected result. [3]
 AggregateReport runAllAndAggregate(int taskCount) {
     std::vector<std::future<std::expected<int, std::string>>> futures;
     futures.reserve(static_cast<std::size_t>(taskCount));
 
     for (int i = 0; i < taskCount; ++i) {
-        futures.push_back(std::async(std::launch::async, riskyTask, i));  // [4] 每個任務獨立執行
+        futures.push_back(std::async(std::launch::async, riskyTask, i));  // [4] Each task runs independently
     }
 
     AggregateReport report;
     for (auto& fut : futures) {
-        std::expected<int, std::string> result = fut.get();  // [5] get() 只會拋出 async 本身的失敗
+        std::expected<int, std::string> result = fut.get();  // [5] get() only throws for async's own failures
         if (result.has_value()) {
             report.succeeded.push_back(*result);
         } else {
-            report.failures.push_back(result.error());  // [6] 失敗不中斷迴圈，繼續收集其餘結果
+            report.failures.push_back(result.error());  // [6] A failure doesn't stop the loop; keep collecting the rest
         }
     }
     return report;
@@ -74,8 +74,8 @@ AggregateReport runAllAndAggregate(int taskCount) {
 int main() {
     AggregateReport report = runAllAndAggregate(9);
 
-    std::println("成功任務數: {}", report.succeeded.size());
-    std::println("失敗任務數: {}", report.failures.size());
+    std::println("Succeeded tasks: {}", report.succeeded.size());
+    std::println("Failed tasks: {}", report.failures.size());
     for (const std::string& msg : report.failures) {
         std::println("  - {}", msg);
     }

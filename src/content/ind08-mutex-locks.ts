@@ -22,7 +22,8 @@ struct Account {
     long balance = 0;
 };
 
-// 危險版本：依序個別上鎖，鎖定順序取決於呼叫者，可能死結。 [1]
+// Dangerous version: locks each mutex individually in sequence; the locking
+// order depends on the caller, which can deadlock. [1]
 void transferNaive(Account& from, Account& to, long amount) {
     std::lock_guard<std::mutex> lockFrom(from.m);  // [2]
     std::lock_guard<std::mutex> lockTo(to.m);
@@ -30,20 +31,20 @@ void transferNaive(Account& from, Account& to, long amount) {
     to.balance += amount;
 }
 
-// 安全版本：std::scoped_lock 一次鎖住兩個 mutex，內部用
-// std::lock 演算法避免死結，無論呼叫順序為何都安全。 [3]
+// Safe version: std::scoped_lock locks both mutexes at once, using the
+// std::lock algorithm internally to avoid deadlock regardless of call order. [3]
 void transferSafe(Account& from, Account& to, long amount) {
-    std::scoped_lock lock(from.m, to.m);  // [4] C++17 多鎖建構
+    std::scoped_lock lock(from.m, to.m);  // [4] C++17 multi-lock construction
     from.balance -= amount;
     to.balance += amount;
-}  // [5] 離開作用域自動、依序釋放兩把鎖
+}  // [5] Both locks are released automatically, in order, on scope exit
 
 int main() {
     Account a, b;
     a.balance = 100;
 
-    // 兩個方向同時轉帳：naive 版本在 a→b、b→a 交錯執行時可能死結；
-    // scoped_lock 版本則保證不會。 [6]
+    // Transfer in both directions concurrently: the naive version can
+    // deadlock when a->b and b->a interleave; scoped_lock guarantees it won't. [6]
     std::thread t1(transferSafe, std::ref(a), std::ref(b), 30);
     std::thread t2(transferSafe, std::ref(b), std::ref(a), 10);
     t1.join();
@@ -168,7 +169,7 @@ struct Account {
 };
 
 void transferSafe(Account& from, Account& to, long amount) {
-    std::scoped_lock lock(from.m, to.m);  // 一次鎖住兩個 mutex，死結安全
+    std::scoped_lock lock(from.m, to.m);  // Locks both mutexes at once, deadlock-safe
     from.balance -= amount;
     to.balance += amount;
 }

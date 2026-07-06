@@ -37,34 +37,34 @@ const ind17StdSimd: ChapterContent = {
 
 namespace stdx = std::experimental;
 
-// 5 點 stencil：out[i] = (in[i-1] + in[i] + in[i+1]) / 3，SoA
-// 佈局（連續陣列）。
+// 5-point stencil: out[i] = (in[i-1] + in[i] + in[i+1]) / 3, SoA
+// layout (contiguous array).
 void stencilSimd(const std::vector<float>& in, std::vector<float>& out) {
     using Vec = stdx::native_simd<float>;
-    constexpr std::size_t width = Vec::size();  // [1] 硬體決定的向量寬度
+    constexpr std::size_t width = Vec::size();  // [1] Hardware-determined vector width
     const std::size_t n = in.size();
 
     std::size_t i = 1;
-    // 主迴圈：一次處理 width 個元素，全部走連續 load/store。 [2]
+    // Main loop: process width elements at a time, all via contiguous load/store. [2]
     for (; i + width < n; i += width) {
         Vec left, mid, right;
         left.copy_from(&in[i - 1],
-                       stdx::element_aligned);  // [3] 未強制對齊，安全但可能較慢
+                       stdx::element_aligned);  // [3] Not forced to be aligned, safe but possibly slower
         mid.copy_from(&in[i], stdx::element_aligned);
         right.copy_from(&in[i + 1], stdx::element_aligned);
 
-        Vec result = (left + mid + right) / Vec(3.0f);  // [4] 垂直運算，同時算 width 個 lane
+        Vec result = (left + mid + right) / Vec(3.0f);  // [4] Vertical operation, computes width lanes at once
         result.copy_to(&out[i], stdx::element_aligned);
     }
 
-    // 尾端 remainder：剩下不足一個向量寬度的元素，退回純量迴圈補齊。 [5]
+    // Trailing remainder: leftover elements less than one vector width, fall back to a scalar loop. [5]
     for (; i + 1 < n; ++i) {
         out[i] = (in[i - 1] + in[i] + in[i + 1]) / 3.0f;
     }
 }
 
 int main() {
-    constexpr std::size_t n = 4099;  // 刻意選不是向量寬度倍數的大小，強制觸發尾端迴圈 [6]
+    constexpr std::size_t n = 4099;  // Deliberately not a multiple of the vector width, to force the trailing loop [6]
     std::vector<float> in(n), out(n, 0.0f);
     for (std::size_t i = 0; i < n; ++i) {
         in[i] = static_cast<float>(i % 7);
@@ -191,7 +191,7 @@ void addVectors(const std::vector<float>& a, const std::vector<float>& b, std::v
         vr.copy_to(&out[i], stdx::element_aligned);
     }
 
-    // 純量 remainder：補齊不足一個向量寬度的尾端元素。
+    // Scalar remainder: fill in the trailing elements that don't fill a full vector width.
     for (; i < n; ++i) {
         out[i] = a[i] + b[i];
     }

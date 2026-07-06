@@ -20,42 +20,42 @@ const ch19ChronoCore: ChapterContent = {
 
 using namespace std::chrono;
 
-// duration 是編譯期型別安全的時間長度。 [1]
-using FrameRate = duration<int64_t, std::ratio<1, 60>>;     // 1/60 秒
-using SampleRate = duration<int64_t, std::ratio<1, 48000>>;   // 1/48000 秒
+// duration is a compile-time type-safe length of time. [1]
+using FrameRate = duration<int64_t, std::ratio<1, 60>>;     // 1/60 second
+using SampleRate = duration<int64_t, std::ratio<1, 48000>>;   // 1/48000 second
 
-// time_point 綁定特定 clock 與 duration。 [2]
-time_point<steady_clock, milliseconds> last_tick;  // 使用 steady_clock 計算經過時間
+// time_point binds a specific clock and duration together. [2]
+time_point<steady_clock, milliseconds> last_tick;  // used to measure elapsed time with steady_clock
 
 void measureLoop() {
     auto start = steady_clock::now();  // [3]
 
-    std::this_thread::sleep_for(150ms);  // [4] 字面值運算子：150 毫秒
+    std::this_thread::sleep_for(150ms);  // [4] literal operator: 150 milliseconds
 
     auto end = steady_clock::now();
     auto elapsed = duration_cast<milliseconds>(end - start);  // [5]
     std::cout << "elapsed = " << elapsed.count() << " ms\\n";
 }
 
-// ratio 用於自定義精細的時間單位。 [6]
+// ratio is used to define fine-grained custom time units. [6]
 template <typename Rep, intmax_t Num, intmax_t Den>
 using DurationWithRatio = duration<Rep, ratio<Num, Den>>;
 
-// 以 system_clock 取得 wall-clock 時間。 [7]
+// use system_clock to get wall-clock time. [7]
 auto getTimestamp() {
     auto tp = system_clock::now();
-    return system_clock::to_time_t(tp);  // 轉換為 time_t
+    return system_clock::to_time_t(tp);  // convert to time_t
 }
 
-// 混用不同 duration 型別時，編譯器強制做單位轉換。 [8]
+// mixing different duration types forces the compiler to require a unit conversion. [8]
 void scheduleWork() {
     milliseconds ms{3000};
     seconds sec = duration_cast<seconds>(ms);  // [9]
-    nanoseconds ns = ms;                       // [10] 隱式放大，不會遺失
+    nanoseconds ns = ms;                       // [10] implicit widening, no loss of precision
     std::cout << sec.count() << " sec, " << ns.count() << " ns\\n";
 }
 
-// 比較兩個 time_point。 [11]
+// compare two time_points. [11]
 bool isExpired(time_point<steady_clock> deadline) {
     return steady_clock::now() >= deadline;
 }
@@ -69,7 +69,7 @@ int main() {
     std::cout << "deadline in 500ms: "
               << duration_cast<milliseconds>(deadline - now).count() << " ms\\n";
 
-    // high_resolution_clock 通常比 steady_clock 更精細，但不保證不會倒退。 [13]
+    // high_resolution_clock is usually finer-grained than steady_clock, but is not guaranteed to never go backwards. [13]
     auto hrc_now = high_resolution_clock::now();
     (void)hrc_now;
 

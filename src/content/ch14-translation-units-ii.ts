@@ -13,21 +13,21 @@ const ch14TranslationUnitsII: ChapterContent = {
   },
   code: {
     lang: 'cpp',
-    code: `// ---- math.ixx / math.cppm（模組介面單元）----
-export module math;  // [1] 宣告模組名稱
+    code: `// ---- math.ixx / math.cppm (module interface unit) ----
+export module math;  // [1] declare the module name
 
-export int add(int a, int b) {  // [2] export：對匯入端可見
+export int add(int a, int b) {  // [2] export: visible to importers
     return a + b;
 }
 
-int helper() { return 1; }  // [3] 未 export：模組私有
+int helper() { return 1; }  // [3] not exported: module-private
 
-export namespace geo {  // [4] 可 export 整個 namespace
+export namespace geo {  // [4] can export an entire namespace
 double area(double r) { return 3.14159265 * r * r; }
 }  // namespace geo
 
-// ---- main.cpp（使用端）----
-// import math;                          [5] 匯入編譯後的模組介面
+// ---- main.cpp (consumer) ----
+// import math;                          [5] import the compiled module interface
 // int main() { return add(2, 3) + (int)geo::area(1.0); }`,
     callouts: [
       { n: 1, text: 'export module math; 建立一個具名模組，取代以標頭檔為單位的組織方式。' },
@@ -114,7 +114,7 @@ double area(double r) { return 3.14159265 * r * r; }
       '從文字包含到模組：#include 逐單元重新解析，Modules 則編譯出可重用的二進位模組介面（BMI）供匯入。',
   },
   tryIt: {
-    code: `// 註：多數線上編譯器對 Modules 支援有限；以下為等價的傳統寫法示意。
+    code: `// Note: most online compilers have limited Modules support; below is an equivalent traditional-style illustration.
 #include <iostream>
 
 int add(int a, int b) { return a + b; }

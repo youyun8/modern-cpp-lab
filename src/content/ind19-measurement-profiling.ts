@@ -18,8 +18,8 @@ const ind19MeasurementProfiling: ChapterContent = {
 #include <cmath>
 #include <vector>
 
-// [1] 待測函式：對一個 vector 做逐元素平方根加總。
-//     刻意讓它「有副作用地」回傳結果，方便呼叫端用 DoNotOptimize 固定它。
+// [1] Function under test: sums the element-wise square roots of a vector.
+//     Deliberately made to return its result "with a side effect", so the caller can pin it with DoNotOptimize.
 double SumSqrt(const std::vector<double>& data) {
     double acc = 0.0;
     for (double x : data) {
@@ -28,17 +28,17 @@ double SumSqrt(const std::vector<double>& data) {
     return acc;
 }
 
-// [2] 反例（僅供對照，未註冊）：若把 acc 宣告在迴圈內且未使用回傳值，
-//     編譯器在 -O2/-O3 下很可能整段迴圈視為死碼直接刪除。
+// [2] Counter-example (for comparison only, not registered): if acc were declared inside the loop
+//     and the return value unused, the compiler under -O2/-O3 would likely treat the whole loop as dead code and remove it.
 static void BM_SumSqrt_Naive(benchmark::State& state) {
     std::vector<double> data(state.range(0), 2.0);
     for (auto _ : state) {
-        SumSqrt(data);  // 回傳值被丟棄，最佳化器有權把呼叫連同迴圈本體一起消除
+        SumSqrt(data);  // Return value discarded; the optimizer is free to eliminate the call along with the loop body
     }
 }
 
-// [3] 正確作法：用 DoNotOptimize 告訴編譯器「這個值之後仍會被用到」，
-//     強迫它保留計算過程，不能整段最佳化掉。
+// [3] Correct approach: use DoNotOptimize to tell the compiler "this value will still be used later",
+//     forcing it to preserve the computation instead of optimizing it away entirely.
 static void BM_SumSqrt_Correct(benchmark::State& state) {
     std::vector<double> data(state.range(0), 2.0);
     for (auto _ : state) {
@@ -47,9 +47,9 @@ static void BM_SumSqrt_Correct(benchmark::State& state) {
     }
 }
 
-// [5] 若待測函式會透過指標／記憶體寫入產生副作用（而非回傳值），
-//     額外呼叫 ClobberMemory 強迫編譯器把暫存器內容真的寫回記憶體，
-//     避免整批寫入被合併或延後到計時區間之外。
+// [5] If the function under test produces side effects via pointer/memory writes (rather than a return value),
+//     additionally call ClobberMemory to force the compiler to actually write register contents back to memory,
+//     preventing the batch of writes from being merged or deferred outside the timed region.
 static void BM_VectorFill_Correct(benchmark::State& state) {
     std::vector<double> data(state.range(0));
     for (auto _ : state) {
@@ -185,8 +185,8 @@ BENCHMARK_MAIN();`,
 #include <iostream>
 #include <vector>
 
-// 簡易示範：手刻的「防死碼消除」寫法，概念與 benchmark::DoNotOptimize 相同。
-// 用 volatile sink 強迫編譯器保留計算結果，避免整段迴圈被最佳化掉。
+// Simple demo: a hand-rolled "prevent dead-code elimination" trick, conceptually the same as benchmark::DoNotOptimize.
+// Uses a volatile sink to force the compiler to keep the computed result, preventing the whole loop from being optimized away.
 double SumSqrt(const std::vector<double>& data) {
     double acc = 0.0;
     for (double x : data) {
@@ -197,9 +197,9 @@ double SumSqrt(const std::vector<double>& data) {
 
 int main() {
     std::vector<double> data(1'000'000, 2.0);
-    volatile double sink = 0.0;  // 防止整段被刪除
+    volatile double sink = 0.0;  // Prevents the whole computation from being eliminated
 
-    // 暖身：先跑幾次讓快取與分支預測器進入穩態，結果不計入統計。
+    // Warm-up: run a few times first to bring the cache and branch predictor to steady state; results excluded from stats.
     for (int i = 0; i < 3; ++i) {
         sink = SumSqrt(data);
     }

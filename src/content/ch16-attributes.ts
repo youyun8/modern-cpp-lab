@@ -29,15 +29,15 @@ const ch16Attributes: ChapterContent = {
     lang: 'cpp',
     code: `#include <iostream>
 
-// 型別層級的 nodiscard：任何被忽略的回傳都會告警
+// Type-level nodiscard: any ignored return value triggers a warning
 struct [[nodiscard]] Status {
     bool ok;
 };
 
-[[nodiscard("忽略錯誤碼會導致靜默失敗")]]              // [1]
+[[nodiscard("ignoring the error code causes silent failure")]]  // [1]
 Status write_all(const char* data);
 
-[[deprecated("請改用 write_all()")]]                    // [2]
+[[deprecated("use write_all() instead")]]                // [2]
 void legacy_write(const char* data);
 
 int classify(int x) {
@@ -53,7 +53,7 @@ int classify(int x) {
 }
 
 int main([[maybe_unused]] int argc, char**) {           // [5]
-    write_all("hi");   // 警告：忽略了 [[nodiscard]] 回傳值
+    write_all("hi");   // warning: [[nodiscard]] return value ignored
     return classify(0);
 }`,
     callouts: [
@@ -117,7 +117,7 @@ int main([[maybe_unused]] int argc, char**) {           // [5]
 [[nodiscard]] int compute() { return 42; }
 
 int main() {
-    // 試著把下一行取消註解，觀察編譯器對忽略回傳值的警告
+    // Try uncommenting the next line to see the compiler warn about the ignored return value
     // compute();
     int result = compute();
     std::cout << result << '\\n';

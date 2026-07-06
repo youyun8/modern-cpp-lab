@@ -52,24 +52,24 @@ int main() {
 
     std::jthread t1(worker, kIterations);
     std::jthread t2(worker, kIterations);
-    // jthread 解構時自動 join，不需要顯式呼叫。 [3]
+    // jthread joins automatically on destruction; no explicit call needed. [3]
 
-    // 若以 g++ -std=c++20 -g -fsanitize=thread race.cpp 編譯並執行，
-    // TSan 大致會回報如下形式的訊息（示意，非實際輸出）：
+    // If compiled and run with g++ -std=c++20 -g -fsanitize=thread race.cpp,
+    // TSan will roughly report a message of this form (illustrative, not actual output):
     //   WARNING: ThreadSanitizer: data race
     //     Write of size 4 at 0x0001 by thread T2:
     //       #0 worker(int) race.cpp:8
     //     Previous write of size 4 at 0x0001 by thread T1:
     //       #0 worker(int) race.cpp:8
-    // 這份報告只在「這次執行剛好排程出競爭」時出現；
-    // 若排程恰好序列化了兩個執行緒的存取，同一份二進位可能靜默通過。 [4]
+    // This report only appears when the schedule happens to trigger the race this run;
+    // if the schedule happens to serialize both threads' accesses, the same binary may pass silently. [4]
     std::printf("counter = %d (expected %d)\\n", shared_counter,
                 2 * kIterations);  // [5]
     return 0;
 }
 
-// 修法：改用 std::atomic<int>，以 fetch_add 保證每次遞增都是
-// 不可分割的讀-改-寫，消除競爭而不需要額外的鎖。
+// Fix: switch to std::atomic<int> and use fetch_add so every increment is an
+// indivisible read-modify-write, eliminating the race without an extra lock.
 //
 //   std::atomic<int> shared_counter{0};
 //   ...
@@ -187,8 +187,8 @@ int main() {
     std::jthread t1(worker, kIterations);
     std::jthread t2(worker, kIterations);
 
-    // jthread 解構時自動 join；用 fetch_add 取代裸 ++ 之後，
-    // 這裡總是精確等於 2 * kIterations，且 TSan 不會回報任何競爭。
+    // jthread joins automatically on destruction; after replacing the bare ++ with fetch_add,
+    // this is always exactly 2 * kIterations, and TSan won't report any race.
     std::printf("counter = %d (expected %d)\\n", shared_counter.load(), 2 * kIterations);
     return 0;
 }`,

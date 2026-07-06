@@ -18,7 +18,7 @@ const ch05BasicConceptsIII: ChapterContent = {
 #include <limits>
 #include <print>
 
-// 以相對＋絕對誤差比較浮點數，遠比 == 可靠。 [1]
+// Comparing floats with relative + absolute error is far more reliable than ==. [1]
 bool nearlyEqual(double a, double b, double eps = 1e-9) {
     double diff = std::fabs(a - b);
     double scale = std::fmax(std::fabs(a), std::fabs(b));
@@ -27,12 +27,12 @@ bool nearlyEqual(double a, double b, double eps = 1e-9) {
 
 int main() {
     double x = 0.1 + 0.2;
-    std::println("0.1+0.2 == 0.3 ? {}", x == 0.3);  // [3] 幾乎必為 false
+    std::println("0.1+0.2 == 0.3 ? {}", x == 0.3);  // [3] almost always false
     std::println("nearlyEqual ? {}", nearlyEqual(x, 0.3));
 
     double nan = std::numeric_limits<double>::quiet_NaN();
-    std::println("nan == nan ? {}", nan == nan);  // [4] 永遠 false
-    std::println("isnan ? {}", std::isnan(nan));  // [5] 正確偵測
+    std::println("nan == nan ? {}", nan == nan);  // [4] always false
+    std::println("isnan ? {}", std::isnan(nan));  // [5] correctly detected
     return 0;
 }`,
     callouts: [

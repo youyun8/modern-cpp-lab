@@ -13,19 +13,19 @@ const ch18Ecosystem: ChapterContent = {
   },
   code: {
     lang: 'bash',
-    code: `# ---- CMakeLists.txt（節錄）----
+    code: `# ---- CMakeLists.txt (excerpt) ----
 # cmake_minimum_required(VERSION 3.20)
 # project(myproject LANGUAGES CXX)
-# set(CMAKE_CXX_STANDARD 23)              # [1] 指定語言標準
-# add_executable(app src/main.cpp)       # [2] 宣告可執行目標
-# target_include_directories(app PUBLIC include)  # [3] 標頭搜尋路徑
-# target_link_libraries(app PRIVATE fmt::fmt)     # [4] 連結相依
+# set(CMAKE_CXX_STANDARD 23)              # [1] specify the language standard
+# add_executable(app src/main.cpp)       # [2] declare an executable target
+# target_include_directories(app PUBLIC include)  # [3] header search path
+# target_link_libraries(app PRIVATE fmt::fmt)     # [4] link dependencies
 
-# ---- 設定並建置（out-of-source build）----
-cmake -S . -B build -G Ninja             # [5] 產生建置系統
-cmake --build build -j                    # 平行建置
+# ---- configure and build (out-of-source build) ----
+cmake -S . -B build -G Ninja             # [5] generate the build system
+cmake --build build -j                    # build in parallel
 
-# 自動排版與靜態分析
+# auto-format and static analysis
 clang-format -i src/*.cpp
 clang-tidy src/main.cpp -- -std=c++23`,
     callouts: [
@@ -111,12 +111,14 @@ clang-tidy src/main.cpp -- -std=c++23`,
   tryIt: {
     code: `#include <iostream>
 
-/// \\brief 計算階乘（Doxygen 風格註解）。
-/// \\param n 非負整數
+/// \\brief Compute a factorial (Doxygen-style comment).
+/// \\param n a non-negative integer
 /// \\return n!
 unsigned long long factorial(int n) {
     unsigned long long r = 1;
-    for (int i = 2; i <= n; ++i) r *= i;
+    for (int i = 2; i <= n; ++i) {
+        r *= i;
+    }
     return r;
 }
 

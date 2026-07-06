@@ -37,16 +37,17 @@ int main() {
     std::uniform_int_distribution<int> dice(1, 6);      // [3]
     std::normal_distribution<double> gauss(0.0, 1.0);   // [4]
 
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < 3; ++i) {
         std::cout << dice(engine) << ' ';
+    }
     std::cout << '\\n';
 
     std::cout << gauss(engine) << '\\n';
 
-    // 可重現：固定種子 -> 固定序列
+    // Reproducible: fixed seed -> fixed sequence
     std::mt19937 fixed(42);                             // [5]
     std::uniform_int_distribution<int> d(0, 99);
-    std::cout << d(fixed) << ' ' << d(fixed) << '\\n';   // 每次執行皆相同
+    std::cout << d(fixed) << ' ' << d(fixed) << '\\n';   // identical every run
     return 0;
 }`,
     callouts: [
@@ -110,15 +111,17 @@ int main() {
 #include <random>
 
 int main() {
-    std::mt19937 engine(12345);                // 固定種子以便觀察分布
+    std::mt19937 engine(12345);                // fixed seed to observe the distribution
     std::uniform_int_distribution<int> dice(1, 6);
 
     std::map<int, int> hist;
-    for (int i = 0; i < 6000; ++i)
+    for (int i = 0; i < 6000; ++i) {
         ++hist[dice(engine)];
+    }
 
-    for (auto [face, count] : hist)
+    for (auto [face, count] : hist) {
         std::cout << face << ": " << count << '\\n';
+    }
     return 0;
 }`,
   },

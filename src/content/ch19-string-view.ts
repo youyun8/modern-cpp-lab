@@ -26,10 +26,16 @@ std::vector<std::string_view> split_words(std::string_view line) {  // [2]
     std::vector<std::string_view> words;
     std::size_t pos = 0;
     while (pos < line.size()) {
-        while (pos < line.size() && line[pos] == ' ') ++pos;
+        while (pos < line.size() && line[pos] == ' ') {
+            ++pos;
+        }
         const std::size_t start = pos;
-        while (pos < line.size() && line[pos] != ' ') ++pos;
-        if (start != pos) words.push_back(line.substr(start, pos - start));  // [3]
+        while (pos < line.size() && line[pos] != ' ') {
+            ++pos;
+        }
+        if (start != pos) {
+            words.push_back(line.substr(start, pos - start));  // [3]
+        }
     }
     return words;
 }
@@ -161,7 +167,7 @@ int main() {
     std::string_view word = first_word(text);
     std::cout << word << '\\n';
 
-    std::string owned{word};  // 需要保存時複製成擁有資料的 string
+    std::string owned{word};  // copy into an owning string when you need to keep it
     std::cout << owned << '\\n';
     return 0;
 }`,

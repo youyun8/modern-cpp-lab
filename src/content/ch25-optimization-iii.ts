@@ -13,18 +13,18 @@ const ch25OptimizationIII: ChapterContent = {
   },
   code: {
     lang: 'bash',
-    code: `# 基準最佳化：-O2/-O3 加上除錯符號以利剖析
+    code: `# Baseline optimization: -O2/-O3 plus debug symbols to aid profiling
 g++ -std=c++23 -O3 -g -march=native app.cpp -o app   # [1]
 
-# 連結期最佳化（LTO）：跨轉譯單元內聯與死碼移除
+# Link-time optimization (LTO): cross-translation-unit inlining and dead code elimination
 g++ -std=c++23 -O3 -flto app.cpp lib.cpp -o app       # [2]
 
-# Profile-Guided Optimization：先蒐集剖析，再據以最佳化
+# Profile-Guided Optimization: collect a profile first, then optimize using it
 g++ -std=c++23 -O3 -fprofile-generate app.cpp -o app  # [3]
-./app                                                  # 產生 .gcda 剖析資料
+./app                                                  # generate .gcda profile data
 g++ -std=c++23 -O3 -fprofile-use app.cpp -o app        # [4]
 
-# 以 perf 取樣找出熱點（低負擔）
+# Use perf sampling to find hotspots (low overhead)
 perf record -g ./app && perf report                    # [5]`,
     callouts: [
       {
@@ -120,13 +120,15 @@ perf record -g ./app && perf report                    # [5]`,
 #include <cmath>
 #include <iostream>
 
-// 簡易 benchmark 骨架：多次迭代取平均，並防止結果被最佳化掉。
+// Simple benchmark skeleton: run many iterations and average, while preventing the result from being optimized away.
 int main() {
     constexpr int kIter = 5'000'000;
-    volatile double sink = 0.0;  // volatile 防止整段被刪除
+    volatile double sink = 0.0;  // volatile prevents the whole block from being eliminated
     auto t0 = std::chrono::steady_clock::now();
     double acc = 0.0;
-    for (int i = 1; i <= kIter; ++i) acc += std::sqrt((double)i);
+    for (int i = 1; i <= kIter; ++i) {
+        acc += std::sqrt((double)i);
+    }
     sink = acc;
     auto t1 = std::chrono::steady_clock::now();
     std::cout << "elapsed = " << std::chrono::duration<double, std::milli>(t1 - t0).count()

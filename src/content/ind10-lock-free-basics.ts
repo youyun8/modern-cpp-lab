@@ -37,18 +37,18 @@ const ind10LockFreeBasics: ChapterContent = {
 #include <thread>
 #include <vector>
 
-// 觀察 CAS 重試風暴：多執行緒對同一個 atomic 計數器做高頻率 CAS。 [1]
+// Observe a CAS retry storm: multiple threads do high-frequency CAS on the same atomic counter. [1]
 std::atomic<long long> shared_counter{0};
-std::atomic<long long> retry_count{0};  // [2] 統計 CAS 失敗（重試）次數，僅供教學觀察。
+std::atomic<long long> retry_count{0};  // [2] Counts CAS failures (retries), for teaching purposes only.
 
 void hammer(int iterations) {
     for (int i = 0; i < iterations; ++i) {
         long long expected = shared_counter.load(std::memory_order_relaxed);  // [3]
-        // compare_exchange_weak 失敗時會把 expected 更新為目前值，
-        // 迴圈因此可以直接重試而不必手動重讀。 [4]
+        // When compare_exchange_weak fails, it updates expected to the current value,
+        // so the loop can retry directly without a manual reload. [4]
         while (!shared_counter.compare_exchange_weak(
             expected, expected + 1, std::memory_order_relaxed, std::memory_order_relaxed)) {
-            retry_count.fetch_add(1, std::memory_order_relaxed);  // [5] 每次失敗代表一次白做工。
+            retry_count.fetch_add(1, std::memory_order_relaxed);  // [5] Each failure represents wasted work.
         }
     }
 }
@@ -67,8 +67,8 @@ int main() {
     }
     auto elapsed = std::chrono::steady_clock::now() - start;
 
-    // [6] 競爭越高（執行緒數越多、臨界區越小），retry_count 相對於總操作數的
-    // 比例通常會顯著上升——這就是 CAS retry storm 的量化證據。
+    // [6] The higher the contention (more threads, smaller critical section), the ratio of
+    // retry_count to total operations typically rises significantly — this is quantitative evidence of a CAS retry storm.
     std::cout << "counter = " << shared_counter.load() << "\\n";
     std::cout << "retries = " << retry_count.load() << "\\n";
     std::cout << "elapsed(ms) = "
@@ -180,7 +180,7 @@ int main() {
 #include <thread>
 #include <vector>
 
-// 簡化版：量測不同執行緒數下的 CAS 重試次數。
+// Simplified version: measures CAS retry counts under different thread counts.
 std::atomic<long long> counter{0};
 std::atomic<long long> retries{0};
 
@@ -196,8 +196,12 @@ void worker(int iters) {
 int main() {
     constexpr int kThreads = 4;
     std::vector<std::thread> ts;
-    for (int t = 0; t < kThreads; ++t) ts.emplace_back(worker, 50000);
-    for (auto& t : ts) t.join();
+    for (int t = 0; t < kThreads; ++t) {
+        ts.emplace_back(worker, 50000);
+    }
+    for (auto& t : ts) {
+        t.join();
+    }
 
     std::cout << "counter = " << counter.load() << "\\n";
     std::cout << "retries = " << retries.load() << "\\n";

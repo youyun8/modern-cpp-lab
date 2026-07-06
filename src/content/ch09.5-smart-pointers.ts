@@ -21,63 +21,65 @@ const ch09SmartPointers: ChapterContent = {
 struct Node {
     int value = 0;
     std::string name;
-    std::unique_ptr<Node> next;          // [1] unique_ptr 表示「這個 Node 擁有下一個」
-    std::shared_ptr<Node> shared_child;  // [2] 多個父節點可共享同一 child
-    std::weak_ptr<Node> weak_backref;    // [3] 弱參考，避免父子互相形成循環
+    std::unique_ptr<Node> next;          // [1] unique_ptr means "this Node owns the next one"
+    std::shared_ptr<Node> shared_child;  // [2] Multiple parent nodes can share the same child
+    std::weak_ptr<Node> weak_backref;    // [3] Weak reference, avoids a parent-child cycle
 
     explicit Node(std::string n, int v = 0) : value(v), name(std::move(n)) {
-        std::cout << "Node(" << name << ") 建構\\n";
+        std::cout << "Node(" << name << ") constructed\\n";
     }
-    ~Node() { std::cout << "Node(" << name << ") 解構\\n"; }
+    ~Node() { std::cout << "Node(" << name << ") destroyed\\n"; }
 };
 
-// 工廠函式：make_unique 比先 new 再包 unique_ptr 更安全且異常安全。 [4]
+// Factory function: make_unique is safer and exception-safe compared to new-then-wrap. [4]
 std::unique_ptr<Node> makeNode(std::string name, int value) {
     return std::make_unique<Node>(std::move(name), value);
 }
 
-// unique_ptr 作為引數時，以值傳遞明確表達「所有權轉移」。 [5]
+// When unique_ptr is a parameter, passing by value clearly signals "ownership transfer". [5]
 void takeOwnership(std::unique_ptr<Node> node) {
-    std::cout << "takeOwnership 收到: " << node->name << "\\n";
-    // 離開作用域時 node 自動解構
+    std::cout << "takeOwnership received: " << node->name << "\\n";
+    // node is automatically destroyed when leaving scope
 }
 
-// shared_ptr 作為引數時，以 const reference 傳遞避免不必要的計數增減。 [6]
+// When shared_ptr is a parameter, pass by const reference to avoid unnecessary refcount churn. [6]
 void inspect(const std::shared_ptr<Node>& node) {
-    if (node) std::cout << "inspect: " << node->name << "\\n";
+    if (node) {
+        std::cout << "inspect: " << node->name << "\\n";
+    }
 }
 
 int main() {
     auto a = makeNode("alpha", 1);
     auto b = makeNode("beta", 2);
 
-    a->next = std::move(b);  // [7] 所有權從 b 轉移到 a->next；b 現在為空
-    // takeOwnership(b);     // 編譯錯誤：b 已經 losing 所有權
+    a->next = std::move(b);  // [7] Ownership moves from b to a->next; b is now empty
+    // takeOwnership(b);     // Compile error: b has already lost ownership
 
     auto shared_c = std::make_shared<Node>("shared_c", 3);  // [8]
     {
-        auto copy = shared_c;  // [9] 參考計數 +1
-        inspect(shared_c);     //   傳入 const&，計數不變
-        std::cout << "計數 = " << shared_c.use_count() << "\\n";  // [10]
-    }  // copy 解構，計數 -1
-    std::cout << "計數 = " << shared_c.use_count() << "\\n";
+        auto copy = shared_c;  // [9] Reference count +1
+        inspect(shared_c);     //   Passed by const&, count unchanged
+        std::cout << "count = " << shared_c.use_count() << "\\n";  // [10]
+    }  // copy destroyed, count -1
+    std::cout << "count = " << shared_c.use_count() << "\\n";
 
-    // weak_ptr 觀察但不增加計數。 [11]
+    // weak_ptr observes without increasing the count. [11]
     std::weak_ptr<Node> weak = shared_c;
-    std::cout << "弱參考計數 = " << shared_c.use_count() << "\\n";  // 仍為 1
+    std::cout << "weak ref count = " << shared_c.use_count() << "\\n";  // still 1
 
-    if (auto locked = weak.lock()) {  // [12] 升級為 shared_ptr
-        std::cout << "鎖定成功: " << locked->name << "\\n";
+    if (auto locked = weak.lock()) {  // [12] Upgrade to shared_ptr
+        std::cout << "lock succeeded: " << locked->name << "\\n";
     }
 
-    shared_c.reset();  // [13] 釋放，參考計數歸零
+    shared_c.reset();  // [13] Release, reference count reaches zero
     if (auto locked = weak.lock()) {  // [14]
-        std::cout << "仍存活\\n";
+        std::cout << "still alive\\n";
     } else {
-        std::cout << "物件已釋放\\n";
+        std::cout << "object already released\\n";
     }
 
-    // a 與其鏈表的 Node 在 main 結束時自動連級解構。
+    // a and its linked Node chain are destroyed in cascade automatically at the end of main.
     return 0;
 }`,
     callouts: [
@@ -231,19 +233,19 @@ int main() {
 struct Widget {
     std::string name;
     explicit Widget(std::string n) : name(std::move(n)) {
-        std::cout << "Widget(" << name << ") 建構\\n";
+        std::cout << "Widget(" << name << ") constructed\\n";
     }
-    ~Widget() { std::cout << "Widget(" << name << ") 解構\\n"; }
+    ~Widget() { std::cout << "Widget(" << name << ") destroyed\\n"; }
 };
 
 int main() {
     auto p1 = std::make_unique<Widget>("alpha");
-    // std::unique_ptr<Widget> p2 = p1;  // 錯誤：不能複製
-    auto p2 = std::move(p1);             // 轉移所有權
+    // std::unique_ptr<Widget> p2 = p1;  // Error: cannot copy
+    auto p2 = std::move(p1);             // Transfer ownership
 
     auto s1 = std::make_shared<Widget>("beta");
     {
-        auto s2 = s1;  // 共享所有權
+        auto s2 = s1;  // Share ownership
         std::cout << "use_count = " << s1.use_count() << "\\n";
     }
     std::cout << "use_count = " << s1.use_count() << "\\n";

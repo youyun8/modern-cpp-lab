@@ -16,23 +16,23 @@ const ch09OopI: ChapterContent = {
     code: `#include <print>
 #include <utility>
 
-// 示範 rule of five：手動管理一段原始緩衝區。 [1]
+// Demonstrates the rule of five: manually managing a raw buffer. [1]
 class Buffer {
     int* data_;
     std::size_t size_;
 
    public:
-    explicit Buffer(std::size_t n)  // [2] 建構子取得資源
+    explicit Buffer(std::size_t n)  // [2] Constructor acquires the resource
         : data_(new int[n]{}), size_(n) {}
-    ~Buffer() { delete[] data_; }  // [3] 解構子釋放資源
+    ~Buffer() { delete[] data_; }  // [3] Destructor releases the resource
 
-    Buffer(const Buffer& other)  // [4] 複製建構（深複製）
+    Buffer(const Buffer& other)  // [4] Copy constructor (deep copy)
         : data_(new int[other.size_]), size_(other.size_) {
         std::copy(other.data_, other.data_ + size_, data_);
     }
-    Buffer& operator=(const Buffer&) = delete;  // 簡化：禁用複製指定
+    Buffer& operator=(const Buffer&) = delete;  // Simplified: disable copy assignment
 
-    Buffer(Buffer&& other) noexcept  // [5] 移動建構：接管指標
+    Buffer(Buffer&& other) noexcept  // [5] Move constructor: takes ownership of the pointer
         : data_(std::exchange(other.data_, nullptr)), size_(std::exchange(other.size_, 0)) {}
 
     std::size_t size() const { return size_; }
@@ -40,9 +40,9 @@ class Buffer {
 
 int main() {
     Buffer a(4);
-    Buffer b = std::move(a);  // 呼叫移動建構，a 被清空
+    Buffer b = std::move(a);  // Calls the move constructor, a is left empty
     std::println("b.size = {}", b.size());
-    return 0;  // b 的解構子自動釋放記憶體
+    return 0;  // b's destructor automatically frees the memory
 }`,
     callouts: [
       {
@@ -138,7 +138,7 @@ int main() {
 #include <utility>
 #include <vector>
 
-// rule of zero 版本：用 std::vector 管理資源，無需手寫特殊成員。
+// Rule of zero version: uses std::vector to manage the resource, no special members needed.
 class Buffer {
     std::vector<int> data_;
 
@@ -149,7 +149,7 @@ class Buffer {
 
 int main() {
     Buffer a(4);
-    Buffer b = std::move(a);  // 自動生成的移動建構
+    Buffer b = std::move(a);  // Compiler-generated move constructor
     std::cout << "b.size = " << b.size() << '\\n';
     return 0;
 }`,

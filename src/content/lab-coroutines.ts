@@ -16,17 +16,17 @@ const labCoroutines: ChapterContent = {
 #include <cstdint>
 #include <exception>
 
-// 一個極簡的惰性 generator：co_yield 逐一產生值並暫停。 [1]
+// A minimal lazy generator: co_yield produces values one at a time and suspends. [1]
 template <typename T>
 struct Generator {
-    struct promise_type {  // [2] 協程的 promise 型別
+    struct promise_type {  // [2] The coroutine's promise type
         T current;
         Generator get_return_object() {
             return Generator{std::coroutine_handle<promise_type>::from_promise(*this)};
         }
-        std::suspend_always initial_suspend() { return {}; }  // [3] 一開始即暫停
+        std::suspend_always initial_suspend() { return {}; }  // [3] Suspend immediately at start
         std::suspend_always final_suspend() noexcept { return {}; }
-        std::suspend_always yield_value(T v) {  // [4] co_yield 進入此處
+        std::suspend_always yield_value(T v) {  // [4] co_yield enters here
             current = v;
             return {};
         }
@@ -38,15 +38,19 @@ struct Generator {
     bool next() {
         h.resume();
         return !h.done();
-    }  // [5] 恢復到下一個 yield
+    }  // [5] Resume to the next yield
     T value() const { return h.promise().current; }
     ~Generator() {
-        if (h) h.destroy();
+        if (h) {
+            h.destroy();
+        }
     }
 };
 
 Generator<int> firstN(int n) {
-    for (int i = 0; i < n; ++i) co_yield i* i;  // 產生平方數，然後暫停
+    for (int i = 0; i < n; ++i) {
+        co_yield i* i;  // Produce the square, then suspend
+    }
 }`,
     callouts: [
       {
@@ -166,17 +170,23 @@ struct Generator {
     }
     T value() const { return h.promise().current; }
     ~Generator() {
-        if (h) h.destroy();
+        if (h) {
+            h.destroy();
+        }
     }
 };
 
 Generator<int> squares(int n) {
-    for (int i = 0; i < n; ++i) co_yield i* i;
+    for (int i = 0; i < n; ++i) {
+        co_yield i* i;
+    }
 }
 
 int main() {
     auto g = squares(5);
-    while (g.next()) std::cout << g.value() << ' ';
+    while (g.next()) {
+        std::cout << g.value() << ' ';
+    }
     std::cout << '\\n';
     return 0;
 }`,

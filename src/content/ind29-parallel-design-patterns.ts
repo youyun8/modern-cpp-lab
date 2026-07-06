@@ -20,8 +20,8 @@ const ind29ParallelDesignPatterns: ChapterContent = {
 #include <print>
 #include <thread>
 
-// Active Object：把「呼叫」與「執行」解耦。
-// 公開介面回傳 std::future，實際工作在內部專屬執行緒上依序執行。 [1]
+// Active Object: decouples "invocation" from "execution".
+// The public interface returns std::future; the actual work runs sequentially on a dedicated internal thread. [1]
 class Logger {
    public:
     Logger() : worker_(&Logger::run, this) {}
@@ -35,33 +35,35 @@ class Logger {
         worker_.join();
     }
 
-    // 公開方法立即返回 future，呼叫端不會被實際的 I/O 阻塞。 [2]
+    // The public method returns a future immediately; the caller is never blocked by the actual I/O. [2]
     std::future<void> log(std::string message) {
         auto task = std::make_shared<std::packaged_task<void()>>([msg = std::move(message)] {
-            std::println("[log] {}", msg);  // 模擬耗時的實際輸出
+            std::println("[log] {}", msg);  // simulate the (potentially slow) actual output
         });
         std::future<void> fut = task->get_future();
         {
             std::lock_guard<std::mutex> lock(mutex_);
-            queue_.push_back([task] { (*task)(); });  // [3] 請求進入內部佇列
+            queue_.push_back([task] { (*task)(); });  // [3] request enters the internal queue
         }
         cv_.notify_one();
         return fut;
     }
 
    private:
-    // 專屬執行緒：Monitor 風格，所有存取都在鎖保護下完成。 [4]
+    // Dedicated thread: Monitor style, all access completes under lock protection. [4]
     void run() {
         while (true) {
             std::function<void()> job;
             {
                 std::unique_lock<std::mutex> lock(mutex_);
                 cv_.wait(lock, [this] { return stop_ || !queue_.empty(); });  // [5]
-                if (queue_.empty() && stop_) return;
+                if (queue_.empty() && stop_) {
+                    return;
+                }
                 job = std::move(queue_.front());
                 queue_.pop_front();
             }
-            job();  // [6] 鎖已釋放，執行實際工作不阻塞其他呼叫端
+            job();  // [6] lock already released; executing the actual work does not block other callers
         }
     }
 
@@ -189,8 +191,8 @@ int main() {
 #include <thread>
 #include <vector>
 
-// SPMD + BSP：固定數量 worker 執行緒各自處理資料切片，
-// 每個超步結束後在 barrier 同步，確保下一階段能安全讀到上一階段結果。
+// SPMD + BSP: a fixed number of worker threads each process a slice of the data,
+// synchronizing at the barrier after every superstep so the next stage can safely read the previous stage's results.
 int main() {
     constexpr int num_workers = 4;
     constexpr int steps = 3;
@@ -202,15 +204,18 @@ int main() {
     for (int id = 0; id < num_workers; ++id) {
         workers.emplace_back([&, id] {
             for (int step = 0; step < steps; ++step) {
-                data[id] += id + step;  // 本地計算（SPMD：相同程式、不同資料）
-                sync_point.arrive_and_wait();  // BSP：等所有 worker 完成本超步
+                data[id] += id + step;  // local computation (SPMD: same program, different data)
+                sync_point.arrive_and_wait();  // BSP: wait until all workers finish this superstep
             }
         });
     }
-    for (auto& t : workers) t.join();
+    for (auto& t : workers) {
+        t.join();
+    }
 
-    for (int id = 0; id < num_workers; ++id)
+    for (int id = 0; id < num_workers; ++id) {
         std::cout << "worker " << id << " -> " << data[id] << "\\n";
+    }
     return 0;
 }`,
   },

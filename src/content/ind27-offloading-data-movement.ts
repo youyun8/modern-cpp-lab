@@ -31,14 +31,14 @@ const ind27OffloadingDataMovement: ChapterContent = {
   ],
   code: {
     lang: 'cpp',
-    code: `// 概念示意（省略錯誤檢查）：pinned memory + 多條 stream 重疊傳輸與計算。 [1]
-// 需以 hipcc（HIP）編譯；CUDA 版本 API 形狀幾乎一一對應（hip -> cuda
-// 前綴替換）。
+    code: `// Conceptual sketch (error checking omitted): pinned memory + multiple streams overlapping transfer and compute. [1]
+// Must be compiled with hipcc (HIP); the CUDA version's API shape maps almost
+// one-to-one (swap the hip -> cuda prefix).
 #include <cstddef>
 #include <vector>
 
-// __global__ void scaleKernel(float* data, float k, int n); // device
-// 端核心宣告
+// __global__ void scaleKernel(float* data, float k, int n); // device-side
+// kernel declaration
 
 constexpr int kChunks = 4;
 
@@ -48,35 +48,35 @@ void OverlappedPipeline(std::size_t totalElems) {
 
     float* h_pinned = nullptr;
     // hipHostMalloc(&h_pinned, totalElems * sizeof(float));      // [2] pinned
-    // host 記憶體
+    // host memory
     float* d_buf = nullptr;
     // hipMalloc(&d_buf, totalElems * sizeof(float));              // device
-    // 記憶體
+    // memory
 
     // hipStream_t streams[kChunks];
     // for (int i = 0; i < kChunks; ++i) {
     //     hipStreamCreate(&streams[i]);                           // [3]
-    //     每個區塊一條 stream
+    //     one stream per chunk
     // }
 
     for (int i = 0; i < kChunks; ++i) {
         std::size_t offset = static_cast<std::size_t>(i) * chunkElems;
         // hipMemcpyAsync(d_buf + offset, h_pinned + offset, chunkBytes,
-        //                 hipMemcpyHostToDevice, streams[i]);     // [4] 非同步
-        //                 H2D，區塊 i
+        //                 hipMemcpyHostToDevice, streams[i]);     // [4] async
+        //                 H2D for chunk i
         // hipLaunchKernelGGL(scaleKernel,
         //                     dim3((chunkElems + 255) / 256), dim3(256),
         //                     0, streams[i],
         //                     d_buf + offset, 2.0f,
-        //                     static_cast<int>(chunkElems));      // [5] 區塊 i
-        //                     的計算與區塊 i+1 的傳輸重疊
+        //                     static_cast<int>(chunkElems));      // [5] compute
+        //                     for chunk i overlaps with the transfer for chunk i+1
         // hipMemcpyAsync(h_pinned + offset, d_buf + offset, chunkBytes,
         //                 hipMemcpyDeviceToHost, streams[i]);
     }
 
     // for (int i = 0; i < kChunks; ++i) {
     //     hipStreamSynchronize(streams[i]);                       // [6]
-    //     同步點：等所有區塊完成 hipStreamDestroy(streams[i]);
+    //     sync point: wait for all chunks to finish hipStreamDestroy(streams[i]);
     // }
     // hipFree(d_buf);
     // hipHostFree(h_pinned);
@@ -173,8 +173,9 @@ void OverlappedPipeline(std::size_t totalElems) {
       'host 以 pinned memory 透過多條 stream 非同步搬移資料，各區塊的傳輸與 kernel 計算在不同 stream 上重疊執行，最後於同步點會合取回結果。',
   },
   tryIt: {
-    code: `// GPU 需以 hipcc/nvcc 編譯。以下用 std::async/std::future 模擬
-// 「多條 stream 重疊傳輸與計算」的心智模型，可在一般編譯器執行。
+    code: `// The GPU version must be compiled with hipcc/nvcc. The following uses
+// std::async/std::future to simulate the mental model of "multiple streams
+// overlapping transfer and compute", runnable on an ordinary compiler.
 #include <chrono>
 #include <future>
 #include <iostream>
@@ -185,22 +186,22 @@ int main() {
     constexpr int kChunks = 4;
     std::vector<std::future<int>> streams;
 
-    // 類比：每個區塊各自的「非同步傳輸 + 計算」排入獨立佇列。
+    // Analogy: each chunk's "async transfer + compute" is queued independently.
     for (int i = 0; i < kChunks; ++i) {
         streams.push_back(std::async(std::launch::async, [i] {
-            // 模擬非同步 H2D 傳輸延遲
+            // Simulate async H2D transfer latency
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
-            // 模擬 kernel 計算
+            // Simulate kernel compute
             std::this_thread::sleep_for(std::chrono::milliseconds(20));
-            return i * 100;  // 假裝這是該區塊算出的結果
+            return i * 100;  // pretend this is the result computed for this chunk
         }));
     }
 
-    std::cout << "host 在各區塊 GPU 工作進行時繼續執行...\\n";
+    std::cout << "host continues running while per-chunk GPU work is in flight...\\n";
 
-    // 同步點集中在最後，讓所有區塊的傳輸與計算得以重疊。
+    // Sync points are consolidated at the end, letting all chunks' transfer and compute overlap.
     for (int i = 0; i < kChunks; ++i) {
-        std::cout << "區塊 " << i << " 結果 = " << streams[i].get() << '\\n';
+        std::cout << "chunk " << i << " result = " << streams[i].get() << '\\n';
     }
     return 0;
 }`,

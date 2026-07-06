@@ -19,17 +19,17 @@ const ch04BasicConceptsII: ChapterContent = {
 
 int main() {
     int smax = std::numeric_limits<int>::max();  // [1]
-    // smax + 1;   // [2] 有號溢位是未定義行為，切勿依賴
+    // smax + 1;   // [2] Signed overflow is undefined behavior; never rely on it
 
     unsigned int u = 0;
-    --u;  // [3] 無號回繞：變成 UINT_MAX，行為有定義但常非本意
+    --u;  // [3] Unsigned wraparound: becomes UINT_MAX, well-defined but often unintended
 
     int a = -1;
     unsigned int b = 1;
-    bool surprising = (a < b);  // [4] a 被轉為無號，結果可能與直覺相反
+    bool surprising = (a < b);  // [4] a is converted to unsigned, result may be counterintuitive
 
     std::int8_t small = 100;
-    auto promoted = small + small;  // [5] 先提升為 int 再相加，型別為 int
+    auto promoted = small + small;  // [5] Promoted to int before addition; result type is int
 
     std::println("u={}, (a<b)={}, promoted type size={}", u, surprising, sizeof(promoted));
     return 0;
@@ -121,11 +121,11 @@ int main() {
 
 int main() {
     unsigned int u = 0;
-    --u;  // 無號回繞
+    --u;  // unsigned wraparound
     int a = -1;
     unsigned int b = 1;
     std::cout << "u = " << u << '\\n';
-    std::cout << "(a < b) = " << (a < b) << "  (可能與直覺不同)\\n";
+    std::cout << "(a < b) = " << (a < b) << "  (may be counterintuitive)\\n";
     std::cout << "INT_MAX = " << std::numeric_limits<int>::max() << '\\n';
     return 0;
 }`,

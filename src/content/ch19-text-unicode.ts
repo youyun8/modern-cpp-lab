@@ -29,7 +29,7 @@ std::size_t count_utf8_code_points(std::string_view bytes) {  // [1]
 }
 
 int main() {
-    std::u8string typed = u8"cafe 世界";  // [3]
+    std::u8string typed = u8"café world";  // [3]
     std::string text;
     text.reserve(typed.size());
     for (char8_t unit : typed) {
@@ -135,7 +135,7 @@ int main() {
 #include <string>
 
 int main() {
-    std::u8string text = u8"Hi 世界";
+    std::u8string text = u8"Hi café";
     std::cout << "UTF-8 code units = " << text.size() << '\\n';
     for (char8_t unit : text) {
         auto byte = static_cast<unsigned char>(unit);

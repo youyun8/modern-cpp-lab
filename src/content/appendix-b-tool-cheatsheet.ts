@@ -13,22 +13,22 @@ const appendixBToolCheatsheet: ChapterContent = {
   },
   code: {
     lang: 'bash',
-    code: `# ---- perf：Linux 通用取樣剖析 ----
-perf stat ./app                                    # [1] 全域效能計數器總覽
-perf record -g -- ./app                            # [2] 取樣並記錄呼叫堆疊
-perf report                                        # 檢視取樣結果，找出熱點函式
+    code: `# ---- perf: general-purpose sampling profiler on Linux ----
+perf stat ./app                                    # [1] Overview of global performance counters
+perf record -g -- ./app                            # [2] Sample and record the call stack
+perf report                                        # View sampling results to find hot functions
 
-# ---- LIKWID：輕量硬體計數器 ----
-likwid-perfctr -C 0-3 -g CACHE ./app                # [3] 量測指定核心的快取事件群組
+# ---- LIKWID: lightweight hardware counters ----
+likwid-perfctr -C 0-3 -g CACHE ./app                # [3] Measure cache event groups on specified cores
 
-# ---- rocprof：AMD ROCm GPU 剖析 ----
-rocprof --stats ./gpu_app                           # [4] 收集 kernel 執行時間統計
+# ---- rocprof: AMD ROCm GPU profiling ----
+rocprof --stats ./gpu_app                           # [4] Collect kernel execution time statistics
 
-# ---- ThreadSanitizer：資料競爭偵測 ----
+# ---- ThreadSanitizer: data race detection ----
 g++ -std=c++20 -g -fsanitize=thread race.cpp -o race
 TSAN_OPTIONS="halt_on_error=1 second_deadlock_stack=1" ./race  # [5]
 
-# ---- Google Benchmark：微基準 ----
+# ---- Google Benchmark: microbenchmarking ----
 ./bench --benchmark_min_time=1s --benchmark_repetitions=10 \\
         --benchmark_report_aggregates_only=true            # [6]`,
     callouts: [
@@ -138,17 +138,17 @@ TSAN_OPTIONS="halt_on_error=1 second_deadlock_stack=1" ./race  # [5]
       '平行程式的工具鏈分工：以剖析工具找熱點、消毒器抓正確性錯誤、微基準量測優化成效，形式驗證工具釐清記憶體模型邊界情況。',
   },
   tryIt: {
-    code: `#最小可執行的工具鏈範例：先消毒、再剖析、再微基準
+    code: `#Minimal working toolchain example: sanitize first, then profile, then microbenchmark
 g++ - std =
     c++ 20 - g - fsanitize =
         thread race.cpp -
-        o race #1. 先確保沒有資料競爭./
+        o race #1. First make sure there is no data race./
             race
 
                 perf stat./
-            race #2. 健檢整體效能計數器
+            race #2. Health-check the overall performance counters
 
-# 3. 針對關鍵函式撰寫 Google Benchmark 微基準（另編為 bench.cpp）
+# 3. Write a Google Benchmark microbenchmark for the key function (compiled separately as bench.cpp)
 #BENCHMARK(BM_MyFunction);
 #BENCHMARK_MAIN();
                 g++ -

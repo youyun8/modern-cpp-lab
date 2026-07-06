@@ -18,10 +18,10 @@ const ind26MdspanLinalg: ChapterContent = {
 #include <vector>
 
 using Extents2D = std::dextents<size_t, 2>;
-using MatrixView = std::mdspan<float, Extents2D>;  // [1] layout_right 為預設
+using MatrixView = std::mdspan<float, Extents2D>;  // [1] layout_right is the default
 using ConstMatrixView = std::mdspan<const float, Extents2D>;
 
-// 以 mdspan 表達的天真 GEMM：C += A * B，維度由 extents 攜帶。 [2]
+// Naive GEMM expressed with mdspan: C += A * B, dimensions carried by extents. [2]
 void gemm_naive(ConstMatrixView a, ConstMatrixView b, MatrixView c) {
     const size_t n = a.extent(0);
     const size_t k_dim = a.extent(1);
@@ -29,15 +29,15 @@ void gemm_naive(ConstMatrixView a, ConstMatrixView b, MatrixView c) {
 
     for (size_t i = 0; i < n; ++i) {
         for (size_t k = 0; k < k_dim; ++k) {
-            const float a_ik = a(i, k);  // [3] operator() 取代手算 i * ld + k
+            const float a_ik = a(i, k);  // [3] operator() replaces manually computing i * ld + k
             for (size_t j = 0; j < m; ++j) {
-                c(i, j) += a_ik * b(k, j);  // [4] 內層對 b、c 皆連續存取（layout_right）
+                c(i, j) += a_ik * b(k, j);  // [4] the inner loop accesses both b and c contiguously (layout_right)
             }
         }
     }
 }
 
-// 1D stencil：以 mdspan 表達邊界安全的三點平均。 [5]
+// 1D stencil: express a boundary-safe three-point average with mdspan. [5]
 void stencil_1d(std::mdspan<const float, std::dextents<size_t, 1>> in,
                 std::mdspan<float, std::dextents<size_t, 1>> out) {
     const size_t n = in.extent(0);
@@ -50,7 +50,7 @@ int main() {
     constexpr size_t n = 4;
     std::vector<float> a(n * n, 1.0f), b(n * n, 2.0f), c(n * n, 0.0f);
 
-    // mdspan 不擁有記憶體：底層仍是 vector<float> 的連續儲存。
+    // mdspan does not own memory: the underlying storage is still the vector<float>'s contiguous buffer.
     gemm_naive(ConstMatrixView(a.data(), n, n), ConstMatrixView(b.data(), n, n),
                MatrixView(c.data(), n, n));
 
@@ -188,7 +188,9 @@ void gemm_naive(ConstMatrixView a, ConstMatrixView b, MatrixView c) {
     for (size_t i = 0; i < n; ++i) {
         for (size_t k = 0; k < k_dim; ++k) {
             const float a_ik = a(i, k);
-            for (size_t j = 0; j < m; ++j) c(i, j) += a_ik * b(k, j);
+            for (size_t j = 0; j < m; ++j) {
+                c(i, j) += a_ik * b(k, j);
+            }
         }
     }
 }
@@ -198,7 +200,7 @@ int main() {
     std::vector<float> a(n * n, 1.0f), b(n * n, 2.0f), c(n * n, 0.0f);
     gemm_naive(ConstMatrixView(a.data(), n, n), ConstMatrixView(b.data(), n, n),
                MatrixView(c.data(), n, n));
-    std::cout << "c(0, 0) = " << c[0] << " (應為 " << n * 2 << ")\\n";
+    std::cout << "c(0, 0) = " << c[0] << " (expected " << n * 2 << ")\\n";
     return 0;
 }`,
   },

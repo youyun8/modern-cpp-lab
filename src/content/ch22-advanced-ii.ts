@@ -30,14 +30,18 @@ void addWithLock(long long value) {
 
 long long computePartial(int begin, int end) {  // [4]
     long long local = 0;
-    for (int i = begin; i < end; ++i) local += i;
+    for (int i = begin; i < end; ++i) {
+        local += i;
+    }
     return local;
 }
 
 int main() {
     std::vector<std::thread> workers;
     for (int t = 0; t < 4; ++t) workers.emplace_back([t]() { addWithLock(t); });  // [5]
-    for (auto& w : workers) w.join();
+    for (auto& w : workers) {
+        w.join();
+    }
 
     auto future = std::async(std::launch::async,  // [6]
                              computePartial, 0, 1'000'000);
@@ -136,7 +140,9 @@ std::atomic<long long> total{0};
 
 void worker(int begin, int end) {
     long long local = 0;
-    for (int i = begin; i < end; ++i) local += i;
+    for (int i = begin; i < end; ++i) {
+        local += i;
+    }
     // Combine once per thread to minimise atomic contention.
     total.fetch_add(local, std::memory_order_relaxed);
 }
@@ -150,7 +156,9 @@ int main() {
         int end = (t + 1) * (kN / kThreads);
         pool.emplace_back([begin, end]() { worker(begin, end); });
     }
-    for (auto& th : pool) th.join();
+    for (auto& th : pool) {
+        th.join();
+    }
     std::cout << "sum = " << total.load() << '\\n';
     return 0;
 }`,

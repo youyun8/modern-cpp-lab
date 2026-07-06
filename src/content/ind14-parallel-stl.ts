@@ -55,17 +55,9 @@ void scaleInPlace(std::vector<double>& data, double factor) {
 //   std::for_each(std::execution::par_unseq, data.begin(), data.end(),
 //                 [&](double& x) {
 //                     std::lock_guard<std::mutex> lock(log_mutex);  // [5]
-//                     locking x = std::sqrt(x);                              //
-//                     may deadlock:
-//                 });                                                //
-//                 interleaved
-//                                                                     // calls
-//                                                                     can be
-//                                                                     // issued
-//                                                                     on one
-//                                                                     // thread
-//                                                                     under
-//                                                                     // unseq.
+//                     x = std::sqrt(x);  // locking here may deadlock: under
+//                 });                    // unseq, interleaved calls can be
+//                                        // issued on one thread.
 // The same lambda would also be unsafe if it allocated memory (e.g. pushed
 // into a std::vector) or let an exception escape (e.g. data.at() out of
 // range without a try/catch): both call std::terminate or corrupt state

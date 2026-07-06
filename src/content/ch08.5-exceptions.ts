@@ -22,33 +22,35 @@ const ch08Exceptions: ChapterContent = {
 struct Logger {
     std::string name;
     explicit Logger(std::string n) : name(std::move(n)) {
-        std::cout << "Logger(" << name << ") 建構\\n";
+        std::cout << "Logger(" << name << ") constructed\\n";
     }
-    ~Logger() { std::cout << "Logger(" << name << ") 解構\\n"; }
+    ~Logger() { std::cout << "Logger(" << name << ") destroyed\\n"; }
 };
 
-// 宣告不丟例外的函式：編譯器可放棄堆疊展開路徑，呼叫者也無需準備 catch。 [1]
-void safeCleanup() noexcept { std::cout << "安全清理\\n"; }
+// Declare a function that never throws: the compiler can drop the unwinding path, and callers need no catch. [1]
+void safeCleanup() noexcept { std::cout << "Safe cleanup\\n"; }
 
-// 可能因為輸入無效而丟出例外。 [2]
+// May throw an exception because of invalid input. [2]
 double divide(double a, double b) {
-    if (b == 0.0) throw std::runtime_error("除數為零");  // [3]
+    if (b == 0.0) {
+        throw std::runtime_error("division by zero");  // [3]
+    }
     return a / b;
 }
 
-// 示範堆疊展開期間的 RAII 解構。 [4]
+// Demonstrates RAII destruction during stack unwinding. [4]
 void nestedWork() {
     Logger scope1{"inner"};       // [5]
     try {
         Logger scope2{"try-block"};
-        divide(10.0, 0.0);       // 丟出 runtime_error，堆疊開始展開
+        divide(10.0, 0.0);       // Throws runtime_error, stack unwinding begins
     } catch (const std::runtime_error& e) {  // [6]
-        std::cout << "捕捉到: " << e.what() << "\\n";
-        // scope2 在 try-block 結束時已先解構；scope1 在 nestedWork 結束時才解構
+        std::cout << "Caught: " << e.what() << "\\n";
+        // scope2 is destroyed at the end of the try block; scope1 is destroyed at the end of nestedWork
     }
 }
 
-// noexcept 用於移動建構子／移動賦值，讓容器的強異常安全保證成立。 [7]
+// noexcept on move constructor/move assignment lets containers provide the strong exception-safety guarantee. [7]
 struct Buffer {
     std::vector<int> data;
     Buffer(Buffer&& other) noexcept
@@ -60,8 +62,8 @@ int main() {
         Logger outer{"main"};
         nestedWork();
         safeCleanup();
-    } catch (const std::exception& e) {  // [9] 捕捉所有標準例外的基礎類別
-        std::cerr << "未預期例外: " << e.what() << "\\n";
+    } catch (const std::exception& e) {  // [9] Catches the base class of all standard exceptions
+        std::cerr << "Unexpected exception: " << e.what() << "\\n";
         return 1;
     }
     return 0;
@@ -197,7 +199,7 @@ struct SafeBuffer {
 
 void mayThrow(bool shouldThrow) {
     if (shouldThrow) {
-        throw std::runtime_error("出錯了！");
+        throw std::runtime_error("something went wrong!");
     }
 }
 
@@ -205,7 +207,7 @@ int main() {
     try {
         mayThrow(true);
     } catch (const std::exception& e) {
-        std::cout << "捕捉到: " << e.what() << "\\n";
+        std::cout << "Caught: " << e.what() << "\\n";
     }
     return 0;
 }`,

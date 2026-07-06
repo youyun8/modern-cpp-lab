@@ -14,7 +14,7 @@ const labLockFree: ChapterContent = {
     lang: 'cpp',
     code: `#include <atomic>
 
-// 無鎖堆疊的 push：以 CAS 迴圈把新節點接到頭部。 [1]
+// Push for a lock-free stack: link the new node to the head via a CAS loop. [1]
 template <typename T>
 class LockFreeStack {
     struct Node {
@@ -28,9 +28,9 @@ class LockFreeStack {
         Node* node = new Node{value, head_.load(std::memory_order_relaxed)};  // [2]
         while (!head_.compare_exchange_weak(                                  // [3]
             node->next, node,
-            std::memory_order_release,     // [4] 成功：release 發佈
-            std::memory_order_relaxed)) {  // 失敗：relaxed 重讀
-            // node->next 已被更新為最新 head_，直接重試即可。 [5]
+            std::memory_order_release,     // [4] On success: release publishes
+            std::memory_order_relaxed)) {  // On failure: relaxed re-read
+            // node->next has already been updated to the latest head_, so just retry. [5]
         }
     }
 };`,
@@ -132,23 +132,27 @@ class LockFreeStack {
 #include <thread>
 #include <vector>
 
-// 無鎖計數器：多執行緒以 CAS 迴圈安全累加。
+// Lock-free counter: multiple threads accumulate safely with a CAS loop.
 std::atomic<long long> counter{0};
 
 void worker(int iters) {
     for (int i = 0; i < iters; ++i) {
         long long cur = counter.load(std::memory_order_relaxed);
         while (!counter.compare_exchange_weak(cur, cur + 1, std::memory_order_relaxed)) {
-            // cur 已更新為最新值，重試
+            // cur has been updated to the latest value; retry
         }
     }
 }
 
 int main() {
     std::vector<std::thread> ts;
-    for (int t = 0; t < 4; ++t) ts.emplace_back(worker, 100000);
-    for (auto& t : ts) t.join();
-    std::cout << "counter = " << counter.load() << " (應為 400000)\\n";
+    for (int t = 0; t < 4; ++t) {
+        ts.emplace_back(worker, 100000);
+    }
+    for (auto& t : ts) {
+        t.join();
+    }
+    std::cout << "counter = " << counter.load() << " (expected 400000)\\n";
     return 0;
 }`,
   },

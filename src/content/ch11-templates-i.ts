@@ -16,26 +16,26 @@ const ch11TemplatesI: ChapterContent = {
     code: `#include <concepts>
 #include <print>
 
-// 具名 concept：型別必須支援 + 且結果可轉回自身。 [1]
+// Named concept: the type must support + and the result must convert back to itself. [1]
 template <typename T>
 concept Addable = requires(T a, T b) {
     { a + b } -> std::convertible_to<T>;  // [2]
 };
 
-// 以 concept 約束函式樣板；違反約束時錯誤訊息清楚。 [3]
+// Constrain a function template with a concept; the error message is clear when violated. [3]
 template <Addable T>
 T sum(T a, T b) {
     return a + b;
 }
 
-// 也可用 requires 子句表達額外限制。 [4]
+// A requires clause can also express additional restrictions. [4]
 template <typename T>
 requires std::integral<T> T twice(T x) { return x + x; }
 
 int main() {
     std::println("{}", sum(3, 4));      // T = int
     std::println("{}", sum(1.5, 2.5));  // T = double
-    std::println("{}", twice(21));      // [5] 僅整數可用
+    std::println("{}", twice(21));      // [5] Only integers are allowed
     return 0;
 }`,
     callouts: [

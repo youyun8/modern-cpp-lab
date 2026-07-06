@@ -19,18 +19,20 @@ const ch19Utilities: ChapterContent = {
 #include <variant>
 #include <vector>
 
-// std::span：接受任意連續序列而不複製、不樣板化。 [1]
+// std::span: accepts any contiguous sequence without copying or templating. [1]
 long long sum(std::span<const int> data) {
     long long s = 0;
-    for (int x : data) s += x;
+    for (int x : data) {
+        s += x;
+    }
     return s;
 }
 
-using Value = std::variant<int, double, std::string>;  // [2] 型別安全和型別
+using Value = std::variant<int, double, std::string>;  // [2] a type-safe sum type
 
 std::string describe(const Value& v) {
     return std::visit(
-        [](const auto& x) {               // [3] 窮盡式處理
+        [](const auto& x) {               // [3] exhaustive handling
             return std::format("{}", x);  // [4]
         },
         v);
@@ -39,8 +41,8 @@ std::string describe(const Value& v) {
 int main() {
     std::vector<int> v{1, 2, 3, 4};
     int raw[] = {10, 20, 30};
-    std::println("vector sum = {}", sum(v));    // [5] 傳 vector
-    std::println("array sum  = {}", sum(raw));  //    傳 C 陣列
+    std::println("vector sum = {}", sum(v));    // [5] pass a vector
+    std::println("array sum  = {}", sum(raw));  //    pass a C array
 
     Value a = 42, b = 3.14, c = std::string{"hi"};
     std::println("{} / {} / {}", describe(a), describe(b), describe(c));

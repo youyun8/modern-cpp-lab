@@ -16,25 +16,27 @@ const ch26SoftwareDesignI: ChapterContent = {
     code: `#include <print>
 #include <vector>
 
-// 依賴反轉：高階演算法依賴抽象介面，而非特定實作。 [1]
+// Dependency inversion: the high-level algorithm depends on an abstract interface, not a specific implementation. [1]
 struct Kernel {
     virtual ~Kernel() = default;
     virtual void gemm(int n, const float* A, const float* B, float* C) const = 0;
 };
 
-// 單一職責：這個實作只負責一種 GEMM 策略。 [2]
+// Single responsibility: this implementation is responsible for only one GEMM strategy. [2]
 struct NaiveGemm : Kernel {
     void gemm(int n, const float* A, const float* B, float* C) const override {
-        for (int i = 0; i < n; ++i)  // [3] 列優先、快取友善的迴圈順序
+        for (int i = 0; i < n; ++i) {  // [3] Row-major, cache-friendly loop order
             for (int k = 0; k < n; ++k) {
                 float a = A[i * n + k];
-                for (int j = 0; j < n; ++j)
-                    C[i * n + j] += a * B[k * n + j];  // [4] 內層連續存取 B 與 C
+                for (int j = 0; j < n; ++j) {
+                    C[i * n + j] += a * B[k * n + j];  // [4] Contiguous access to B and C in the inner loop
+                }
             }
+        }
     }
 };
 
-// 開放封閉：新增策略只需新增型別，不必修改既有程式。 [5]
+// Open-closed: adding a strategy only requires adding a new type, without modifying existing code. [5]
 void run(const Kernel& k, int n, const std::vector<float>& A, const std::vector<float>& B,
          std::vector<float>& C) {
     k.gemm(n, A.data(), B.data(), C.data());
@@ -127,21 +129,24 @@ void run(const Kernel& k, int n, const std::vector<float>& A, const std::vector<
     code: `#include <iostream>
 #include <vector>
 
-// 簡化的 GEMM：比較 i-j-k 與 i-k-j 的快取友善度差異。
+// Simplified GEMM: compare the cache-friendliness difference between i-j-k and i-k-j.
 void gemm_ikj(int n, const std::vector<float>& A, const std::vector<float>& B,
               std::vector<float>& C) {
-    for (int i = 0; i < n; ++i)
+    for (int i = 0; i < n; ++i) {
         for (int k = 0; k < n; ++k) {
             float a = A[i * n + k];
-            for (int j = 0; j < n; ++j) C[i * n + j] += a * B[k * n + j];
+            for (int j = 0; j < n; ++j) {
+                C[i * n + j] += a * B[k * n + j];
+            }
         }
+    }
 }
 
 int main() {
     int n = 64;
     std::vector<float> A(n * n, 1.0f), B(n * n, 1.0f), C(n * n, 0.0f);
     gemm_ikj(n, A, B, C);
-    std::cout << "C[0] = " << C[0] << " (應為 " << n << ")\\n";
+    std::cout << "C[0] = " << C[0] << " (should be " << n << ")\\n";
     return 0;
 }`,
   },

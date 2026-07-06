@@ -13,19 +13,19 @@ const ch28BinarySize: ChapterContent = {
   },
   code: {
     lang: 'bash',
-    code: `# 預設隱藏符號，縮小動態符號表並促成更多最佳化
+    code: `# Hide symbols by default, shrinking the dynamic symbol table and enabling more optimization
 g++ -std=c++23 -O2 -fvisibility=hidden -fvisibility-inlines-hidden \\
     -c lib.cpp -o lib.o                                   # [1]
 
-# 連結期最佳化 + 移除未用區段
+# Link-time optimization + remove unused sections
 g++ -O2 -flto -ffunction-sections -fdata-sections \\
     -Wl,--gc-sections main.o lib.o -o app                # [2]
 
-# 以體積為目標最佳化，並移除符號
+# Optimize for size, and strip symbols
 g++ -std=c++23 -Os small.cpp -o small                    # [3]
 strip --strip-all small                                   # [4]
 
-# 診斷體積來源
+# Diagnose sources of size bloat
 size app ; bloaty app                                      # [5]`,
     callouts: [
       {
@@ -117,19 +117,22 @@ size app ; bloaty app                                      # [5]`,
     code: `#include <iostream>
 #include <vector>
 
-// 抽出與型別無關的共通實作到非樣板函式，減少樣板膨脹。
+// Extract the type-independent common implementation into a non-template function to reduce template bloat.
 namespace detail {
 std::size_t countPositive(const int* p, std::size_t n) {
     std::size_t c = 0;
-    for (std::size_t i = 0; i < n; ++i)
-        if (p[i] > 0) ++c;
+    for (std::size_t i = 0; i < n; ++i) {
+        if (p[i] > 0) {
+            ++c;
+        }
+    }
     return c;
 }
 }  // namespace detail
 
 template <class Container>
 std::size_t countPositive(const Container& c) {
-    return detail::countPositive(c.data(), c.size());  // 薄樣板包裝
+    return detail::countPositive(c.data(), c.size());  // thin template wrapper
 }
 
 int main() {

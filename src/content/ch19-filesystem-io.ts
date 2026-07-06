@@ -27,7 +27,9 @@ int main() {
     {
         std::ofstream out(report);
         out << "Modern C++\\n";
-        if (!out) return 1;                  // [3]
+        if (!out) {
+            return 1;                  // [3]
+        }
     }
 
     std::error_code ec;

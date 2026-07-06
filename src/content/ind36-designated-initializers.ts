@@ -39,14 +39,14 @@ void init_window(const WindowConfig& config) {
 }
 
 int main() {
-    // 傳統聚合初始化：順序不能亂，而且很容易忘記哪個是 width 哪個是 height
+    // Traditional aggregate initialization: order can't be shuffled, and it's easy to forget which is width and which is height
     // WindowConfig config1 {1024, 768, true, "My Game"};
 
-    // C++20 指定初始化：明確、安全，且能跳過想保持預設值的欄位
+    // C++20 designated initializers: explicit, safe, and can skip fields that should keep their default value
     WindowConfig config2 {
         .width = 1024,
         .height = 768,
-        // fullscreen 保持預設 false
+        // fullscreen keeps its default of false
         .title = "Designated Game"  // [2]
     };
 
@@ -112,7 +112,7 @@ int main() {
     Employee emp {
         .id = 42,
         .name = "Alice"
-        // department 保持 Engineering
+        // department keeps its default of Engineering
     };
     std::cout << emp.name << " works in " << emp.department << '\\n';
     return 0;

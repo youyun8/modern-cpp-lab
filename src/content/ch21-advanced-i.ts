@@ -18,22 +18,22 @@ const ch21AdvancedI: ChapterContent = {
 #include <utility>
 #include <vector>
 
-// 轉發參考 + std::forward：完美轉發保留左值／右值類別。 [1]
+// Forwarding reference + std::forward: perfect forwarding preserves lvalue/rvalue category. [1]
 template <typename T>
 void addTo(std::vector<std::string>& out, T&& value) {
     out.push_back(std::forward<T>(value));  // [2]
 }
 
-std::string makeName() { return std::string(1000, 'x'); }  // 大字串
+std::string makeName() { return std::string(1000, 'x'); }  // a large string
 
 int main() {
     std::vector<std::string> names;
     std::string lv = "left";
-    addTo(names, lv);          // [3] T 推導為 std::string&（左值 → 複製）
-    addTo(names, makeName());  // [4] T 推導為 std::string（右值 → 移動）
+    addTo(names, lv);          // [3] T deduced as std::string& (lvalue -> copy)
+    addTo(names, makeName());  // [4] T deduced as std::string (rvalue -> move)
 
     std::string a = "hello";
-    std::string b = std::move(a);  // [5] a 進入有效但未指定狀態
+    std::string b = std::move(a);  // [5] a is now in a valid but unspecified state
     std::println("b={}, count={}", b, names.size());
     return 0;
 }`,
@@ -128,9 +128,9 @@ int main() {
 
 int main() {
     std::string a = "hello world";
-    std::string b = std::move(a);  // 移動而非複製
+    std::string b = std::move(a);  // move instead of copy
     std::cout << "b = " << b << '\\n';
-    std::cout << "a.size() after move = " << a.size() << " (有效但未指定)\\n";
+    std::cout << "a.size() after move = " << a.size() << " (valid but unspecified)\\n";
     return 0;
 }`,
   },

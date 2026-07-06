@@ -42,8 +42,8 @@ struct Token {
 
 int main() {
     std::string name = "left value";
-    relay(name);                    // T = std::string&, 呼叫 const& 版本
-    relay(std::string{"temporary"}); // T = std::string, 呼叫 && 版本
+    relay(name);                    // T = std::string&, calls the const& overload
+    relay(std::string{"temporary"}); // T = std::string, calls the && overload
 
     Token token = make_object<Token>("forwarded text");
     std::cout << token.text << '\\n';

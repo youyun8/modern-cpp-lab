@@ -18,23 +18,23 @@ const ch08BasicConceptsVI: ChapterContent = {
 #include <string>
 #include <vector>
 
-// 大型物件以 const& 傳遞避免複製；小型以值傳遞即可。 [1]
+// Pass large objects by const& to avoid copies; small ones can be passed by value. [1]
 int countLongerThan(const std::vector<std::string>& words, std::size_t n) {
     int threshold = static_cast<int>(n);
-    return static_cast<int>(std::count_if(  // [2] 演算法 + lambda
+    return static_cast<int>(std::count_if(  // [2] Algorithm + lambda
         words.begin(), words.end(),
-        [threshold](const std::string& w) {  // [3] 以值捕獲 threshold
+        [threshold](const std::string& w) {  // [3] Capture threshold by value
             return static_cast<int>(w.size()) > threshold;
         }));
 }
 
-auto makeAdder(int base) {  // [4] 回傳捕獲狀態的閉包
+auto makeAdder(int base) {  // [4] Return a closure that captures state
     return [base](int x) { return base + x; };
 }
 
 int main() {
     std::vector<std::string> words{"a", "bee", "programming", "cpp"};
-    std::println("長度 > 2 的字數：{}", countLongerThan(words, 2));
+    std::println("Words longer than 2: {}", countLongerThan(words, 2));
 
     auto add10 = makeAdder(10);
     std::println("add10(5) = {}", add10(5));  // [5]

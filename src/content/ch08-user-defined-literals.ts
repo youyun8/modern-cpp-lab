@@ -29,7 +29,7 @@ struct Distance {
     long double meters;
 };
 
-// 熟型浮點字面值運算子：字面值先被解析成 long double
+// Cooked floating-point literal operator: the literal is first parsed as a long double
 constexpr Distance operator""_km(long double v) {   // [1]
     return Distance{v * 1000.0L};
 }

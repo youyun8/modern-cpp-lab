@@ -46,7 +46,7 @@ std::atomic<int> x{0};
 std::atomic<int> y{0};
 int r1 = 0, r2 = 0;
 
-// Store Buffering litmus test：兩執行緒互相讀對方的旗標。 [1]
+// Store Buffering litmus test: two threads each read the other's flag. [1]
 void thread1() {
     x.store(1, std::memory_order_relaxed);                // [2]
     std::atomic_thread_fence(std::memory_order_seq_cst);  // [3]
@@ -65,11 +65,13 @@ int main() {
     t1.join();
     t2.join();
 
-    // 若拿掉 [3] 的兩個 fence，在弱序硬體（ARM/POWER）上
-    // r1 == 0 && r2 == 0 是合法結果——兩個 store 都還留在
-    // store buffer 裡，尚未對另一執行緒可見。 [5]
-    // 加上成對的 seq_cst fence 後，全域總序排除了這個結果，
-    // 讓程式在所有架構上行為一致。 [6]
+    // If the two fences at [3] are removed, on weakly ordered hardware
+    // (ARM/POWER) r1 == 0 && r2 == 0 is a legal outcome -- both stores
+    // may still be sitting in their store buffers, not yet visible
+    // to the other thread. [5]
+    // With the paired seq_cst fences, the global total order excludes
+    // this outcome, making the program's behavior consistent across
+    // all architectures. [6]
     return (r1 == 0 && r2 == 0) ? 1 : 0;
 }`,
     callouts: [
@@ -190,8 +192,9 @@ int main() {
     t1.join();
     t2.join();
 
-    // 在強序的 x86 上幾乎總是看到 r1 或 r2 至少一個為 1；
-    // 在弱序硬體上重複執行足夠多次，r1 == 0 && r2 == 0 是合法結果。
+    // On strongly ordered x86, you'll almost always see at least one
+    // of r1 or r2 equal to 1; on weakly ordered hardware, running this
+    // enough times can legally produce r1 == 0 && r2 == 0.
     std::printf("r1=%d r2=%d\\n", r1, r2);
     return 0;
 }`,

@@ -16,30 +16,32 @@ const ch06BasicConceptsIV: ChapterContent = {
     code: `#include <print>
 #include <string_view>
 
-namespace geometry::shapes {                   // [1] 巢狀命名空間簡寫
-enum class Kind { Circle, Square, Triangle };  // [2] 強型別列舉
+namespace geometry::shapes {                   // [1] nested namespace shorthand
+enum class Kind { Circle, Square, Triangle };  // [2] strongly typed enum
 
 std::string_view name(Kind k) {
-    switch (k) {  // [3] switch 對列舉逐一處理
+    switch (k) {  // [3] switch handling each enumerator
         case Kind::Circle:
-            return "圓形";
+            return "circle";
         case Kind::Square:
-            return "正方形";
+            return "square";
         case Kind::Triangle:
-            return "三角形";
+            return "triangle";
     }
-    return "未知";
+    return "unknown";
 }
 }  // namespace geometry::shapes
 
 int main() {
-    namespace gs = geometry::shapes;  // [4] 命名空間別名
+    namespace gs = geometry::shapes;  // [4] namespace alias
 
-    for (auto k : {gs::Kind::Circle, gs::Kind::Square})  // [5] range-based for
+    for (auto k : {gs::Kind::Circle, gs::Kind::Square}) {  // [5] range-based for
         std::println("{}", gs::name(k));
+    }
 
-    if (int n = 2 + 3; n > 4)  // [6] 帶初始化的 if
-        std::println("n={} 大於 4", n);
+    if (int n = 2 + 3; n > 4) {  // [6] if with initializer
+        std::println("n={} is greater than 4", n);
+    }
     return 0;
 }`,
     callouts: [

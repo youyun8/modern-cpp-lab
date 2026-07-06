@@ -141,7 +141,9 @@ int main() {
     std::array<std::byte, 1024> storage{};
     std::pmr::monotonic_buffer_resource arena(storage.data(), storage.size());
     std::pmr::vector<int> values{&arena};
-    for (int i = 0; i < 10; ++i) values.push_back(i);
+    for (int i = 0; i < 10; ++i) {
+        values.push_back(i);
+    }
     std::cout << values.size() << '\\n';
     return 0;
 }`,

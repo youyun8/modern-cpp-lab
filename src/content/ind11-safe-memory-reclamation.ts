@@ -17,7 +17,7 @@ const ind11SafeMemoryReclamation: ChapterContent = {
 #include <atomic>
 #include <thread>
 
-// 極簡 hazard pointer：固定大小的公告陣列，每個執行緒一個槽。 [1]
+// Minimal hazard pointer: a fixed-size announcement array, one slot per thread. [1]
 template <typename T, int MaxThreads = 64>
 class HazardPointerDomain {
    public:
@@ -26,7 +26,7 @@ class HazardPointerDomain {
         do {
             ptr = source.load(std::memory_order_acquire);
             slot(hazard_slot()).store(ptr, std::memory_order_release);  // [2]
-            // 重讀一次，避免公告完成前 source 已被更新又被回收。 [3]
+            // Re-read once to avoid a case where source was updated and reclaimed before the announcement finished. [3]
         } while (ptr != source.load(std::memory_order_acquire));
         return ptr;
     }
@@ -37,7 +37,9 @@ class HazardPointerDomain {
 
     bool is_protected(T* ptr) const {
         for (auto& h : slots_) {
-            if (h.load(std::memory_order_acquire) == ptr) return true;  // [5]
+            if (h.load(std::memory_order_acquire) == ptr) {
+                return true;  // [5]
+            }
         }
         return false;
     }
@@ -54,7 +56,7 @@ class HazardPointerDomain {
     static inline std::atomic<int> next_id_{0};
 };
 
-// 使用範例：pop 前先「保護」節點，讀完再清除公告。 [6]
+// Usage example: "protect" the node before pop, then clear the announcement after reading. [6]
 template <typename T>
 struct Node {
     T value;
@@ -164,8 +166,8 @@ struct Node {
 #include <thread>
 #include <vector>
 
-// 簡化示範：用一個公告槽陣列模擬 hazard pointer 的「保護 -> 使用 ->
-// 清除」流程。
+// Simplified demo: use an announcement slot array to simulate the hazard
+// pointer "protect -> use -> clear" flow.
 constexpr int kMaxThreads = 4;
 std::array<std::atomic<int*>, kMaxThreads> hazard_slots{};
 
@@ -182,7 +184,9 @@ void clear(int slot) { hazard_slots[slot].store(nullptr, std::memory_order_relea
 
 bool is_protected(int* ptr) {
     for (auto& h : hazard_slots) {
-        if (h.load(std::memory_order_acquire) == ptr) return true;
+        if (h.load(std::memory_order_acquire) == ptr) {
+            return true;
+        }
     }
     return false;
 }
@@ -199,7 +203,7 @@ int main() {
 
     int* node = shared_node.load();
     if (!is_protected(node)) {
-        delete node;  // 沒有任何執行緒公告該指標，可安全釋放。
+        delete node;  // No thread has announced this pointer, so it is safe to free.
         std::cout << "node safely reclaimed\\n";
     }
     return 0;

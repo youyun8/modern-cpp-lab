@@ -16,27 +16,27 @@ const ch12TemplatesII: ChapterContent = {
     code: `#include <print>
 #include <type_traits>
 
-// 可變參數樣板 + C++17 折疊運算式：加總任意數量引數。 [1]
+// Variadic template + C++17 fold expression: sum an arbitrary number of arguments. [1]
 template <typename... Args>
 auto sumAll(Args... args) {
-    return (args + ...);  // [2] 一元右折疊
+    return (args + ...);  // [2] unary right fold
 }
 
-// 完全特化：為 bool 提供不同行為。 [3]
+// Full specialization: provide different behavior for bool. [3]
 template <typename T>
 const char* kind() {
-    return "一般型別";
+    return "generic type";
 }
 template <>
 const char* kind<bool>() {
-    return "布林型別";
+    return "boolean type";
 }
 
-// 以 if constexpr 取代部分 SFINAE，於編譯期選擇分支。 [4]
+// Use if constexpr instead of partial SFINAE, selecting the branch at compile time. [4]
 template <typename T>
 auto describe(T v) {
     if constexpr (std::is_integral_v<T>)
-        return v * 2;  // [5] 只有整數會編譯此分支
+        return v * 2;  // [5] only integral types compile this branch
     else
         return v;
 }

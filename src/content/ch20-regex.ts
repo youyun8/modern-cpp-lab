@@ -32,23 +32,23 @@ const ch20Regex: ChapterContent = {
 #include <string>
 
 int main() {
-    const std::string text = "訂單 A-1024 與 B-2048 已出貨";
+    const std::string text = "Order A-1024 and B-2048 have shipped";
 
-    // 建立一次，重複使用；宣告為 const 避免反覆編譯樣式
+    // Build once and reuse; declare const to avoid recompiling the pattern
     static const std::regex code_re(R"(([A-Z])-(\\d+))");   // [1]
 
-    // 驗證：整段字串是否完全符合
+    // Validation: does the whole string fully match?
     std::cout << std::boolalpha
               << std::regex_match("A-1024", code_re) << '\\n';  // [2]
 
-    // 遍歷所有匹配並取出擷取群組
+    // Iterate over all matches and extract the capture groups
     for (std::sregex_iterator it(text.begin(), text.end(), code_re), end;
          it != end; ++it) {                                    // [3]
         const std::smatch& m = *it;
         std::cout << m[1] << " / " << m[2] << '\\n';            // [4]
     }
 
-    // 取代：以 $2 引用第二個擷取群組
+    // Replace: reference the second capture group with $2
     std::cout << std::regex_replace(text, code_re, "[$2]") << '\\n'; // [5]
     return 0;
 }`,
