@@ -32,10 +32,8 @@ export default function HomePage() {
   return (
     <div className="mx-auto max-w-4xl space-y-12 pb-16">
       <section className="space-y-4">
-        <p className="font-mono text-sm text-accent">Modern C++ · Parallelism Lab</p>
-        <h1 className="text-3xl font-bold text-content sm:text-4xl">
-          現代 C++ 平行程式設計學習網站
-        </h1>
+        <p className="font-mono text-sm text-accent">Modern C++ Lab</p>
+        <h1 className="text-3xl font-bold text-content sm:text-4xl">Modern C++ Lab</h1>
         <p className="max-w-2xl text-[15px] leading-7 text-content-muted">
           本網站以 Federico Busato 的「Modern C++ Programming」課程為藍本，整理成連續的 60
           章手冊，並以<strong className="text-content">平行化、並行與效能最佳化</strong>

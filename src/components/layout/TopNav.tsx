@@ -43,10 +43,8 @@ export default function TopNav() {
           <span aria-hidden="true">⇤</span>
         </button>
         <Link href="/" className="flex items-baseline gap-2">
-          <span className="text-base font-bold text-content">現代 C++ 平行程式設計</span>
-          <span className="hidden text-xs text-content-muted sm:inline">
-            Modern C++ · Parallelism Lab
-          </span>
+          <span className="text-base font-bold text-content">Modern C++ Lab</span>
+          <span className="hidden text-xs text-content-muted sm:inline">平行化 · 並行 · 效能</span>
         </Link>
       </div>
       <div className="flex items-center gap-2">

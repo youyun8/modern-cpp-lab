@@ -1,4 +1,4 @@
-# 現代 C++ 平行程式設計學習網站
+# Modern C++ Lab
 
 > Modern C++ Programming — an interactive learning site focused on parallelism, concurrency & performance optimization.
 

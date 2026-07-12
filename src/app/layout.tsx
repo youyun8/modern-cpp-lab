@@ -29,8 +29,8 @@ const notoSansTC = Noto_Sans_TC({
 
 export const metadata: Metadata = {
   title: {
-    default: '現代 C++ 平行程式設計學習網站',
-    template: '%s · 現代 C++ 平行程式設計',
+    default: 'Modern C++ Lab',
+    template: '%s · Modern C++ Lab',
   },
   description:
     '以 Federico Busato 的「Modern C++ Programming」課程為基礎，聚焦平行化、並行與效能最佳化的互動式繁體中文學習網站。',
