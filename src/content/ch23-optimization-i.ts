@@ -18,7 +18,7 @@ const ch23OptimizationI: ChapterContent = {
 
 // Row-major traversal is cache-friendly: consecutive iterations touch
 // consecutive addresses, maximising spatial locality. [1]
-double sumRowMajor(const std::vector<double>& matrix, std::size_t rows, std::size_t cols) {
+double sum_row_major(const std::vector<double>& matrix, std::size_t rows, std::size_t cols) {
     double acc = 0.0;
     for (std::size_t r = 0; r < rows; ++r) {  // [2]
         for (std::size_t c = 0; c < cols; ++c) {
@@ -30,7 +30,7 @@ double sumRowMajor(const std::vector<double>& matrix, std::size_t rows, std::siz
 
 // Column-major traversal jumps by 'cols' each step, defeating the cache
 // and causing frequent DRAM misses. [3]
-double sumColMajor(const std::vector<double>& matrix, std::size_t rows, std::size_t cols) {
+double sum_col_major(const std::vector<double>& matrix, std::size_t rows, std::size_t cols) {
     double acc = 0.0;
     for (std::size_t c = 0; c < cols; ++c) {
         for (std::size_t r = 0; r < rows; ++r) {
@@ -41,13 +41,13 @@ double sumColMajor(const std::vector<double>& matrix, std::size_t rows, std::siz
 }
 
 // Amdahl's Law: theoretical speedup with fraction p parallelised. [5]
-constexpr double amdahlSpeedup(double p, double n) { return 1.0 / ((1.0 - p) + p / n); }`,
+constexpr double amdahl_speedup(double p, double n) { return 1.0 / ((1.0 - p) + p / n); }`,
     callouts: [
       { n: 1, text: '列優先（row-major）走訪符合 C++ 陣列的記憶體佈局，善用空間區域性。' },
       { n: 2, text: '內層迴圈連續存取相鄰位址，一條快取行可服務多次迭代。' },
       { n: 3, text: '欄優先走訪每步跨越一整列，快取行幾乎每次都失效。' },
       { n: 4, text: '相同的資料、相同的計算，只因存取順序不同就可能慢上數倍。' },
-      { n: 5, text: 'amdahlSpeedup 以 constexpr 在編譯期即可計算理論加速上限。' },
+      { n: 5, text: 'amdahl_speedup 以 constexpr 在編譯期即可計算理論加速上限。' },
     ],
   },
   deepDive: [

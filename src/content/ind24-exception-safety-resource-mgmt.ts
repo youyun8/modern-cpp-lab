@@ -38,7 +38,7 @@ const ind24ExceptionSafetyResourceMgmt: ChapterContent = {
 #include <vector>
 
 // A parallel task: may succeed and return an int, or fail carrying an explanatory string. [1]
-std::expected<int, std::string> riskyTask(int id) {
+std::expected<int, std::string> risky_task(int id) {
     if (id % 3 == 0) {
         return std::unexpected("task " + std::to_string(id) + ": simulated failure");
     }
@@ -51,12 +51,12 @@ struct AggregateReport {
 };
 
 // Launch N tasks and aggregate every std::expected result. [3]
-AggregateReport runAllAndAggregate(int taskCount) {
+AggregateReport run_all_and_aggregate(int taskCount) {
     std::vector<std::future<std::expected<int, std::string>>> futures;
     futures.reserve(static_cast<std::size_t>(taskCount));
 
     for (int i = 0; i < taskCount; ++i) {
-        futures.push_back(std::async(std::launch::async, riskyTask, i));  // [4] Each task runs independently
+        futures.push_back(std::async(std::launch::async, risky_task, i));  // [4] Each task runs independently
     }
 
     AggregateReport report;
@@ -72,7 +72,7 @@ AggregateReport runAllAndAggregate(int taskCount) {
 }
 
 int main() {
-    AggregateReport report = runAllAndAggregate(9);
+    AggregateReport report = run_all_and_aggregate(9);
 
     std::println("Succeeded tasks: {}", report.succeeded.size());
     std::println("Failed tasks: {}", report.failures.size());
@@ -176,7 +176,7 @@ int main() {
 #include <string>
 #include <vector>
 
-std::expected<int, std::string> riskyTask(int id) {
+std::expected<int, std::string> risky_task(int id) {
     if (id % 3 == 0) {
         return std::unexpected("task " + std::to_string(id) + " failed");
     }
@@ -186,7 +186,7 @@ std::expected<int, std::string> riskyTask(int id) {
 int main() {
     std::vector<std::future<std::expected<int, std::string>>> futures;
     for (int i = 0; i < 6; ++i) {
-        futures.push_back(std::async(std::launch::async, riskyTask, i));
+        futures.push_back(std::async(std::launch::async, risky_task, i));
     }
 
     int successCount = 0;

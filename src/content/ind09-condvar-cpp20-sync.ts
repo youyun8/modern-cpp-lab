@@ -48,12 +48,12 @@ constexpr int kIterations = 3;
 std::vector<double> current(kRows, 0.0);
 std::vector<double> next(kRows, 0.0);
 
-void onPhaseComplete() noexcept {  // [1]
+void on_phase_complete() noexcept {  // [1]
     std::swap(current, next);      // [2]
 }
 
 int main() {
-    std::barrier phase_barrier(kThreads, onPhaseComplete);  // [3]
+    std::barrier phase_barrier(kThreads, on_phase_complete);  // [3]
 
     std::vector<std::thread> workers;
     for (int t = 0; t < kThreads; ++t) {

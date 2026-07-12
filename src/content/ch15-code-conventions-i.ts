@@ -9,7 +9,7 @@ const ch15CodeConventionsI: ChapterContent = {
     '專案佈局、命名慣例與標頭檔組織原則：如何安排 include／src／tests 目錄並維持一致的命名風格。',
   concept: {
     standard: 'C++23',
-    body: '良好的專案結構讓程式易於瀏覽、建置與測試。常見佈局把公開標頭放在 include/<專案名>/、實作放在 src/、測試放在 tests/，並以 CMake 描述目標與相依。標頭應以 #pragma once 或 include guard 防止重複包含，並遵循「self-contained header」原則：每個標頭都能獨立編譯，自行 include 其所需。命名慣例雖無單一標準，但重點是一致：常見以 PascalCase 命名型別、snake_case 或 camelCase 命名函式與變數、UPPER_CASE 命名巨集，並避免以底線開頭的保留名稱。include 順序建議由「自身標頭 → 專案標頭 → 第三方 → 標準庫」，有助於暴露隱藏的相依。',
+    body: '良好的專案結構讓程式易於瀏覽、建置與測試。常見佈局把公開標頭放在 include/<專案名>/、實作放在 src/、測試放在 tests/，並以 CMake 描述目標與相依。標頭應以 #pragma once 或 include guard 防止重複包含，並遵循「self-contained header」原則：每個標頭都能獨立編譯，自行 include 其所需。命名慣例雖無單一標準，但重點是一致：常見以 PascalCase 命名型別、snake_case 命名函式／方法與變數、UPPER_CASE 命名巨集，並避免以底線開頭的保留名稱。include 順序建議由「自身標頭 → 專案標頭 → 第三方 → 標準庫」，有助於暴露隱藏的相依。',
   },
   code: {
     lang: 'bash',

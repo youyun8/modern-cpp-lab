@@ -18,7 +18,7 @@ const ch12TemplatesII: ChapterContent = {
 
 // Variadic template + C++17 fold expression: sum an arbitrary number of arguments. [1]
 template <typename... Args>
-auto sumAll(Args... args) {
+auto sum_all(Args... args) {
     return (args + ...);  // [2] unary right fold
 }
 
@@ -42,7 +42,7 @@ auto describe(T v) {
 }
 
 int main() {
-    std::println("sum = {}", sumAll(1, 2, 3, 4, 5));
+    std::println("sum = {}", sum_all(1, 2, 3, 4, 5));
     std::println("{} / {}", kind<int>(), kind<bool>());
     std::println("describe(21) = {}", describe(21));
     return 0;
@@ -139,7 +139,7 @@ int main() {
 #include <type_traits>
 
 template <typename... Args>
-auto sumAll(Args... args) {
+auto sum_all(Args... args) {
     return (args + ...);
 }
 
@@ -152,7 +152,7 @@ auto describe(T v) {
 }
 
 int main() {
-    std::cout << "sum = " << sumAll(1, 2, 3, 4, 5) << '\\n';
+    std::cout << "sum = " << sum_all(1, 2, 3, 4, 5) << '\\n';
     std::cout << "describe(21) = " << describe(21) << '\\n';
     return 0;
 }`,

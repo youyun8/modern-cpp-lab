@@ -42,7 +42,7 @@ struct NumaBuffer {
 // computation. This is the standard NUMA-aware allocation trick -- the
 // Linux kernel places each page on the node of the thread performing
 // the *first write*, not the thread that called operator new. [3]
-void firstTouchInit(NumaBuffer& buf, unsigned num_threads) {
+void first_touch_init(NumaBuffer& buf, unsigned num_threads) {
     const std::size_t n = buf.data.size();
     const std::size_t chunk = (n + num_threads - 1) / num_threads;
     std::vector<std::thread> workers;
@@ -65,10 +65,10 @@ void firstTouchInit(NumaBuffer& buf, unsigned num_threads) {
     }
 }
 
-// Compute phase that reuses the *same* chunking as firstTouchInit, so
+// Compute phase that reuses the *same* chunking as first_touch_init, so
 // each thread only ever touches memory that was first-touched by
 // itself (or at least by a thread on the same node). [5]
-double parallelSum(NumaBuffer& buf, unsigned num_threads) {
+double parallel_sum(NumaBuffer& buf, unsigned num_threads) {
     const std::size_t n = buf.data.size();
     const std::size_t chunk = (n + num_threads - 1) / num_threads;
     std::vector<PerThreadAccumulator> partial(num_threads);
@@ -130,7 +130,7 @@ double parallelSum(NumaBuffer& buf, unsigned num_threads) {
     },
     {
       heading: 'first-touch 政策與平行初始化',
-      body: 'Linux 對匿名記憶體（`malloc`、`new`、`mmap` 的私有匿名對映）預設採用 first-touch 配置政策：`mmap`／`brk` 只建立虛擬位址空間的對映，實體頁框（page frame）要等到第一次被讀寫時才由核心配置，並且優先配置在「執行這次存取的 CPU」所在的 NUMA 節點。這代表配置記憶體的那一行程式碼本身不決定資料落點；真正決定落點的，是之後誰先寫入這塊記憶體。\n\n這也是為什麼「先用單一執行緒（通常是 main 執行緒）把整個陣列清零或填入初始值，再啟動多執行緒平行運算」是 NUMA 系統上一個常見卻隱蔽的效能陷阱：清零迴圈的第一次寫入，讓所有頁面全部落在 main 執行緒所在的那一個 NUMA 節點；之後即使運算階段平均分配給所有節點的執行緒，位於其他節點的執行緒每次存取都是遠端記憶體存取。正確做法是「平行初始化」：讓每個工作執行緒初始化（first-touch）它之後在運算階段會負責的那塊資料，且切塊方式在初始化與運算兩階段保持一致，這樣每個執行緒讀寫的永遠是自己節點上的本地記憶體。這正是本章程式碼範例中 `firstTouchInit` 與 `parallelSum` 使用相同 chunk 邊界的原因。\n\n光靠平行初始化還不夠精確控制，因為作業系統排程器可能把執行緒在節點間搬移。若要更嚴格保證資料局部性，可再搭配執行緒親和性（thread affinity，如 `pthread_setaffinity_np` 或 OpenMP 的 `OMP_PROC_BIND`）把每個執行緒釘選在固定核心／節點上，並用 `numactl --membind` 或 `libnuma` 的 `numa_alloc_onnode` 做更明確的節點級配置。',
+      body: 'Linux 對匿名記憶體（`malloc`、`new`、`mmap` 的私有匿名對映）預設採用 first-touch 配置政策：`mmap`／`brk` 只建立虛擬位址空間的對映，實體頁框（page frame）要等到第一次被讀寫時才由核心配置，並且優先配置在「執行這次存取的 CPU」所在的 NUMA 節點。這代表配置記憶體的那一行程式碼本身不決定資料落點；真正決定落點的，是之後誰先寫入這塊記憶體。\n\n這也是為什麼「先用單一執行緒（通常是 main 執行緒）把整個陣列清零或填入初始值，再啟動多執行緒平行運算」是 NUMA 系統上一個常見卻隱蔽的效能陷阱：清零迴圈的第一次寫入，讓所有頁面全部落在 main 執行緒所在的那一個 NUMA 節點；之後即使運算階段平均分配給所有節點的執行緒，位於其他節點的執行緒每次存取都是遠端記憶體存取。正確做法是「平行初始化」：讓每個工作執行緒初始化（first-touch）它之後在運算階段會負責的那塊資料，且切塊方式在初始化與運算兩階段保持一致，這樣每個執行緒讀寫的永遠是自己節點上的本地記憶體。這正是本章程式碼範例中 `first_touch_init` 與 `parallel_sum` 使用相同 chunk 邊界的原因。\n\n光靠平行初始化還不夠精確控制，因為作業系統排程器可能把執行緒在節點間搬移。若要更嚴格保證資料局部性，可再搭配執行緒親和性（thread affinity，如 `pthread_setaffinity_np` 或 OpenMP 的 `OMP_PROC_BIND`）把每個執行緒釘選在固定核心／節點上，並用 `numactl --membind` 或 `libnuma` 的 `numa_alloc_onnode` 做更明確的節點級配置。',
     },
     {
       heading: '記憶體池、arena allocator 與 huge pages',

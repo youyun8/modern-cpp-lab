@@ -32,13 +32,13 @@ struct Node {
 };
 
 // Factory function: make_unique is safer and exception-safe compared to new-then-wrap. [4]
-std::unique_ptr<Node> makeNode(std::string name, int value) {
+std::unique_ptr<Node> make_node(std::string name, int value) {
     return std::make_unique<Node>(std::move(name), value);
 }
 
 // When unique_ptr is a parameter, passing by value clearly signals "ownership transfer". [5]
-void takeOwnership(std::unique_ptr<Node> node) {
-    std::cout << "takeOwnership received: " << node->name << "\\n";
+void take_ownership(std::unique_ptr<Node> node) {
+    std::cout << "take_ownership received: " << node->name << "\\n";
     // node is automatically destroyed when leaving scope
 }
 
@@ -50,11 +50,11 @@ void inspect(const std::shared_ptr<Node>& node) {
 }
 
 int main() {
-    auto a = makeNode("alpha", 1);
-    auto b = makeNode("beta", 2);
+    auto a = make_node("alpha", 1);
+    auto b = make_node("beta", 2);
 
     a->next = std::move(b);  // [7] Ownership moves from b to a->next; b is now empty
-    // takeOwnership(b);     // Compile error: b has already lost ownership
+    // take_ownership(b);     // Compile error: b has already lost ownership
 
     auto shared_c = std::make_shared<Node>("shared_c", 3);  // [8]
     {

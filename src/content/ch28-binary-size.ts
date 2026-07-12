@@ -119,7 +119,7 @@ size app ; bloaty app                                      # [5]`,
 
 // Extract the type-independent common implementation into a non-template function to reduce template bloat.
 namespace detail {
-std::size_t countPositive(const int* p, std::size_t n) {
+std::size_t count_positive(const int* p, std::size_t n) {
     std::size_t c = 0;
     for (std::size_t i = 0; i < n; ++i) {
         if (p[i] > 0) {
@@ -131,13 +131,13 @@ std::size_t countPositive(const int* p, std::size_t n) {
 }  // namespace detail
 
 template <class Container>
-std::size_t countPositive(const Container& c) {
-    return detail::countPositive(c.data(), c.size());  // thin template wrapper
+std::size_t count_positive(const Container& c) {
+    return detail::count_positive(c.data(), c.size());  // thin template wrapper
 }
 
 int main() {
     std::vector<int> v{-1, 2, -3, 4, 5};
-    std::cout << "positive = " << countPositive(v) << '\\n';
+    std::cout << "positive = " << count_positive(v) << '\\n';
     return 0;
 }`,
   },

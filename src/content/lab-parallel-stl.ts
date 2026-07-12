@@ -17,7 +17,7 @@ const labParallelStl: ChapterContent = {
 #include <numeric>
 #include <vector>
 
-double parallelDot(const std::vector<double>& a, const std::vector<double>& b) {
+double parallel_dot(const std::vector<double>& a, const std::vector<double>& b) {
     return std::transform_reduce(   // [2]
         std::execution::par_unseq,  // [3]
         a.begin(), a.end(), b.begin(),
@@ -26,7 +26,7 @@ double parallelDot(const std::vector<double>& a, const std::vector<double>& b) {
         std::multiplies<>{});  // transform
 }
 
-void normalizeInPlace(std::vector<double>& data, double scale) {
+void normalize_in_place(std::vector<double>& data, double scale) {
     std::for_each(std::execution::par,                                            // [4]
                   data.begin(), data.end(), [scale](double& x) { x *= scale; });  // [5]
 }

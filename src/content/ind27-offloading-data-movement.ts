@@ -37,12 +37,12 @@ const ind27OffloadingDataMovement: ChapterContent = {
 #include <cstddef>
 #include <vector>
 
-// __global__ void scaleKernel(float* data, float k, int n); // device-side
+// __global__ void scale_kernel(float* data, float k, int n); // device-side
 // kernel declaration
 
 constexpr int kChunks = 4;
 
-void OverlappedPipeline(std::size_t totalElems) {
+void overlapped_pipeline(std::size_t totalElems) {
     std::size_t chunkElems = totalElems / kChunks;
     std::size_t chunkBytes = chunkElems * sizeof(float);
 
@@ -64,7 +64,7 @@ void OverlappedPipeline(std::size_t totalElems) {
         // hipMemcpyAsync(d_buf + offset, h_pinned + offset, chunkBytes,
         //                 hipMemcpyHostToDevice, streams[i]);     // [4] async
         //                 H2D for chunk i
-        // hipLaunchKernelGGL(scaleKernel,
+        // hipLaunchKernelGGL(scale_kernel,
         //                     dim3((chunkElems + 255) / 256), dim3(256),
         //                     0, streams[i],
         //                     d_buf + offset, 2.0f,

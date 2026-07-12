@@ -39,7 +39,7 @@ namespace stdx = std::experimental;
 
 // 5-point stencil: out[i] = (in[i-1] + in[i] + in[i+1]) / 3, SoA
 // layout (contiguous array).
-void stencilSimd(const std::vector<float>& in, std::vector<float>& out) {
+void stencil_simd(const std::vector<float>& in, std::vector<float>& out) {
     using Vec = stdx::native_simd<float>;
     constexpr std::size_t width = Vec::size();  // [1] Hardware-determined vector width
     const std::size_t n = in.size();
@@ -70,7 +70,7 @@ int main() {
         in[i] = static_cast<float>(i % 7);
     }
 
-    stencilSimd(in, out);
+    stencil_simd(in, out);
     std::println("out[1] = {}, out[n-2] = {}", out[1], out[n - 2]);
     return 0;
 }`,
@@ -177,7 +177,7 @@ int main() {
 
 namespace stdx = std::experimental;
 
-void addVectors(const std::vector<float>& a, const std::vector<float>& b, std::vector<float>& out) {
+void add_vectors(const std::vector<float>& a, const std::vector<float>& b, std::vector<float>& out) {
     using Vec = stdx::native_simd<float>;
     const std::size_t width = Vec::size();
     const std::size_t n = a.size();
@@ -202,7 +202,7 @@ int main() {
     std::vector<float> b{10, 20, 30, 40, 50, 60, 70};
     std::vector<float> out(a.size());
 
-    addVectors(a, b, out);
+    add_vectors(a, b, out);
     for (float v : out) {
         std::cout << v << ' ';
     }

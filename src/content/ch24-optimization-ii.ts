@@ -33,7 +33,7 @@ struct GoodCounters {
 };
 
 // Branch predictability: sorted data greatly improves branch predictor hit rate. [4]
-long long sumAboveThreshold(const std::vector<int>& v, int t) {
+long long sum_above_threshold(const std::vector<int>& v, int t) {
     long long s = 0;
     for (int x : v) {
         if (x >= t) {

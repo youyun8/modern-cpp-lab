@@ -45,7 +45,7 @@ using namespace std::chrono_literals;
 
 // Cooperative cancellation: the worker periodically checks the stop_token
 // and cleans up and exits on its own once a stop is requested. [1]
-void pollingWorker(std::stop_token token, std::atomic<int>& ticks) {
+void polling_worker(std::stop_token token, std::atomic<int>& ticks) {
     while (!token.stop_requested()) {  // [2]
         ++ticks;
         std::this_thread::sleep_for(20ms);
@@ -58,7 +58,7 @@ int main() {
 
     // The jthread constructor detects that the first parameter accepts a
     // stop_token and injects it automatically. [3]
-    std::jthread worker(pollingWorker, std::ref(ticks));
+    std::jthread worker(polling_worker, std::ref(ticks));
 
     // stop_callback runs synchronously the moment request_stop() is called,
     // which is useful for waking up a blocked wait. [4]
@@ -165,7 +165,7 @@ int main() {
 
 using namespace std::chrono_literals;
 
-void countUp(std::stop_token token, std::atomic<int>& counter) {
+void count_up(std::stop_token token, std::atomic<int>& counter) {
     while (!token.stop_requested()) {
         ++counter;
         std::this_thread::sleep_for(10ms);
@@ -175,7 +175,7 @@ void countUp(std::stop_token token, std::atomic<int>& counter) {
 int main() {
     std::atomic<int> counter{0};
     {
-        std::jthread worker(countUp, std::ref(counter));
+        std::jthread worker(count_up, std::ref(counter));
         std::this_thread::sleep_for(100ms);
         // No explicit join()/request_stop(): jthread's destructor
         // handles both automatically when it goes out of scope.

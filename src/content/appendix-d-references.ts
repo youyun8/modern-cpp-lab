@@ -38,7 +38,7 @@ const appendixDReferences: ChapterContent = {
 // #include <linalg>      // std::linalg (matrix/linear algebra)
 // #include <simd>        // std::simd (data-parallel types)
 
-void referenceLookupTable() {
+void reference_lookup_table() {
     // [1] std::execution::sender / receiver / schedule / then / when_all
     //     see: P2300 -- std::execution (Chapter 45)
     //     Still under revision as of this writing; check wg21.link/p2300 for the latest version.

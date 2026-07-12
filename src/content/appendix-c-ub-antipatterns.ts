@@ -21,14 +21,14 @@ const appendixCUbAntipatterns: ChapterContent = {
 // -----------------------------------------------------------------------
 int g_bad_counter = 0;  // [1] plain int, no protection
 
-void badIncrement() {
+void bad_increment() {
     ++g_bad_counter;  // [1] BUG: read-modify-write race
                       //     from multiple threads
 }
 
 std::atomic<int> g_good_counter{0};  // [2]
 
-void goodIncrement() {
+void good_increment() {
     g_good_counter.fetch_add(1, std::memory_order_relaxed);  // [2] FIX
 }
 
@@ -40,7 +40,7 @@ struct Account {
     int balance = 100;
 };
 
-void badTransfer(Account& from, Account& to, int amount) {  // [3] BUG
+void bad_transfer(Account& from, Account& to, int amount) {  // [3] BUG
     std::lock_guard<std::mutex> lock_from(from.mtx);        // [3] order depends
     std::lock_guard<std::mutex> lock_to(to.mtx);            //     on call site;
                                                             //     A->B and B->A
@@ -49,7 +49,7 @@ void badTransfer(Account& from, Account& to, int amount) {  // [3] BUG
     to.balance += amount;
 }
 
-void goodTransfer(Account& from, Account& to, int amount) {  // [4] FIX
+void good_transfer(Account& from, Account& to, int amount) {  // [4] FIX
     std::scoped_lock lock(from.mtx, to.mtx);                 // [4] deadlock-avoiding
                                                              //     algorithm locks both
                                                              //     atomically
@@ -86,11 +86,11 @@ std::atomic<bool> g_ready{false};  // [7] FIX: real synchronization
                                    //     primitive with release/acquire
 
 int main() {
-    badIncrement();
-    goodIncrement();
+    bad_increment();
+    good_increment();
 
     Account acc_x, acc_y;
-    goodTransfer(acc_x, acc_y, 10);
+    good_transfer(acc_x, acc_y, 10);
 
     GoodCounters counters;
     counters.a.value.fetch_add(1, std::memory_order_relaxed);
@@ -110,7 +110,7 @@ int main() {
       },
       {
         n: 3,
-        text: 'BUG：`badTransfer` 依照傳入順序鎖 `from` 再鎖 `to`；若另一個執行緒同時呼叫 `badTransfer(B, A, ...)`，兩者互相持有對方要等的鎖，形成典型的死結（不一致鎖排序）。',
+        text: 'BUG：`bad_transfer` 依照傳入順序鎖 `from` 再鎖 `to`；若另一個執行緒同時呼叫 `bad_transfer(B, A, ...)`，兩者互相持有對方要等的鎖，形成典型的死結（不一致鎖排序）。',
       },
       {
         n: 4,
@@ -145,7 +145,7 @@ int main() {
     },
     {
       heading: '死結與不一致的鎖排序',
-      body: '死結（deadlock）最常見的成因是多個執行緒以不同順序取得多把鎖：執行緒 1 先鎖 A 再鎖 B，執行緒 2 先鎖 B 再鎖 A，兩者同時執行時可能各自持有一把鎖並永久等待對方釋放另一把。上方 `badTransfer` 就是典型案例：轉帳方向不同時，鎖的取得順序就跟著顛倒。\n\n修法有三種常見套路：（一）全域約定鎖的固定取得順序（例如永遠先鎖位址較小的 mutex），需要在每個呼叫點手動遵守，容易因為疏忽而破功；（二）使用 `std::lock`（C++11）或 `std::scoped_lock`（C++17）一次鎖住多個 mutex，函式庫內部保證不會死結，不需要呼叫端自行排序，是目前建議的預設寫法；（三）盡量縮小臨界區、避免在持有鎖時呼叫可能回頭取得同一把鎖的外部程式碼（重入死結）或呼叫使用者提供的回呼。',
+      body: '死結（deadlock）最常見的成因是多個執行緒以不同順序取得多把鎖：執行緒 1 先鎖 A 再鎖 B，執行緒 2 先鎖 B 再鎖 A，兩者同時執行時可能各自持有一把鎖並永久等待對方釋放另一把。上方 `bad_transfer` 就是典型案例：轉帳方向不同時，鎖的取得順序就跟著顛倒。\n\n修法有三種常見套路：（一）全域約定鎖的固定取得順序（例如永遠先鎖位址較小的 mutex），需要在每個呼叫點手動遵守，容易因為疏忽而破功；（二）使用 `std::lock`（C++11）或 `std::scoped_lock`（C++17）一次鎖住多個 mutex，函式庫內部保證不會死結，不需要呼叫端自行排序，是目前建議的預設寫法；（三）盡量縮小臨界區、避免在持有鎖時呼叫可能回頭取得同一把鎖的外部程式碼（重入死結）或呼叫使用者提供的回呼。',
     },
     {
       heading: 'False sharing：看不見的效能反面教材',
@@ -245,14 +245,14 @@ struct Account {
     int balance = 100;
 };
 
-void badTransfer(Account& from, Account& to, int amount) {
+void bad_transfer(Account& from, Account& to, int amount) {
     std::lock_guard<std::mutex> lock_from(from.mtx);
     std::lock_guard<std::mutex> lock_to(to.mtx);
     from.balance -= amount;
     to.balance += amount;
 }
 
-void goodTransfer(Account& from, Account& to, int amount) {
+void good_transfer(Account& from, Account& to, int amount) {
     std::scoped_lock lock(from.mtx, to.mtx);
     from.balance -= amount;
     to.balance += amount;
@@ -261,10 +261,10 @@ void goodTransfer(Account& from, Account& to, int amount) {
 int main() {
     Account a, b;
 
-    // Two threads transferring in opposite directions with badTransfer()
-    // can deadlock; with goodTransfer() they cannot, regardless of order.
-    std::thread t1([&]() { goodTransfer(a, b, 10); });
-    std::thread t2([&]() { goodTransfer(b, a, 5); });
+    // Two threads transferring in opposite directions with bad_transfer()
+    // can deadlock; with good_transfer() they cannot, regardless of order.
+    std::thread t1([&]() { good_transfer(a, b, 10); });
+    std::thread t2([&]() { good_transfer(b, a, 5); });
     t1.join();
     t2.join();
 
