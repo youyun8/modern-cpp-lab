@@ -44,7 +44,7 @@ const ind28PortableHeterogeneousConvergence: ChapterContent = {
 // The point of this chapter's convergence story is that none of those
 // three require a different *algorithmic* description -- only a different
 // dispatch mechanism underneath.
-void vectorAdd(const std::vector<float>& a, const std::vector<float>& b, std::vector<float>& out) {
+void vector_add(const std::vector<float>& a, const std::vector<float>& b, std::vector<float>& out) {
     // [4] std::execution::par_unseq: portable request for data-parallel
     // dispatch. Whether this actually lands on a GPU depends entirely on
     // the compiler/toolchain (e.g. nvc++ -stdpar=gpu, roc-stdpar) and on

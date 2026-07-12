@@ -24,7 +24,7 @@ struct Account {
 
 // Dangerous version: locks each mutex individually in sequence; the locking
 // order depends on the caller, which can deadlock. [1]
-void transferNaive(Account& from, Account& to, long amount) {
+void transfer_naive(Account& from, Account& to, long amount) {
     std::lock_guard<std::mutex> lockFrom(from.m);  // [2]
     std::lock_guard<std::mutex> lockTo(to.m);
     from.balance -= amount;
@@ -33,7 +33,7 @@ void transferNaive(Account& from, Account& to, long amount) {
 
 // Safe version: std::scoped_lock locks both mutexes at once, using the
 // std::lock algorithm internally to avoid deadlock regardless of call order. [3]
-void transferSafe(Account& from, Account& to, long amount) {
+void transfer_safe(Account& from, Account& to, long amount) {
     std::scoped_lock lock(from.m, to.m);  // [4] C++17 multi-lock construction
     from.balance -= amount;
     to.balance += amount;
@@ -45,8 +45,8 @@ int main() {
 
     // Transfer in both directions concurrently: the naive version can
     // deadlock when a->b and b->a interleave; scoped_lock guarantees it won't. [6]
-    std::thread t1(transferSafe, std::ref(a), std::ref(b), 30);
-    std::thread t2(transferSafe, std::ref(b), std::ref(a), 10);
+    std::thread t1(transfer_safe, std::ref(a), std::ref(b), 30);
+    std::thread t2(transfer_safe, std::ref(b), std::ref(a), 10);
     t1.join();
     t2.join();
 
@@ -56,11 +56,11 @@ int main() {
     callouts: [
       {
         n: 1,
-        text: 'transferNaive 分別對兩個 mutex 呼叫 lock_guard 建構子，鎖定順序完全由呼叫端的參數順序決定。',
+        text: 'transfer_naive 分別對兩個 mutex 呼叫 lock_guard 建構子，鎖定順序完全由呼叫端的參數順序決定。',
       },
       {
         n: 2,
-        text: '若另一執行緒以相反順序呼叫 transferNaive(b, a, ...)，兩者互相持有對方需要的鎖，形成典型死結。',
+        text: '若另一執行緒以相反順序呼叫 transfer_naive(b, a, ...)，兩者互相持有對方需要的鎖，形成典型死結。',
       },
       {
         n: 3,
@@ -168,7 +168,7 @@ struct Account {
     long balance = 0;
 };
 
-void transferSafe(Account& from, Account& to, long amount) {
+void transfer_safe(Account& from, Account& to, long amount) {
     std::scoped_lock lock(from.m, to.m);  // Locks both mutexes at once, deadlock-safe
     from.balance -= amount;
     to.balance += amount;
@@ -178,8 +178,8 @@ int main() {
     Account a, b;
     a.balance = 100;
 
-    std::thread t1(transferSafe, std::ref(a), std::ref(b), 30);
-    std::thread t2(transferSafe, std::ref(b), std::ref(a), 10);
+    std::thread t1(transfer_safe, std::ref(a), std::ref(b), 30);
+    std::thread t2(transfer_safe, std::ref(b), std::ref(a), 10);
     t1.join();
     t2.join();
 

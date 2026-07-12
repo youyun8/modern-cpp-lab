@@ -20,25 +20,25 @@ const ch08StructuredBindings: ChapterContent = {
 #include <utility>
 
 // When returning multiple values, prefer returning a tuple or struct instead of using out-parameters. [1]
-std::pair<int, std::string> findItem(int key) {
+std::pair<int, std::string> find_item(int key) {
     return {key, std::string{"item#"} + std::to_string(key)};
 }
 
 // Use structured bindings to receive both return values at once, with clear names. [2]
-auto [id, name] = findItem(42);
+auto [id, name] = find_item(42);
 
 // Can also bind to references to avoid copying large objects. [3]
-auto& [ref_id, ref_name] = findItem(100);
+auto& [ref_id, ref_name] = find_item(100);
 
 // Walk a map in a loop: name key and value directly. [4]
-void printMap(const std::map<int, std::string>& items) {
+void print_map(const std::map<int, std::string>& items) {
     for (const auto& [key, value] : items) {  // [5]
         std::cout << key << " -> " << value << "\\n";
     }
 }
 
 // Structured bindings can also destructure arrays. [6]
-std::tuple<int, double, std::string> getMetrics() {
+std::tuple<int, double, std::string> get_metrics() {
     return {7, 3.14, "ok"};
 }
 
@@ -49,14 +49,14 @@ auto [cx, cy] = center;  // [8] Structured binding of an aggregate type
 
 // Example combined with if-init. [9]
 int main() {
-    auto [status, payload] = findItem(7);  // [10]
+    auto [status, payload] = find_item(7);  // [10]
     std::cout << status << ": " << payload << "\\n";
 
-    auto [metric_i, metric_d, metric_s] = getMetrics();  // [11]
+    auto [metric_i, metric_d, metric_s] = get_metrics();  // [11]
     std::cout << metric_i << ", " << metric_d << ", " << metric_s << "\\n";
 
     std::map<int, std::string> m{{1, "one"}, {2, "two"}};
-    printMap(m);
+    print_map(m);
 
     // Check the insert return value, unpacking pair<bool, iterator> at once. [12]
     auto [iter, inserted] = m.insert({3, "three"});
@@ -125,7 +125,7 @@ int main() {
     },
     {
       heading: 'std::tie 的互補角色',
-      body: '在 C++17 之前，回傳多值常見的「接收」方式是用 std::tie：int id; std::string name; std::tie(id, name) = findItem(42); tie 會把每個變數當成 lvalue reference 綁定到右邊 tuple 的對應元素。結構化綁定出現後，std::tie 的用途縮小到「必須先宣告變數、再從 tuple 賦值」的場景，以及 std::ignore 的用法（例如 std::tie(iter, std::ignore) = map.insert(...)，只提取第一個元素）。對新程式碼，優先使用結構化綁定，因為它一次宣告並命名所有元件，可讀性更好。',
+      body: '在 C++17 之前，回傳多值常見的「接收」方式是用 std::tie：int id; std::string name; std::tie(id, name) = find_item(42); tie 會把每個變數當成 lvalue reference 綁定到右邊 tuple 的對應元素。結構化綁定出現後，std::tie 的用途縮小到「必須先宣告變數、再從 tuple 賦值」的場景，以及 std::ignore 的用法（例如 std::tie(iter, std::ignore) = map.insert(...)，只提取第一個元素）。對新程式碼，優先使用結構化綁定，因為它一次宣告並命名所有元件，可讀性更好。',
     },
     {
       heading: '自訂型別支援結構化綁定',
@@ -197,12 +197,12 @@ int main() {
 #include <map>
 #include <string>
 
-std::pair<int, std::string> findItem(int key) {
+std::pair<int, std::string> find_item(int key) {
     return {key, std::string{"item#"} + std::to_string(key)};
 }
 
 int main() {
-    auto [id, name] = findItem(42);
+    auto [id, name] = find_item(42);
     std::cout << id << ": " << name << "\\n";
 
     std::map<int, std::string> m{{1, "alpha"}, {2, "beta"}};

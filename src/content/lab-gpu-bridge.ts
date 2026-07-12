@@ -29,7 +29,7 @@ void pipeline(float* h_in, float* d_buf, int n /*, cudaStream_t s */) {
 
 // Mental model: cudaStream is to the GPU what std::future is to CPU async work.
 #include <future>
-int cpuAnalog() {
+int cpu_analog() {
     std::future<int> f = std::async(std::launch::async, [] { return 42; });
     return f.get();  // Corresponds to cudaStreamSynchronize: wait for async work to finish
 }`,

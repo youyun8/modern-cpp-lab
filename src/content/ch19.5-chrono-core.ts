@@ -27,7 +27,7 @@ using SampleRate = duration<int64_t, std::ratio<1, 48000>>;   // 1/48000 second
 // time_point binds a specific clock and duration together. [2]
 time_point<steady_clock, milliseconds> last_tick;  // used to measure elapsed time with steady_clock
 
-void measureLoop() {
+void measure_loop() {
     auto start = steady_clock::now();  // [3]
 
     std::this_thread::sleep_for(150ms);  // [4] literal operator: 150 milliseconds
@@ -42,13 +42,13 @@ template <typename Rep, intmax_t Num, intmax_t Den>
 using DurationWithRatio = duration<Rep, ratio<Num, Den>>;
 
 // use system_clock to get wall-clock time. [7]
-auto getTimestamp() {
+auto get_timestamp() {
     auto tp = system_clock::now();
     return system_clock::to_time_t(tp);  // convert to time_t
 }
 
 // mixing different duration types forces the compiler to require a unit conversion. [8]
-void scheduleWork() {
+void schedule_work() {
     milliseconds ms{3000};
     seconds sec = duration_cast<seconds>(ms);  // [9]
     nanoseconds ns = ms;                       // [10] implicit widening, no loss of precision
@@ -56,13 +56,13 @@ void scheduleWork() {
 }
 
 // compare two time_points. [11]
-bool isExpired(time_point<steady_clock> deadline) {
+bool is_expired(time_point<steady_clock> deadline) {
     return steady_clock::now() >= deadline;
 }
 
 int main() {
-    measureLoop();
-    scheduleWork();
+    measure_loop();
+    schedule_work();
 
     auto now = system_clock::now();
     auto deadline = now + 500ms;  // [12]

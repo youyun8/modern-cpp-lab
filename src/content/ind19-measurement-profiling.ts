@@ -20,7 +20,7 @@ const ind19MeasurementProfiling: ChapterContent = {
 
 // [1] Function under test: sums the element-wise square roots of a vector.
 //     Deliberately made to return its result "with a side effect", so the caller can pin it with DoNotOptimize.
-double SumSqrt(const std::vector<double>& data) {
+double sum_sqrt(const std::vector<double>& data) {
     double acc = 0.0;
     for (double x : data) {
         acc += std::sqrt(x);
@@ -30,19 +30,19 @@ double SumSqrt(const std::vector<double>& data) {
 
 // [2] Counter-example (for comparison only, not registered): if acc were declared inside the loop
 //     and the return value unused, the compiler under -O2/-O3 would likely treat the whole loop as dead code and remove it.
-static void BM_SumSqrt_Naive(benchmark::State& state) {
+static void bm_sum_sqrt_naive(benchmark::State& state) {
     std::vector<double> data(state.range(0), 2.0);
     for (auto _ : state) {
-        SumSqrt(data);  // Return value discarded; the optimizer is free to eliminate the call along with the loop body
+        sum_sqrt(data);  // Return value discarded; the optimizer is free to eliminate the call along with the loop body
     }
 }
 
 // [3] Correct approach: use DoNotOptimize to tell the compiler "this value will still be used later",
 //     forcing it to preserve the computation instead of optimizing it away entirely.
-static void BM_SumSqrt_Correct(benchmark::State& state) {
+static void bm_sum_sqrt_correct(benchmark::State& state) {
     std::vector<double> data(state.range(0), 2.0);
     for (auto _ : state) {
-        double result = SumSqrt(data);
+        double result = sum_sqrt(data);
         benchmark::DoNotOptimize(result);  // [4]
     }
 }
@@ -50,7 +50,7 @@ static void BM_SumSqrt_Correct(benchmark::State& state) {
 // [5] If the function under test produces side effects via pointer/memory writes (rather than a return value),
 //     additionally call ClobberMemory to force the compiler to actually write register contents back to memory,
 //     preventing the batch of writes from being merged or deferred outside the timed region.
-static void BM_VectorFill_Correct(benchmark::State& state) {
+static void bm_vector_fill_correct(benchmark::State& state) {
     std::vector<double> data(state.range(0));
     for (auto _ : state) {
         for (auto& x : data) {
@@ -60,9 +60,9 @@ static void BM_VectorFill_Correct(benchmark::State& state) {
     }
 }
 
-BENCHMARK(BM_SumSqrt_Naive)->Range(1 << 10, 1 << 16);
-BENCHMARK(BM_SumSqrt_Correct)->Range(1 << 10, 1 << 16);
-BENCHMARK(BM_VectorFill_Correct)->Range(1 << 10, 1 << 16);
+BENCHMARK(bm_sum_sqrt_naive)->Range(1 << 10, 1 << 16);
+BENCHMARK(bm_sum_sqrt_correct)->Range(1 << 10, 1 << 16);
+BENCHMARK(bm_vector_fill_correct)->Range(1 << 10, 1 << 16);
 
 BENCHMARK_MAIN();`,
     callouts: [
@@ -187,7 +187,7 @@ BENCHMARK_MAIN();`,
 
 // Simple demo: a hand-rolled "prevent dead-code elimination" trick, conceptually the same as benchmark::DoNotOptimize.
 // Uses a volatile sink to force the compiler to keep the computed result, preventing the whole loop from being optimized away.
-double SumSqrt(const std::vector<double>& data) {
+double sum_sqrt(const std::vector<double>& data) {
     double acc = 0.0;
     for (double x : data) {
         acc += std::sqrt(x);
@@ -201,11 +201,11 @@ int main() {
 
     // Warm-up: run a few times first to bring the cache and branch predictor to steady state; results excluded from stats.
     for (int i = 0; i < 3; ++i) {
-        sink = SumSqrt(data);
+        sink = sum_sqrt(data);
     }
 
     auto t0 = std::chrono::steady_clock::now();
-    double result = SumSqrt(data);
+    double result = sum_sqrt(data);
     sink = result;
     auto t1 = std::chrono::steady_clock::now();
 

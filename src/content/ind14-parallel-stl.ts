@@ -38,14 +38,14 @@ const ind14ParallelStl: ChapterContent = {
 
 // Sum of squares via transform_reduce; safe under par_unseq because the
 // lambda touches only its own by-value argument and does pure arithmetic.
-double sumOfSquares(const std::vector<double>& data) {
+double sum_of_squares(const std::vector<double>& data) {
     return std::transform_reduce(std::execution::par_unseq,  // [2]
                                  data.begin(), data.end(), 0.0, std::plus<>{}, [](double x) {
                                      return x * x;
                                  });  // [3] pure, no shared state, no throw
 }
 
-void scaleInPlace(std::vector<double>& data, double factor) {
+void scale_in_place(std::vector<double>& data, double factor) {
     std::for_each(std::execution::par_unseq, data.begin(), data.end(),
                   [factor](double& x) { x *= factor; });  // [4] pure elementwise update
 }

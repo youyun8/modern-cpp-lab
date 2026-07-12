@@ -38,7 +38,7 @@ const ind05AtomicsMemoryOrder: ChapterContent = {
 // Parallel histogram: multiple threads atomically accumulate into buckets of a shared array. [1]
 constexpr int kNumBuckets = 16;
 
-void accumulateHistogram(const int* data, int begin, int end,
+void accumulate_histogram(const int* data, int begin, int end,
                          long long* histogram) {  // [2]
     for (int i = begin; i < end; ++i) {
         int bucket = data[i] % kNumBuckets;
@@ -62,7 +62,7 @@ int main() {
     for (int t = 0; t < kThreads; ++t) {
         int begin = t * (kN / kThreads);
         int end = (t + 1) * (kN / kThreads);
-        pool.emplace_back(accumulateHistogram, data.data(), begin, end, histogram);
+        pool.emplace_back(accumulate_histogram, data.data(), begin, end, histogram);
     }
     for (auto& th : pool) {
         th.join();  // [6] Safe to read histogram only after join

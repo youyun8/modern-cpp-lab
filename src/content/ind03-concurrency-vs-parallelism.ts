@@ -20,7 +20,7 @@ const ind03ConcurrencyVsParallelism: ChapterContent = {
 #include <vector>
 
 // Task parallelism: two "different" jobs proceed at the same time, logically independent of each other. [1]
-void loadConfigAndWarmCache(const std::string& path) {
+void load_config_and_warm_cache(const std::string& path) {
     std::future<Config> configFut =
         std::async(std::launch::async, [path] { return parseConfig(path); });  // [2]
     std::future<void> warmFut = std::async(std::launch::async, [] { warmDiskCache(); });
@@ -31,7 +31,7 @@ void loadConfigAndWarmCache(const std::string& path) {
 }
 
 // Data parallelism: the same computation is applied to different slices of data; the work is identical. [4]
-void scaleInPlace(std::vector<double>& data, double factor, unsigned numWorkers) {
+void scale_in_place(std::vector<double>& data, double factor, unsigned numWorkers) {
     const std::size_t n = data.size();
     const std::size_t chunk = (n + numWorkers - 1) / numWorkers;
 
@@ -54,7 +54,7 @@ void scaleInPlace(std::vector<double>& data, double factor, unsigned numWorkers)
 }
 
 // BSP superstep: std::barrier synchronizes all threads at the boundary of each round.
-void bspRelaxationStep(std::vector<double>& grid, int iterations) {
+void bsp_relaxation_step(std::vector<double>& grid, int iterations) {
     const unsigned p = std::thread::hardware_concurrency();
     std::barrier sync_point(p, [] { /* Optional: coordination action performed at the end of each round */ });
 

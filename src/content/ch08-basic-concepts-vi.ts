@@ -19,7 +19,7 @@ const ch08BasicConceptsVI: ChapterContent = {
 #include <vector>
 
 // Pass large objects by const& to avoid copies; small ones can be passed by value. [1]
-int countLongerThan(const std::vector<std::string>& words, std::size_t n) {
+int count_longer_than(const std::vector<std::string>& words, std::size_t n) {
     int threshold = static_cast<int>(n);
     return static_cast<int>(std::count_if(  // [2] Algorithm + lambda
         words.begin(), words.end(),
@@ -28,15 +28,15 @@ int countLongerThan(const std::vector<std::string>& words, std::size_t n) {
         }));
 }
 
-auto makeAdder(int base) {  // [4] Return a closure that captures state
+auto make_adder(int base) {  // [4] Return a closure that captures state
     return [base](int x) { return base + x; };
 }
 
 int main() {
     std::vector<std::string> words{"a", "bee", "programming", "cpp"};
-    std::println("Words longer than 2: {}", countLongerThan(words, 2));
+    std::println("Words longer than 2: {}", count_longer_than(words, 2));
 
-    auto add10 = makeAdder(10);
+    auto add10 = make_adder(10);
     std::println("add10(5) = {}", add10(5));  // [5]
     return 0;
 }`,
@@ -134,8 +134,8 @@ int main() {
                                [n](const std::string& w) { return (int)w.size() > n; });
     std::cout << "longer than " << n << ": " << count << '\\n';
 
-    auto makeAdder = [](int base) { return [base](int x) { return base + x; }; };
-    std::cout << "add10(5) = " << makeAdder(10)(5) << '\\n';
+    auto make_adder = [](int base) { return [base](int x) { return base + x; }; };
+    std::cout << "add10(5) = " << make_adder(10)(5) << '\\n';
     return 0;
 }`,
   },

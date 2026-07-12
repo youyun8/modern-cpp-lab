@@ -19,20 +19,20 @@ const ind01WhyParallelRoofline: ChapterContent = {
 // [1] Amdahl's law: the theoretical speedup ceiling for a fixed problem size.
 //     speedup(p, s) = 1 / ((1 - p) + p / s)
 //     p: parallelizable fraction (0~1); s: speedup factor of the parallel part (roughly the core count).
-double amdahlSpeedup(double parallel_fraction, double speedup_factor) {
+double amdahl_speedup(double parallel_fraction, double speedup_factor) {
     double serial_fraction = 1.0 - parallel_fraction;
     return 1.0 / (serial_fraction + parallel_fraction / speedup_factor);  // [2]
 }
 
 // [3] Gustafson's law: fix the "work per processor" and scale the problem size with the processor count.
 //     scaled_speedup(p, n) = (1 - p) + p * n
-double gustafsonSpeedup(double parallel_fraction, double num_processors) {
+double gustafson_speedup(double parallel_fraction, double num_processors) {
     return (1.0 - parallel_fraction) + parallel_fraction * num_processors;
 }
 
 // [4] Roofline: arithmetic intensity AI = FLOPs / Bytes; attainable performance = min(peak_flops, AI *
 // peak_bw).
-double attainablePerformanceGFlops(double arithmetic_intensity, double peak_gflops,
+double attainable_performance_gflops(double arithmetic_intensity, double peak_gflops,
                                    double peak_bandwidth_gbs) {
     double memory_bound_estimate = arithmetic_intensity * peak_bandwidth_gbs;  // [5]
     return std::min(peak_gflops, memory_bound_estimate);
@@ -43,15 +43,15 @@ int main() {
     double p = 0.90;
     double s = 32.0;
     std::printf("Amdahl speedup (p=%.2f, s=%.0f) = %.2f\\n",  // [6]
-                p, s, amdahlSpeedup(p, s));
-    std::printf("Gustafson scaled speedup       = %.2f\\n", gustafsonSpeedup(p, s));
+                p, s, amdahl_speedup(p, s));
+    std::printf("Gustafson scaled speedup       = %.2f\\n", gustafson_speedup(p, s));
 
     // STREAM Triad's arithmetic intensity is roughly 1 FLOP / 24 bytes.
     double ai = 1.0 / 24.0;
     double peak_gflops = 2000.0;  // Assume a peak compute of 2 TFLOPs
     double peak_bw_gbs = 200.0;   // Assume a peak bandwidth of 200 GB/s
     std::printf("Attainable = %.2f GFLOP/s (memory-bound)\\n",
-                attainablePerformanceGFlops(ai, peak_gflops, peak_bw_gbs));
+                attainable_performance_gflops(ai, peak_gflops, peak_bw_gbs));
     return 0;
 }`,
     callouts: [
@@ -160,12 +160,12 @@ int main() {
     code: `#include <cstdio>
 
 // Simple Amdahl speedup calculation: p is the parallelizable fraction, n is the number of processors.
-double amdahlSpeedup(double p, double n) { return 1.0 / ((1.0 - p) + p / n); }
+double amdahl_speedup(double p, double n) { return 1.0 / ((1.0 - p) + p / n); }
 
 int main() {
     double p = 0.95;
     for (double n = 1.0; n <= 64.0; n *= 2.0) {
-        std::printf("n=%.0f speedup=%.2f\\n", n, amdahlSpeedup(p, n));
+        std::printf("n=%.0f speedup=%.2f\\n", n, amdahl_speedup(p, n));
     }
     return 0;
 }`,

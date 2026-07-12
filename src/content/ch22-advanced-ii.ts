@@ -23,12 +23,12 @@ std::mutex g_mutex;  // [1]
 long long shared_sum = 0;
 std::atomic<long long> atomic_sum{0};  // [2]
 
-void addWithLock(long long value) {
+void add_with_lock(long long value) {
     std::lock_guard<std::mutex> guard{g_mutex};  // [3]
     shared_sum += value;
 }
 
-long long computePartial(int begin, int end) {  // [4]
+long long compute_partial(int begin, int end) {  // [4]
     long long local = 0;
     for (int i = begin; i < end; ++i) {
         local += i;
@@ -38,13 +38,13 @@ long long computePartial(int begin, int end) {  // [4]
 
 int main() {
     std::vector<std::thread> workers;
-    for (int t = 0; t < 4; ++t) workers.emplace_back([t]() { addWithLock(t); });  // [5]
+    for (int t = 0; t < 4; ++t) workers.emplace_back([t]() { add_with_lock(t); });  // [5]
     for (auto& w : workers) {
         w.join();
     }
 
     auto future = std::async(std::launch::async,  // [6]
-                             computePartial, 0, 1'000'000);
+                             compute_partial, 0, 1'000'000);
     atomic_sum.fetch_add(future.get(),  // [7]
                          std::memory_order_relaxed);
     return 0;

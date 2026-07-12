@@ -47,7 +47,7 @@ struct Generator {
     }
 };
 
-Generator<int> firstN(int n) {
+Generator<int> first_n(int n) {
     for (int i = 0; i < n; ++i) {
         co_yield i* i;  // Produce the square, then suspend
     }

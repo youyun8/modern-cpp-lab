@@ -19,7 +19,7 @@ const ch05BasicConceptsIII: ChapterContent = {
 #include <print>
 
 // Comparing floats with relative + absolute error is far more reliable than ==. [1]
-bool nearlyEqual(double a, double b, double eps = 1e-9) {
+bool nearly_equal(double a, double b, double eps = 1e-9) {
     double diff = std::fabs(a - b);
     double scale = std::fmax(std::fabs(a), std::fabs(b));
     return diff <= eps * std::fmax(1.0, scale);  // [2]
@@ -28,7 +28,7 @@ bool nearlyEqual(double a, double b, double eps = 1e-9) {
 int main() {
     double x = 0.1 + 0.2;
     std::println("0.1+0.2 == 0.3 ? {}", x == 0.3);  // [3] almost always false
-    std::println("nearlyEqual ? {}", nearlyEqual(x, 0.3));
+    std::println("nearly_equal ? {}", nearly_equal(x, 0.3));
 
     double nan = std::numeric_limits<double>::quiet_NaN();
     std::println("nan == nan ? {}", nan == nan);  // [4] always false

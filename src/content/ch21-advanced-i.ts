@@ -20,17 +20,17 @@ const ch21AdvancedI: ChapterContent = {
 
 // Forwarding reference + std::forward: perfect forwarding preserves lvalue/rvalue category. [1]
 template <typename T>
-void addTo(std::vector<std::string>& out, T&& value) {
+void add_to(std::vector<std::string>& out, T&& value) {
     out.push_back(std::forward<T>(value));  // [2]
 }
 
-std::string makeName() { return std::string(1000, 'x'); }  // a large string
+std::string make_name() { return std::string(1000, 'x'); }  // a large string
 
 int main() {
     std::vector<std::string> names;
     std::string lv = "left";
-    addTo(names, lv);          // [3] T deduced as std::string& (lvalue -> copy)
-    addTo(names, makeName());  // [4] T deduced as std::string (rvalue -> move)
+    add_to(names, lv);          // [3] T deduced as std::string& (lvalue -> copy)
+    add_to(names, make_name());  // [4] T deduced as std::string (rvalue -> move)
 
     std::string a = "hello";
     std::string b = std::move(a);  // [5] a is now in a valid but unspecified state

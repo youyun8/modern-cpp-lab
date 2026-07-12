@@ -44,7 +44,7 @@ class ThreadPool {
     explicit ThreadPool(std::size_t thread_count) {
         workers_.reserve(thread_count);
         for (std::size_t i = 0; i < thread_count; ++i) {
-            workers_.emplace_back([this] { WorkerLoop(); });  // [2]
+            workers_.emplace_back([this] { worker_loop(); });  // [2]
         }
     }
 
@@ -59,9 +59,9 @@ class ThreadPool {
         }
     }
 
-    // Submit a task; the same lock protects the queue, so lock contention grows
+    // submit a task; the same lock protects the queue, so lock contention grows
     // with the number of threads on high-core-count machines.
-    void Submit(std::function<void()> task) {
+    void submit(std::function<void()> task) {
         {
             std::lock_guard<std::mutex> lock(mutex_);
             tasks_.push(std::move(task));
@@ -70,7 +70,7 @@ class ThreadPool {
     }
 
    private:
-    void WorkerLoop() {
+    void worker_loop() {
         while (true) {
             std::function<void()> task;
             {
@@ -83,7 +83,7 @@ class ThreadPool {
                 task = std::move(tasks_.front());
                 tasks_.pop();
             }
-            task();  // Run the task after unlocking, so a nested Submit call inside it can't deadlock. [6]
+            task();  // Run the task after unlocking, so a nested submit call inside it can't deadlock. [6]
         }
     }
 
@@ -99,13 +99,13 @@ class ThreadPool {
 class WorkStealingDeque {
    public:
     // Called only by the owning thread: push onto the front (local side).
-    void PushFront(std::function<void()> task);
+    void push_front(std::function<void()> task);
 
     // Called only by the owning thread: pop from the front (LIFO, preserves cache locality).
-    bool PopFront(std::function<void()>& out);
+    bool pop_front(std::function<void()>& out);
 
     // Called by other threads: steal from the back (FIFO, opposite of the local side, reduces contention).
-    bool StealBack(std::function<void()>& out);
+    bool steal_back(std::function<void()>& out);
 };`,
     callouts: [
       {
@@ -122,10 +122,10 @@ class WorkStealingDeque {
       },
       {
         n: 4,
-        text: 'Submit 只喚醒一個等待中的 worker（notify_one），因為只新增了一筆任務，不需要驚群喚醒。',
+        text: 'submit 只喚醒一個等待中的 worker（notify_one），因為只新增了一筆任務，不需要驚群喚醒。',
       },
       { n: 5, text: '用條件變數等待而非忙等（busy-wait）輪詢佇列，避免空閒 worker 白白耗費 CPU。' },
-      { n: 6, text: '任務在解鎖之後才執行，若任務本身又呼叫 Submit，不會因為持有同一把鎖而死鎖。' },
+      { n: 6, text: '任務在解鎖之後才執行，若任務本身又呼叫 submit，不會因為持有同一把鎖而死鎖。' },
     ],
   },
   pitfalls: [
@@ -214,7 +214,7 @@ class ThreadPool {
    public:
     explicit ThreadPool(std::size_t thread_count) {
         for (std::size_t i = 0; i < thread_count; ++i) {
-            workers_.emplace_back([this] { WorkerLoop(); });
+            workers_.emplace_back([this] { worker_loop(); });
         }
     }
 
@@ -229,7 +229,7 @@ class ThreadPool {
         }
     }
 
-    void Submit(std::function<void()> task) {
+    void submit(std::function<void()> task) {
         {
             std::lock_guard<std::mutex> lock(mutex_);
             tasks_.push(std::move(task));
@@ -238,7 +238,7 @@ class ThreadPool {
     }
 
    private:
-    void WorkerLoop() {
+    void worker_loop() {
         while (true) {
             std::function<void()> task;
             {
@@ -266,7 +266,7 @@ int main() {
     std::atomic<int> completed{0};
 
     for (int i = 0; i < 20; ++i) {
-        pool.Submit([i, &completed] {
+        pool.submit([i, &completed] {
             completed.fetch_add(1, std::memory_order_relaxed);
             std::cout << "task " << i << " done on thread " << std::this_thread::get_id() << "\\n";
         });

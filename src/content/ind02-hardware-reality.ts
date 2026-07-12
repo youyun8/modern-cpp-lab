@@ -44,7 +44,7 @@ struct PaddedCountersPortable {
 };
 
 template <typename Counters>
-double benchmarkIncrements(Counters& counters, std::size_t iterations) {
+double benchmark_increments(Counters& counters, std::size_t iterations) {
     auto start = std::chrono::steady_clock::now();
     std::thread t1([&] {
         for (std::size_t i = 0; i < iterations; ++i) {

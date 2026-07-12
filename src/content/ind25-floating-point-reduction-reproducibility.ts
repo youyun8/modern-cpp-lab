@@ -37,7 +37,7 @@ const ind25FloatingPointReductionReproducibility: ChapterContent = {
 #include <vector>
 
 // Naive sequential summation: error accumulates linearly with element count n, O(n * eps). [1]
-double naiveSum(const std::vector<double>& xs) {
+double naive_sum(const std::vector<double>& xs) {
     double total = 0.0;
     for (double x : xs) {
         total += x;
@@ -46,7 +46,7 @@ double naiveSum(const std::vector<double>& xs) {
 }
 
 // Neumaier (Kahan-Babuska) compensated summation: maintains a compensation term c to track lost low-order bits. [2]
-double neumaierSum(const std::vector<double>& xs) {
+double neumaier_sum(const std::vector<double>& xs) {
     double sum = 0.0;
     double c = 0.0;  // running total of low-order bits lost so far
 
@@ -65,7 +65,7 @@ double neumaierSum(const std::vector<double>& xs) {
 }
 
 // Pairwise (cascade) summation: error upper bound is O(log n * eps). [6]
-double pairwiseSum(const std::vector<double>& xs, std::size_t lo, std::size_t hi) {
+double pairwise_sum(const std::vector<double>& xs, std::size_t lo, std::size_t hi) {
     std::size_t n = hi - lo;
     if (n <= 8) {
         double total = 0.0;
@@ -75,7 +75,7 @@ double pairwiseSum(const std::vector<double>& xs, std::size_t lo, std::size_t hi
         return total;
     }
     std::size_t mid = lo + n / 2;
-    return pairwiseSum(xs, lo, mid) + pairwiseSum(xs, mid, hi);
+    return pairwise_sum(xs, lo, mid) + pairwise_sum(xs, mid, hi);
 }
 
 int main() {
@@ -83,9 +83,9 @@ int main() {
     std::vector<double> data(1'000'000, 1e-8);
     data.push_back(1.0);
 
-    double naive = naiveSum(data);
-    double neumaier = neumaierSum(data);
-    double pairwise = pairwiseSum(data, 0, data.size());
+    double naive = naive_sum(data);
+    double neumaier = neumaier_sum(data);
+    double pairwise = pairwise_sum(data, 0, data.size());
 
     std::println("naive    = {:.17f}", naive);
     std::println("neumaier = {:.17f}", neumaier);
@@ -184,7 +184,7 @@ int main() {
 #include <vector>
 
 // Neumaier compensated summation: more robust than the original Kahan algorithm when a new element has larger magnitude.
-double neumaierSum(const std::vector<double>& xs) {
+double neumaier_sum(const std::vector<double>& xs) {
     double sum = 0.0;
     double c = 0.0;
     for (double x : xs) {
@@ -199,7 +199,7 @@ double neumaierSum(const std::vector<double>& xs) {
     return sum + c;
 }
 
-double naiveSum(const std::vector<double>& xs) {
+double naive_sum(const std::vector<double>& xs) {
     double total = 0.0;
     for (double x : xs) {
         total += x;
@@ -211,8 +211,8 @@ int main() {
     std::vector<double> data(100'000, 1e-8);
     data.push_back(1.0);
 
-    double naive = naiveSum(data);
-    double compensated = neumaierSum(data);
+    double naive = naive_sum(data);
+    double compensated = neumaier_sum(data);
 
     std::cout.precision(17);
     std::cout << "naive        = " << naive << '\\n';

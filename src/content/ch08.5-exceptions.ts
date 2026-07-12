@@ -28,7 +28,7 @@ struct Logger {
 };
 
 // Declare a function that never throws: the compiler can drop the unwinding path, and callers need no catch. [1]
-void safeCleanup() noexcept { std::cout << "Safe cleanup\\n"; }
+void safe_cleanup() noexcept { std::cout << "Safe cleanup\\n"; }
 
 // May throw an exception because of invalid input. [2]
 double divide(double a, double b) {
@@ -39,14 +39,14 @@ double divide(double a, double b) {
 }
 
 // Demonstrates RAII destruction during stack unwinding. [4]
-void nestedWork() {
+void nested_work() {
     Logger scope1{"inner"};       // [5]
     try {
         Logger scope2{"try-block"};
         divide(10.0, 0.0);       // Throws runtime_error, stack unwinding begins
     } catch (const std::runtime_error& e) {  // [6]
         std::cout << "Caught: " << e.what() << "\\n";
-        // scope2 is destroyed at the end of the try block; scope1 is destroyed at the end of nestedWork
+        // scope2 is destroyed at the end of the try block; scope1 is destroyed at the end of nested_work
     }
 }
 
@@ -60,8 +60,8 @@ struct Buffer {
 int main() {
     try {
         Logger outer{"main"};
-        nestedWork();
-        safeCleanup();
+        nested_work();
+        safe_cleanup();
     } catch (const std::exception& e) {  // [9] Catches the base class of all standard exceptions
         std::cerr << "Unexpected exception: " << e.what() << "\\n";
         return 1;
@@ -197,7 +197,7 @@ struct SafeBuffer {
         : data(std::move(other.data)) {}
 };
 
-void mayThrow(bool shouldThrow) {
+void may_throw(bool shouldThrow) {
     if (shouldThrow) {
         throw std::runtime_error("something went wrong!");
     }
@@ -205,7 +205,7 @@ void mayThrow(bool shouldThrow) {
 
 int main() {
     try {
-        mayThrow(true);
+        may_throw(true);
     } catch (const std::exception& e) {
         std::cout << "Caught: " << e.what() << "\\n";
     }

@@ -19,14 +19,14 @@ const ch27SoftwareDesignII: ChapterContent = {
 template <typename Derived>
 struct Shape {
     double area() const {
-        return static_cast<const Derived*>(this)->areaImpl();  // [2]
+        return static_cast<const Derived*>(this)->area_impl();  // [2]
     }
 };
 
 struct Circle : Shape<Circle> {
     double r;
     explicit Circle(double r) : r(r) {}
-    double areaImpl() const { return 3.14159265 * r * r; }  // [3]
+    double area_impl() const { return 3.14159265 * r * r; }  // [3]
 };
 
 // PIMPL skeleton: the header only shows a forward declaration and a pointer. [4]
@@ -48,9 +48,9 @@ int main() {
       { n: 1, text: 'CRTP 讓 Shape 在編譯期就知道實際衍生型別，呼叫可被內聯，無 vtable 開銷。' },
       {
         n: 2,
-        text: 'static_cast 到 Derived 後呼叫其 areaImpl，這是靜態（編譯期）分派而非虛擬分派。',
+        text: 'static_cast 到 Derived 後呼叫其 area_impl，這是靜態（編譯期）分派而非虛擬分派。',
       },
-      { n: 3, text: '衍生類別提供 areaImpl 實作；介面共用但沒有執行期間接跳轉的成本。' },
+      { n: 3, text: '衍生類別提供 area_impl 實作；介面共用但沒有執行期間接跳轉的成本。' },
       { n: 4, text: 'PIMPL 在標頭僅前置宣告 Impl，完整定義放在 .cpp，使用者無須看到私有細節。' },
       { n: 5, text: '只暴露一個指標即可隔離實作變動：改 Impl 不需重編譯使用者，並穩定 ABI。' },
     ],
@@ -133,17 +133,17 @@ int main() {
 
 template <typename Derived>
 struct Shape {
-    double area() const { return static_cast<const Derived*>(this)->areaImpl(); }
+    double area() const { return static_cast<const Derived*>(this)->area_impl(); }
 };
 struct Circle : Shape<Circle> {
     double r;
     Circle(double r) : r(r) {}
-    double areaImpl() const { return 3.14159265 * r * r; }
+    double area_impl() const { return 3.14159265 * r * r; }
 };
 struct Square : Shape<Square> {
     double s;
     Square(double s) : s(s) {}
-    double areaImpl() const { return s * s; }
+    double area_impl() const { return s * s; }
 };
 
 int main() {
